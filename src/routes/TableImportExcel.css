@@ -1,0 +1,73 @@
+.table-datafalse,
+.table-datatrue,
+.table-datathanfalse,
+.table-datathantrue {
+    text-align: center;
+}
+
+.table-datatrue .save,
+.table-datafalse .save,
+.table-datathantrue .save,
+.table-datathanfalse .save {
+    text-align: left;
+    padding: 10px;
+}
+.table-datatrue td:first-child,
+.table-datafalse td:first-child,
+.table-datathantrue td:first-child,
+.table-datathanfalse td:first-child,
+.table-datatrue th:first-child,
+.table-datafalse th:first-child,
+.table-datathantrue th:first-child,
+.table-datathanfalse th:first-child {
+    min-width: 10px;
+}
+/* table export excel false red */
+.table-datafalse td {
+    min-width: 100px;
+}
+.table-datafalse td:nth-child(2) {
+    min-width: 70px;
+}
+.table-datafalse td:nth-child(3) {
+    min-width: 150px;
+}
+.table-datafalse td:nth-child(8) {
+    min-width: 300px;
+    text-align: left;
+}
+.table-datafalse td:nth-child(11),
+.table-datafalse td:nth-child(12) {
+    min-width: 300px;
+}
+/* table excel true blue */
+.table-datatrue td {
+    min-width: 100px;
+}
+.table-datatrue td:nth-child(2) {
+    min-width: 70px;
+}
+.table-datatrue td:nth-child(3),
+.table-datatrue td:nth-child(7) {
+    min-width: 150px;
+}
+.table-datatrue td:nth-child(11) {
+    min-width: 300px;
+}
+.table-datatrue .save,
+.table-datafalse .save {
+    text-align: left;
+    padding: 10px;
+}
+/* table than excel true blue */
+.table-datathantrue td, .table-datathantrue th {
+    min-width: 150px;
+}
+/* table than excel false */
+.table-datathanfalse td, .table-datathanfalse th {
+    min-width: 150px;
+}
+.table-datathanfalse td:nth-child(2) {
+    min-width: 250px;
+    text-align: left;
+}

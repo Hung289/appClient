@@ -1,0 +1,1964 @@
+/* Smartphones (portrait and landscape) ----------- */
+@media (min-device-width: 1201px) {
+    .grid-item svg {
+        height: 100px;
+        width: 100px;
+    }
+    .info-box .info-box-text,
+    .info-box .progress-description {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: normal;
+        -webkit-line-clamp: 1;
+        height: 24px;
+
+        -webkit-box-orient: vertical;
+    }
+    #basic-navbar-nav-top {
+        display: none !important;
+    }
+    /* .container{
+        width: 100%;
+    } */
+}
+
+@media (min-device-width: 1024px) and (max-device-width: 1200px) {
+    #boxGioiThieuGrid .grid-item {
+        margin-top: 15px;
+        height: 170px;
+    }
+    .img-tintuc {
+        margin-top: 10px;
+    }
+    .class-timtuc {
+        padding-bottom: 10px;
+    }
+    .grid-item svg {
+        height: 100px;
+        width: 100px;
+    }
+    .col768 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+    .navbar-expand-md .navbar-nav .nav-link {
+        padding: 5px;
+        font-size: 16px;
+    }
+    .logoHome {
+        height: 70px;
+        margin-right: 0.5rem;
+        width: auto;
+    }
+    .menuItem {
+        font-size: 14px;
+    }
+    .LogoBox h1 {
+        font-size: 26px;
+        margin-bottom: 5px;
+        line-height: 30px;
+    }
+    .LogoBox h2 {
+        font-size: 24px;
+    }
+    .btn-hientang {
+        margin-right: 0.5rem;
+        font-size: 13px;
+        padding: 8px 9px 8px 9px;
+    }
+    .btn-nhancoquan {
+        margin-right: 0.5rem;
+        padding: 8px 9px 8px 9px;
+    }
+    .btn-nhantang {
+        border-radius: 5px;
+        font-size: 13px;
+        padding: 8px 9px 8px 9px;
+    }
+    .boxThongKeHome .ThongKeItem {
+        height: 180px;
+    }
+
+    #boxCauHoiThuongGap {
+        margin-top: 30px;
+    }
+    #boxCauHoiThuongGap .headerBox {
+        /* font-size: 45px; */
+        padding: 30px;
+    }
+    #boxCauHoiThuongGap .boxCauHoiPanel {
+        background-color: white;
+        padding: 50px 50px;
+    }
+
+    .boxQuestionItem {
+        margin-bottom: 30px;
+    }
+    .boxQuestionItem .qBlock {
+        padding: 7px;
+    }
+
+    .boxQuestionItem .bAnswer {
+        padding: 20px;
+    }
+
+    #boxFooter {
+        padding: 40px 0 20px 0;
+        text-align: center;
+    }
+    #boxFooter p {
+        color: white;
+        font-size: 16px;
+        margin-bottom: 10px;
+        font-family: Quicksand-Bold;
+    }
+    #boxFooter p:first-child {
+        text-transform: uppercase;
+    }
+    #basic-navbar-nav-top {
+        display: none !important;
+    }
+    img {
+        width: 100%;
+        height: auto;
+    }
+    .NameBoxItem {
+        margin-left: 10px;
+    }
+}
+
+/* iPads (portrait and landscape) ----------- */
+@media (min-device-width: 768px) and (max-device-width: 1023px) {
+    /* .boxTopRight fieldset{
+        width: 350px;
+        margin:  0 auto;
+        float: none;
+    } */
+    /* .hidden-xs {
+        display: none !important;
+    } */
+    #basic-navbar-nav-top {
+        display: none !important;
+    }
+    #basic-navbar-nav .nav-item > a {
+        padding: .5rem 1rem !important;
+    }
+    .menuItem {
+        font-size: 12px ;
+    }
+    .navbar-brand {
+        padding-left: 10px;
+    }
+    .boxtop-li a {
+        color: #000000;
+        font-size: 13px !important;
+        font-family: Quicksand-Bold;
+    }
+    .boxTopRight fieldset {
+        border-radius: 5px;
+        border: 1px solid #cc0000;
+        width: 280px !important;
+        float: right;
+    }
+    /* .menu-bot {
+        display: block;
+        width: 100%;
+        text-align: center;
+    } */
+
+    .img-tintuc {
+        margin-top: 16px;
+    }
+    /* #basic-navbar-nav {
+        display: none !important;
+    } */
+    /* .menu-bar-bottom {
+        display: none;
+    } */
+    .grid-item svg {
+        height: 100px;
+        width: 100px;
+    }
+    .col768 {
+        flex: 0 0 50%;
+        max-width: 50%;
+    }
+
+    .container,
+    .container-sm {
+        max-width: 100%;
+    }
+
+    .navbar {
+        padding: 0;
+    }
+    .navbar-brand {
+        width: 100%;
+    }
+    .logoHome {
+        height: 60px;
+        width: auto;
+    }
+    .LogoBox h1 {
+        line-height: 26px;
+        font-size: 18px;
+        margin-bottom: 5px;
+    }
+    .LogoBox h2 {
+        line-height: 26px;
+        font-size: 18px;
+        margin: 0;
+    }
+    /* .LogoBoxItem {
+        width: 80px;
+    }
+    .logobox2 {
+        padding: 3px 5px !important;
+    }
+    .boxtop-li {
+        line-height: 18px;
+    }
+    .boxtop-li a
+    {
+        font-size: 12px;
+    }
+    .boxtop-ul{
+        margin-bottom: 5px;
+    }
+    .NameBoxItem {
+        width: 65%;
+        float: left;
+    }
+    .NameBoxItem {
+        margin-left: 10px;
+    }
+    .LogoBox {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        align-items: center;
+        justify-content: flex-start;
+        align-content: center;
+    }
+    .btn {
+        font-size: 13px;
+    }
+    .navbar {
+        display: block;
+        align-items: flex-start;
+    }
+    .navbar-nav {
+        display: flex;
+        flex-direction: column;
+        padding-left: 0;
+        margin-bottom: 0;
+        list-style: none;
+        align-items: center;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        align-content: center;
+    }
+    .btn-hientang {
+        margin-left: 10px;
+        margin-right: 3px;
+        font-size: 14px;
+        padding: 10px;
+        min-height: 45px;
+    }
+    .btn-nhancoquan {
+        min-width: 100px;
+        margin-right: 3px;
+        font-size: 14px;
+        padding: 10px;
+        min-height: 45px;
+    }
+    .btn-nhantang {
+        border-radius: 5px;
+        font-size: 14px;
+        font-family: Quicksand-Medium;
+        margin-right: 3px;
+        padding: 10px;
+        min-height: 45px;
+    } */
+    /* .menu-bar-top {
+        width: 0%;
+        float: right;
+        margin-left: 1rem;
+    } */
+
+    .boxDangKybtn {
+        float: right;
+        display: flex;
+        margin-top: 20px;
+        margin-right: 10px;
+    }
+    .NameBoxItem {
+        padding-top: 10px;
+        width: 65%;
+        float: left;
+    }
+    .navbar-brand {
+        margin-right: 0rem;
+    }
+    /* .menu-bar-top {
+        margin-left: 0.5rem;
+        width: 11%;
+
+    } */
+    .menu-mobie{
+        display: block;
+    }
+    /*.menu-desktop{
+        display: none;
+    }
+     .menu-bar-top button{
+         display: block !important;
+    } */
+    .carousel{
+        width: 100%;
+        float: left;
+    }
+    .boxTopRight {
+        /* width: 100%;
+        float: left; */
+        margin: 10px 0;
+    }
+    .navbar-toggler {
+        float: right;
+    }
+
+    .boxThongKeHome {
+        min-height: unset;
+        padding-bottom: 50px;
+    }
+    #boxGioiThieuGrid {
+        grid-template-rows: auto auto auto;
+        grid-template-columns: auto auto;
+    }
+    #boxTangGrid {
+        grid-template-rows: auto auto auto;
+        grid-template-columns: auto auto auto auto;
+    }
+
+    #boxTangGrid .grid-item {
+        border-radius: 3px;
+        width: 120px;
+        height: 140px;
+    }
+    #boxTangGrid .grid-item img {
+        text-align: center;
+        height: 60px;
+        /* padding: 30px; */
+    }
+    .boxThongKeHome .thongKeContent {
+        padding: 0 20px;
+    }
+
+    #boxTinBai .headerComponent {
+        font-size: 40px;
+    }
+    #boxTinBai .boxTinBaiItem .imgTinBai {
+        height: 140px;
+        width: 100%;
+    }
+    #boxDesGioiThieu .headerGioiThieu {
+        font-size: 35px;
+    }
+    #boxTinBai .boxTinBaiItem .titleTinBai {
+        margin: 0.5rem 0rem;
+        font-size: 18px;
+    }
+    #boxTinBai .headerComponent {
+        font-size: 35px;
+    }
+    .boxTinBaiItem {
+        margin-bottom: 2rem;
+    }
+    #boxTinBai .boxTinBaiItem .desTinBai {
+        font-size: 14px;
+    }
+    #boxDesGioiThieu {
+        padding: 3.75rem 2rem;
+    }
+    #boxCauHoiThuongGap {
+        margin-top: 30px;
+    }
+    #boxCauHoiThuongGap .headerBox {
+        font-size: 35px;
+        padding: 30px;
+    }
+    #boxCauHoiThuongGap .boxCauHoiPanel {
+        background-color: white;
+        padding: 30px 30px;
+    }
+
+    .boxQuestionItem {
+        margin-bottom: 30px;
+    }
+    .boxQuestionItem .qBlock {
+        padding: 7px;
+    }
+
+    .boxQuestionItem .bAnswer {
+        padding: 20px;
+    }
+
+    #boxFooter {
+        padding: 1.5rem 0.75rem;
+        text-align: center;
+    }
+    #boxFooter p {
+        color: white;
+        font-size: 16px;
+        margin-bottom: 10px;
+        font-family: Quicksand-Bold;
+    }
+    #boxFooter p:first-child {
+        text-transform: uppercase;
+    }
+    #boxDangKyBanner {
+        margin-top: 50px;
+    }
+    #boxDangKyBanner .imgItem {
+        height: 170px;
+        width: 100%;
+        margin-bottom: 15px;
+    }
+    .text-p-tintuc {
+        margin-bottom: 0.5rem !important;
+    }
+    .class-timtuc {
+        padding: 1.5rem 1rem;
+    }
+    .class-tieude-tintuc {
+        margin: 0.5rem 0rem;
+    }
+    #boxTinBai {
+        margin-top: 2rem;
+        padding: 0px 2rem;
+    }
+    .boxQuestionItem .qBlock .Quesion {
+        font-size: 18px;
+        width: 85%;
+        word-break: break-word;
+        white-space: break-spaces;
+        display: inline-block;
+    }
+    .text-p-tintuc {
+        margin-bottom: 0.5rem !important;
+    }
+    .class-timtuc {
+        padding: 0px 10px 10px;
+    }
+    .class-tieude-tintuc {
+        margin: 0.5rem 0rem;
+    }
+    .NoiDungCauHoiFilter {
+        width: 76%;
+    }
+    .button-themmoi {
+        position: inherit;
+        width: 100%;
+    }
+    .button-timkiem {
+        width: 21%;
+        margin-bottom: 0.25rem;
+    }
+    .modal-dialog {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%) !important;
+        width: 95%;
+        margin: 0rem;
+    }
+    .noidung-ct {
+        padding: 0rem 1rem;
+    }
+    .navbar-expand-md .navbar-nav .nav-link {
+        font-size: 15px;
+    }
+    #basic-navbar-nav-top {
+        display: none !important;
+    }
+    .bannertop {
+        height: 350px;
+    }
+}
+
+@media (min-device-width: 480px) and (max-device-width: 767px) {
+    .menu-mobie{
+        display: none;
+    }
+    .boxTopRight{
+        margin-bottom: 10px;
+    }
+    .boxTopRight fieldset{
+        margin:  0 auto;
+        float:  none;
+    }
+    .menuItem {
+        color: #008dd0 !important;
+    }
+    .hidden-xs {
+        display: none !important;
+    }
+    .noidung-c.t {
+        padding-right: 0;
+    }
+    .navbar-light .navbar-toggler {
+        padding: 10px 7px;
+        margin-right: 7px;
+    }
+    .grid-item svg {
+        height: 100px;
+        width: 100px;
+    }
+    .container,
+    .container-sm {
+        max-width: 100%;
+    }
+    /* Styles */
+    #header-navbar {
+        width: 100%;
+        float: left;
+    }
+    .navbar {
+        padding: 0;
+    }
+    #header-navbar {
+        width: 85%;
+        float: left;
+    }
+    .navbar-brand {
+        width: 100%;
+    }
+    .logoHome {
+        height: 60px;
+        width: auto;
+    }
+    .logobox2{
+        padding: 3px 0 !important;
+    }
+    .LogoBox h1 {
+        line-height: 26px;
+        font-size: 15px;
+        margin-bottom: 5px;
+    }
+    .NameBoxItem{
+         margin-left: 5px;
+    }
+    .LogoBox h2 {
+        line-height: 26px;
+        font-size: 16px;
+        margin: 0;
+    }
+    .LogoBoxItem {
+        width: auto;
+        /* margin-right: 0.5rem; */
+    }
+    .LogoBox {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-start;
+    }
+    .navbar-nav {
+        display: flex;
+        flex-direction: column;
+        padding-left: 0;
+        margin-bottom: 0;
+        list-style: none;
+        align-items: flex-end;
+        justify-content: center;
+        flex-wrap: wrap;
+        align-content: flex-end;
+    }
+
+    .menu-bar-top {
+        width: 0%;
+        float: right;
+        margin-left: 1rem;
+    }
+    /* .btn-hientang {
+        width: 30%;
+        height: 45px;
+    }
+    .btn-nhantang {
+        border-radius: 5px;
+        font-family: Quicksand-Medium;
+        margin-right: 5px;
+        height: 45px;
+        width: 30%;
+    }
+    .btn-nhancoquan {
+        margin-right: 10px;
+        width: 30%;
+        height: 45px;
+    } */
+    .btn-hientang {
+        position: relative;
+        margin-right: 10px;
+        font-size: 14px;
+        width: 30%;
+        height: 60px;
+        padding: 8px 10px 8px 10px;
+    }
+    .btn-hientang .item {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        min-width: 100px;
+    }
+    .btn-nhancoquan {
+        margin-right: 10px;
+        font-size: 14px;
+        width: 30%;
+        height: 60px;
+        padding: 10px 21px 16px 21px;
+        position: relative;
+    }
+    .btn-nhancoquan .item {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        min-width: 100px;
+    }
+    .btn-nhantang {
+        position: relative;
+        margin-right: 10px;
+        font-size: 14px;
+        width: 30%;
+        height: 60px;
+        padding: 10px;
+    }
+    .btn-nhantang .item {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        min-width: 100px;
+    }
+
+    .boxDangKybtn {
+        /* margin-bottom: 0rem; */
+        flex-direction: row;
+        font-size: 15px;
+        justify-content: center;
+        text-align: center;
+        margin: 0px 0px 10px;
+    }
+    .NameBoxItem {
+        width: auto;
+        float: left;
+        /* padding-left: 5px; */
+        /* text-align: center; */
+    }
+    .navbar-brand {
+        margin-right: 0rem;
+    }
+    .menu-bar-top {
+        margin-left: 0.5rem;
+        width: 11%;
+    }
+    .navbar-toggler {
+        float: right;
+    }
+    #basic-navbar-nav {
+        display: none;
+    }
+    .boxThongKeHome {
+        background-repeat: repeat;
+        min-height: unset;
+        padding-bottom: 50px;
+    }
+    #boxGioiThieuGrid {
+        grid-template-rows: auto auto auto;
+        grid-template-columns: auto auto;
+    }
+    #boxTangGrid {
+        /* grid-template-rows: auto auto auto; */
+        grid-template-columns: auto auto auto;
+    }
+
+    #boxTangGrid .grid-item {
+        border-radius: 3px;
+        width: 120px;
+        height: 140px;
+    }
+    #boxTangGrid .grid-item img {
+        text-align: center;
+        height: 60px;
+        /* padding: 30px; */
+    }
+    .boxThongKeHome .thongKeContent {
+        padding: 0 20px;
+    }
+
+    #boxTinBai .headerComponent {
+        font-size: 40px;
+    }
+    #boxTinBai .boxTinBaiItem .imgTinBai {
+        height: 140px;
+        width: 100%;
+    }
+    #boxTinBai .boxTinBaiItem .titleTinBai {
+        margin: 0.5rem 0rem;
+        font-size: 18px;
+    }
+    #boxTinBai .headerComponent {
+        font-size: 35px;
+    }
+    .boxTinBaiItem {
+        margin-bottom: 2rem;
+    }
+    #boxTinBai .boxTinBaiItem .desTinBai {
+        font-size: 14px;
+    }
+    #boxDesGioiThieu {
+        padding: 0px 2rem;
+    }
+    #boxCauHoiThuongGap {
+        margin-top: 30px;
+    }
+    #boxCauHoiThuongGap .headerBox {
+        font-size: 30px;
+        padding: 30px;
+    }
+    #boxCauHoiThuongGap .boxCauHoiPanel {
+        background-color: white;
+        padding: 30px 30px;
+    }
+
+    .boxQuestionItem {
+        margin-bottom: 30px;
+    }
+    .boxQuestionItem .qBlock {
+        padding: 7px;
+    }
+
+    .boxQuestionItem .bAnswer {
+        padding: 20px;
+    }
+
+    #boxFooter {
+        padding: 1.5rem 0.75rem;
+        text-align: center;
+    }
+    #boxFooter p {
+        color: white;
+        font-size: 16px;
+        margin-bottom: 10px;
+        font-family: Quicksand-Bold;
+    }
+    #boxFooter p:first-child {
+        text-transform: uppercase;
+    }
+    #boxDangKyBanner {
+        margin-top: 50px;
+    }
+    #boxDangKyBanner .imgItem {
+        height: 170px;
+        width: 100%;
+        margin-bottom: 15px;
+    }
+    .text-p-tintuc {
+        margin-bottom: 0.5rem !important;
+    }
+    .class-timtuc {
+        padding: 1.5rem 1rem;
+    }
+    .class-tieude-tintuc {
+        margin: 0.5rem 0rem;
+    }
+    #boxTinBai {
+        margin-top: 2rem;
+        padding: 0px 2rem;
+    }
+    .boxQuestionItem .qBlock .Quesion {
+        font-size: 18px;
+        width: 85%;
+        word-break: break-word;
+        white-space: break-spaces;
+        display: inline-block;
+    }
+    img {
+        width: 100%;
+        height: auto;
+    }
+    .text-p-tintuc {
+        margin-bottom: 0.5rem !important;
+    }
+    .class-timtuc {
+        padding: 0px 10px 10px;
+    }
+    .class-tieude-tintuc {
+        margin: 0.5rem 0rem;
+    }
+    .NoiDungCauHoiFilter {
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+    .button-themmoi {
+        position: relative;
+        top: -2.4rem;
+        width: 49%;
+    }
+    .button-timkiem {
+        width: 49%;
+    }
+    .modal-dialog {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%) !important;
+        width: 95%;
+        margin: 0rem;
+    }
+    .noidung-ct {
+        padding: 0rem 1rem;
+    }
+    .bannertop {
+        height: 300px;
+    }
+}
+
+@media (min-device-width: 425px) and (max-device-width: 479px) {
+    .menu-desktop{
+        display: none;
+    }
+    .carousel {
+        width: 100%;
+        float: left;
+    }
+    
+    .boxTopRight
+    {
+        margin: 15px 0;
+        float: left;
+    }
+    .menu-bar-top{
+        float: right;
+        margin-top: 20px;
+        z-index: 9999;
+    }
+    .logobox2 {
+        padding: 3px 4px !important;
+    }
+    .LogoBoxItem{
+        width: 33.333%;
+        float: left;
+        text-align: center;
+    }
+    .menuItem {
+        color: #008dd0 !important;
+    }
+    
+    .choncoquandkchoghep {
+        width: 90%;
+        margin: auto;
+        font-size: 25px;
+    }
+    .hidden-xs {
+        display: none !important;
+    }
+    .noidung-ct {
+        padding-right: 0;
+    }
+    .img-tintuc {
+        margin-top: 5px;
+    }
+    #header-navbar {
+        width: 100%;
+    }
+    .grid-item svg {
+        height: 100px;
+        width: 100px;
+    }
+    .button-themmoi {
+        position: relative;
+        top: -2rem;
+        width: 49%;
+        font-size: 12px;
+    }
+    .button-timkiem {
+        width: 49%;
+        font-size: 12px;
+    }
+    .NoiDungCauHoiFilter {
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+    .navbar-nav {
+        width: 100%;
+        text-align: right;
+    }
+    #basic-navbar-nav {
+        display: none !important;
+    }
+
+    .navbar-light .navbar-toggler {
+        padding: 7px;
+        margin-right: 5px;
+        margin-top: -5px;
+    }
+    .menu-bar-bottom {
+        display: none;
+    }
+    .LogoBox {
+        width: 100%;
+        float: left;
+        display: block;
+    }
+    .logoHome {
+        height: auto;
+        width: 80px;
+        float: none;
+        margin: 0 auto;
+
+    }
+    .navbar-brand {
+        padding: 10px 0 !important;
+        margin-right: 0;
+        line-height: 32px;
+    }
+    .boxTopRight fieldset{
+        margin: 0 auto;
+        float: none;
+    }
+    .LogoBox h1 {
+        font-size: 25px !important;
+        margin-bottom: 3px;
+        line-height: 32px;
+    }
+
+    .LogoBox h2 {
+        font-size: 22px;
+    }
+    .navbar {
+        padding: 0;
+        margin-bottom: 10px;
+    }
+    .navbar-brand {
+        padding: 10px 0;
+        margin-right: 0;
+    }
+
+    .navbar-collapse {
+        padding-right: 0.5rem;
+    }
+    .NameBoxItem {
+        width: 69%;
+        float: left;
+        padding-top: 0px;
+        margin-left: 5px;
+    }
+    .NameBoxItem h1 {
+        font-size: 20px;
+        letter-spacing: 0px;
+    }
+    .NameBoxItem h2 {
+        font-size: 19px;
+    }
+    .navbar {
+        padding: 0;
+        display: block;
+        margin-bottom: 10px;
+    
+    }
+    .LogoBox .LogoBoxItem:first-child {
+        text-align: center;
+    }
+    .LogoBox .LogoBoxItem:last-child {
+        text-align: center;
+    }
+    .boxDangKybtn {
+        text-align: center;
+        flex-direction: row;
+        font-size: 13px;
+        justify-content: space-between;
+    }
+    #boxGioiThieuGrid {
+        grid-template-rows: auto auto auto;
+        grid-template-columns: auto auto;
+    }
+
+    #boxGioiThieuGrid {
+        grid-template-rows: auto auto auto;
+        grid-template-columns: auto auto;
+    }
+    #boxTangGrid {
+        /* grid-template-rows: auto auto auto; */
+        grid-template-columns: auto auto;
+    }
+
+    #boxTangGrid .grid-item {
+        border-radius: 3px;
+        width: 120px;
+        height: 140px;
+    }
+    #boxTangGrid .grid-item img {
+        text-align: center;
+        height: 60px;
+        /* padding: 30px; */
+    }
+    .boxThongKeHome {
+        min-height: unset;
+        padding-bottom: 50px;
+    }
+    .boxThongKeHome .thongKeContent {
+        padding: 0 20px;
+    }
+
+    #boxTinBai .headerComponent {
+        font-size: 30px;
+    }
+    #boxTinBai .boxTinBaiItem .imgTinBai {
+        height: auto;
+    }
+    #boxTinBai .boxTinBaiItem .titleTinBai {
+        margin: 15px 0px;
+        font-size: 18px;
+        margin: 10px 0;
+    }
+    #boxTinBai .boxTinBaiItem .desTinBai {
+        font-size: 14px;
+    }
+    #boxCauHoiThuongGap {
+        margin-top: 30px;
+    }
+    #boxCauHoiThuongGap .headerBox {
+        font-size: 30px;
+        padding: 30px;
+    }
+    #boxCauHoiThuongGap .boxCauHoiPanel {
+        background-color: white;
+        padding: 30px 30px;
+    }
+
+    .boxQuestionItem {
+        margin-bottom: 30px;
+    }
+    .boxQuestionItem .qBlock {
+        padding: 7px;
+    }
+
+    .boxQuestionItem .bAnswer {
+        padding: 20px;
+    }
+
+    #boxFooter {
+        padding: 40px 0 20px 0;
+        text-align: center;
+    }
+    #boxFooter p {
+        color: white;
+        font-size: 16px;
+        margin-bottom: 10px;
+        font-family: Quicksand-Bold;
+    }
+    #boxFooter p:first-child {
+        text-transform: uppercase;
+    }
+    #boxDangKyBanner {
+        margin-top: 50px;
+    }
+    #boxDangKyBanner .imgItem {
+        height: 170px;
+        width: 100%;
+        margin-bottom: 15px;
+    }
+    .bannertop {
+        height: 200px;
+    }
+    .btn-hientang {
+        margin-right: 0px;
+        font-size: 17px;
+        padding: 10px;
+        margin-bottom: 10px;
+        width: 95%;
+    }
+    .btn-nhancoquan {
+        margin-right: 0px;
+        font-size: 17px;
+        padding: 10px;
+        margin-bottom: 10px;
+        width: 95%;
+    }
+    .btn-nhantang {
+        font-size: 17px;
+        padding: 10px;
+        margin-bottom: 10px;
+        width: 95%;
+    }
+}
+
+@media (min-device-width: 320px) and (max-device-width: 375px) {
+    
+    .menu-desktop{
+        display: none;
+    }
+    .carousel {
+        width: 100%;
+        float: left;
+    }
+    
+    .boxTopRight
+    {
+        margin: 15px 0;
+        float: left;
+    }
+    .menu-bar-top{
+        float: right;
+        margin-top: 15px;
+        z-index: 9999;
+    }
+    .logobox2 {
+        padding: 3px 4px !important;
+    }
+    .LogoBoxItem{
+        width: 33.333%;
+        float: left;
+        text-align: center;
+    }
+    .menuItem {
+        color: #008dd0 !important;
+    }
+    .choncoquandkchoghep {
+        width: 90%;
+        margin: auto;
+        font-size: 25px;
+    }
+    .hidden-xs {
+        display: none !important;
+    }
+    .noidung-ct {
+        padding-right: 0;
+    }
+    .img-tintuc {
+        margin-top: 5px;
+    }
+    .menu-bar-top {
+        margin-right: 8px;
+    }
+    .grid-item svg {
+        height: 100px;
+        width: 100px;
+    }
+    #boxGioiThieuGrid {
+        grid-template-rows: auto auto;
+        grid-template-columns: auto auto;
+    }
+    #boxTangGrid {
+        /* grid-template-rows: auto auto auto; */
+        grid-template-columns: auto auto;
+    }
+
+    #boxTangGrid .grid-item {
+        border-radius: 3px;
+        width: 120px;
+        height: 140px;
+    }
+    #boxTangGrid .grid-item img {
+        text-align: center;
+        height: 60px;
+        /* padding: 30px; */
+    }
+    #root > nav > a {
+        width: 100%;
+        float: left;
+    }
+    #header-navbar {
+        width: 80%;
+        float: left;
+    }
+    .navbar-toggler {
+        padding: 8px 7px;
+    }
+
+    #boxDesGioiThieu {
+        padding: 0px 2rem;
+    }
+    .boxTinBaiItem {
+        margin-bottom: 2rem;
+    }
+    #boxTinBai {
+        margin-top: 2rem;
+        padding: 0px 2rem;
+    }
+    .NameBoxItem {
+        width: 65%;
+        float: left;
+        padding-left: 5px;
+    }
+    .boxQuestionItem .qBlock .Quesion {
+        font-size: 18px;
+        width: 85%;
+        word-break: break-word;
+        white-space: break-spaces;
+        display: inline-block;
+    }
+    .boxQuestionItem .qBlock .QIcon {
+        color: #2fa54f;
+        float: right;
+        width: 50px;
+        text-align: center;
+        margin-top: 1rem;
+    }
+    .navbar-nav {
+        width: 100%;
+        text-align: right;
+        align-items: flex-end;
+    }
+    #basic-navbar-nav {
+        display: none !important;
+    }
+    .menu-bar-bottom {
+        display: none;
+    }
+    .logoHome {
+        height: 65px;
+        width: auto;
+        /* margin-left: 0.5rem; */
+    }
+    .LogoBox {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: flex-start;
+        align-items: center;
+    }
+    /* Styles */
+    .navbar-brand {
+        padding: 10px 0;
+        margin-right: 0;
+        width: 100%;
+    }
+    .LogoBox h1 {
+        font-size: 14px;
+        margin-bottom: 3px;
+        letter-spacing: 1px;
+    }
+
+    .LogoBox h2 {
+        font-size: 20px;
+    }
+    .navbar {
+        padding: 0;
+    }
+    .LogoBox .LogoBoxItem:last-child {
+        text-align: left;
+    }
+
+    .boxDangKybtn {
+        flex-direction: row;
+        font-size: 15px;
+        justify-content: center;
+        text-align: center;
+        margin-bottom: 10px;
+    }
+    .btn-hientang {
+        margin-right: 5%;
+        font-size: 15px;
+        padding: 8px 10px 8px 10px;
+    }
+
+    .btn-nhantang {
+        border-radius: 5px;
+        font-size: 15px;
+        padding: 8px 10px 8px 10px;
+        font-family: Quicksand-Medium;
+        margin-right: 3px;
+    }
+    .boxThongKeHome {
+        min-height: unset;
+        padding-bottom: 50px;
+    }
+    .boxThongKeHome .thongKeContent {
+        padding: 0 20px;
+    }
+
+    #boxTinBai .headerComponent {
+        font-size: 40px;
+    }
+    #boxTinBai .boxTinBaiItem .imgTinBai {
+        height: auto;
+    }
+    #boxTinBai .boxTinBaiItem .titleTinBai {
+        margin: 0.5rem 0rem;
+        font-size: 18px;
+    }
+    #boxTinBai .boxTinBaiItem .desTinBai {
+        font-size: 14px;
+    }
+    #boxCauHoiThuongGap {
+        margin-top: 30px;
+    }
+    #boxCauHoiThuongGap .headerBox {
+        font-size: 30px;
+        padding: 30px;
+    }
+    #boxCauHoiThuongGap .boxCauHoiPanel {
+        background-color: white;
+        padding: 30px 30px;
+    }
+
+    .boxQuestionItem {
+        margin-bottom: 30px;
+    }
+    .boxQuestionItem .qBlock {
+        padding: 7px;
+    }
+
+    .boxQuestionItem .bAnswer {
+        padding: 20px;
+    }
+
+    #boxFooter {
+        padding: 1.5rem 0.75rem;
+        text-align: center;
+    }
+    #boxFooter p {
+        color: white;
+        font-size: 16px;
+        margin-bottom: 10px;
+        font-family: Quicksand-Bold;
+    }
+    #boxFooter p:first-child {
+        text-transform: uppercase;
+    }
+
+    #boxDangKyBanner {
+        margin-top: 2rem;
+    }
+    #boxDangKyBanner .imgItem {
+        height: 170px;
+        width: 100%;
+        margin-bottom: 15px;
+    }
+    #boxTinBai .headerComponent {
+        font-size: 30px;
+    }
+    .noidung-ct {
+        padding: 0rem 1rem;
+    }
+    img {
+        width: 100%;
+        height: auto;
+    }
+    .text-p-tintuc {
+        margin-bottom: 0.5rem !important;
+    }
+    .class-timtuc {
+        padding: 0px 10px 10px;
+    }
+    .class-tieude-tintuc {
+        margin: 0.5rem 0rem;
+    }
+    .NoiDungCauHoiFilter {
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+    .button-themmoi {
+        position: relative;
+        top: -2.4rem;
+        width: 49%;
+    }
+    .button-timkiem {
+        width: 49%;
+    }
+    .modal-dialog {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%) !important;
+        width: 95%;
+        margin: 0rem;
+    }
+    .bannertop {
+        height: 210px;
+    }
+    .btn-hientang {
+        margin-right: 10px;
+        font-size: 14px;
+        width: 30%;
+        height: 60px;
+        padding: 10px;
+    }
+    .btn-nhancoquan {
+        margin-right: 10px;
+        font-size: 14px;
+        width: 30%;
+        height: 60px;
+        padding: 10px 21px 16px 21px;
+    }
+    .btn-nhantang {
+        margin-right: 10px;
+        font-size: 14px;
+        width: 30%;
+        height: 60px;
+        padding: 10px;
+    }
+}
+
+@media (min-device-width: 376px) and (max-device-width: 424px) {
+    .menu-desktop{
+        display: none;
+    }
+    .carousel {
+        width: 100%;
+        float: left;
+    }
+    
+    .boxTopRight
+    {
+        margin: 15px 0;
+        float: left;
+    }
+    .menu-bar-top{
+        float: right;
+        margin-top: 20px;
+        z-index: 9999;
+    }
+    .logobox2 {
+        padding: 3px 4px !important;
+    }
+    .LogoBoxItem{
+        width: 33.333%;
+        float: left;
+        text-align: center;
+    }
+    .menuItem {
+        color: #008dd0 !important;
+    }
+    
+    .choncoquandkchoghep {
+        width: 90%;
+        margin: auto;
+        font-size: 25px;
+    }
+    .hidden-xs {
+        display: none !important;
+    }
+    .noidung-ct {
+        padding-right: 0;
+    }
+    .img-tintuc {
+        margin-top: 5px;
+    }
+    #header-navbar {
+        width: 100%;
+    }
+    .grid-item svg {
+        height: 100px;
+        width: 100px;
+    }
+    .button-themmoi {
+        position: relative;
+        top: -2rem;
+        width: 49%;
+        font-size: 12px;
+    }
+    .button-timkiem {
+        width: 49%;
+        font-size: 12px;
+    }
+    .NoiDungCauHoiFilter {
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+    .navbar-nav {
+        width: 100%;
+        text-align: right;
+    }
+    #basic-navbar-nav {
+        display: none !important;
+    }
+
+    .navbar-light .navbar-toggler {
+        padding: 7px;
+        margin-right: 5px;
+        margin-top: -5px;
+    }
+    .menu-bar-bottom {
+        display: none;
+    }
+    .LogoBox {
+        width: 100%;
+        float: left;
+        display: block;
+    }
+    .logoHome {
+        height: auto;
+        width: 75px;
+        float: none;
+    }
+    .navbar-brand {
+        padding: 10px 0 !important;
+        margin-right: 0;
+        line-height: 32px;
+    }
+    .boxTopRight fieldset{
+        margin: 0 auto;
+        float: none;
+    }
+    .LogoBox h1 {
+        font-size: 25px !important;
+        margin-bottom: 3px;
+        line-height: 32px;
+    }
+
+    .LogoBox h2 {
+        font-size: 22px;
+    }
+    .navbar {
+        padding: 0;
+        margin-bottom: 10px;
+    }
+    .navbar-brand {
+        padding: 10px 0;
+        margin-right: 0;
+    }
+
+    .navbar-collapse {
+        padding-right: 0.5rem;
+    }
+    .NameBoxItem {
+        width: 69%;
+        float: left;
+        padding-top: 0px;
+        margin-left: 5px;
+    }
+    .NameBoxItem h1 {
+        font-size: 20px;
+        letter-spacing: 0px;
+    }
+    .NameBoxItem h2 {
+        font-size: 19px;
+    }
+    .navbar {
+        padding: 0;
+        display: block;
+        margin-bottom: 10px;
+    
+    }
+    .LogoBox .LogoBoxItem:first-child {
+        text-align: center;
+    }
+    .LogoBox .LogoBoxItem:last-child {
+        text-align: center;
+    }
+    .boxDangKybtn {
+        text-align: center;
+        flex-direction: row;
+        font-size: 13px;
+        justify-content: space-between;
+    }
+    #boxGioiThieuGrid {
+        grid-template-rows: auto auto auto;
+        grid-template-columns: auto auto;
+    }
+
+    #boxGioiThieuGrid {
+        grid-template-rows: auto auto auto;
+        grid-template-columns: auto auto;
+    }
+    #boxTangGrid {
+        /* grid-template-rows: auto auto auto; */
+        grid-template-columns: auto auto;
+    }
+
+    #boxTangGrid .grid-item {
+        border-radius: 3px;
+        width: 120px;
+        height: 140px;
+    }
+    #boxTangGrid .grid-item img {
+        text-align: center;
+        height: 60px;
+        /* padding: 30px; */
+    }
+    .boxThongKeHome {
+        min-height: unset;
+        padding-bottom: 50px;
+    }
+    .boxThongKeHome .thongKeContent {
+        padding: 0 20px;
+    }
+
+    #boxTinBai .headerComponent {
+        font-size: 30px;
+    }
+    #boxTinBai .boxTinBaiItem .imgTinBai {
+        height: auto;
+    }
+    #boxTinBai .boxTinBaiItem .titleTinBai {
+        margin: 15px 0px;
+        font-size: 18px;
+        margin: 10px 0;
+    }
+    #boxTinBai .boxTinBaiItem .desTinBai {
+        font-size: 14px;
+    }
+    #boxCauHoiThuongGap {
+        margin-top: 30px;
+    }
+    #boxCauHoiThuongGap .headerBox {
+        font-size: 30px;
+        padding: 30px;
+    }
+    #boxCauHoiThuongGap .boxCauHoiPanel {
+        background-color: white;
+        padding: 30px 30px;
+    }
+
+    .boxQuestionItem {
+        margin-bottom: 30px;
+    }
+    .boxQuestionItem .qBlock {
+        padding: 7px;
+    }
+
+    .boxQuestionItem .bAnswer {
+        padding: 20px;
+    }
+
+    #boxFooter {
+        padding: 40px 0 20px 0;
+        text-align: center;
+    }
+    #boxFooter p {
+        color: white;
+        font-size: 16px;
+        margin-bottom: 10px;
+        font-family: Quicksand-Bold;
+    }
+    #boxFooter p:first-child {
+        text-transform: uppercase;
+    }
+    #boxDangKyBanner {
+        margin-top: 50px;
+    }
+    #boxDangKyBanner .imgItem {
+        height: 170px;
+        width: 100%;
+        margin-bottom: 15px;
+    }
+    .bannertop {
+        height: 200px;
+    }
+    .btn-hientang {
+        margin-right: 0px;
+        font-size: 17px;
+        padding: 10px;
+        margin-bottom: 10px;
+        width: 95%;
+    }
+    .btn-nhancoquan {
+        margin-right: 0px;
+        font-size: 17px;
+        padding: 10px;
+        margin-bottom: 10px;
+        width: 95%;
+    }
+    .btn-nhantang {
+        font-size: 17px;
+        padding: 10px;
+        margin-bottom: 10px;
+        width: 95%;
+    }
+}
+
+@media (min-device-width: 320px) and (max-device-width: 375px) {
+    .menu-desktop{
+        display: none;
+    }
+    .carousel {
+        width: 100%;
+        float: left;
+    }
+    
+    .boxTopRight
+    {
+        margin: 15px 0;
+        float: left;
+    }
+    .menu-bar-top{
+        float: right;
+        margin-top: 15px;
+        z-index: 9999;
+    }
+    .logobox2 {
+        padding: 3px 4px !important;
+    }
+    .LogoBoxItem{
+        width: 33.333%;
+        float: left;
+    }
+    .menuItem {
+        color: #008dd0 !important;
+    }
+  
+    .choncoquandkchoghep {
+        font-size: 25px;
+        width: 90%;
+        margin: auto;
+    }
+    .hidden-xs {
+        display: none !important;
+    }
+    .noidung-ct {
+        padding-right: 0;
+    }
+    /* Styles */
+    .img-tintuc {
+        margin-top: 0px;
+    }
+    .class-timtuc {
+        padding: 0px 10px 10px;
+    }
+    .grid-item svg {
+        height: 60px;
+        width: 60px;
+    }
+    #boxDesGioiThieu .headerGioiThieu {
+        font-size: 25px;
+    }
+    #boxDesGioiThieu {
+        padding: 0px 2rem;
+    }
+    #header-navbar {
+        width: 100%;
+        float: none;
+    }
+    .boxQuestionItem .qBlock .QIcon {
+        margin-top: 1rem;
+        width: 34px;
+    }
+    .button-themmoi {
+        position: relative;
+        top: -2rem;
+        width: 49%;
+        font-size: 12px;
+    }
+    .button-timkiem {
+        width: 49%;
+        font-size: 12px;
+    }
+    .NoiDungCauHoiFilter {
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+    .menu-bar-bottom {
+        display: none;
+    }
+    .navbar-toggler {
+        padding: 5px;
+    }
+    .navbar-nav {
+        width: 100%;
+        text-align: right;
+    }
+    #basic-navbar-nav {
+        display: none !important;
+    }
+    /* .menu-bar-top{
+  margin-top: 5px;
+} */
+    .navbar-light .navbar-toggler {
+        margin-right: 5px;
+    }
+    .navbar-toggler-icon {
+        width: 27px;
+        height: 30px;
+    }
+
+    .LogoBox {
+        display: block;
+        /* width: 100%;
+        float: left; */
+    }
+    .logoHome {
+        height: auto;
+        width: 70px;
+        float: none;
+    }
+    .navbar-brand {
+        padding: 0;
+        margin-right: 0;
+    }
+    .LogoBox h1 {
+        font-size: 25px;
+        margin-bottom: 3px;
+    }
+
+    .LogoBox h2 {
+        font-size: 22px;
+    }
+    .navbar {
+        padding: 0;
+        display: block;
+        margin-bottom: 10px;
+    }
+
+    .boxTopRight fieldset {
+        width: 100%;
+    }
+    .NameBoxItem {
+        width: 68%;
+        float: left;
+        margin-left: 5px;
+        padding-top: 10px;
+    }
+    .NameBoxItem h1 {
+        font-size: 18px !important;
+        letter-spacing: 0px;
+        line-height: 26px;
+    }
+    .NameBoxItem h2 {
+        font-size: 18px !important;
+        line-height: 26px;
+    }
+    .boxDangKybtn {
+        text-align: center;
+        flex-direction: row;
+        font-size: 13px;
+        justify-content: space-between;
+    }
+    .btn-hientang {
+        font-size: 17px;
+        margin: 0px 10px 10px 10px;
+        padding: 10px;
+        margin-bottom: 10px;
+        width: 95%;
+    }
+    .btn-nhancoquan {
+        font-size: 17px;
+        margin: 0px 10px 10px 10px;
+        padding: 10px;
+        margin-bottom: 10px;
+        width: 95%;
+    }
+    .btn-nhantang {
+        font-size: 17px;
+        margin: 0px 10px 10px 10px;
+        padding: 10px;
+        margin-bottom: 10px;
+        width: 95%;
+    }
+
+    #boxGioiThieuGrid {
+        grid-template-rows: auto auto auto;
+        grid-template-columns: auto auto;
+    }
+
+    #boxGioiThieuGrid .grid-item {
+        border-radius: 3px;
+        width: 120px;
+        height: 140px;
+    }
+    #boxGioiThieuGrid .grid-item img {
+        text-align: center;
+        height: 60px;
+        /* padding: 30px; */
+    }
+
+    #boxTangGrid {
+        grid-template-rows: auto auto auto;
+        grid-template-columns: auto auto;
+    }
+
+    #boxTangGrid .grid-item {
+        border-radius: 3px;
+        width: 120px;
+        height: 140px;
+    }
+    #boxTangGrid .grid-item img {
+        text-align: center;
+        height: 60px;
+        /* padding: 30px; */
+    }
+
+    .boxThongKeHome {
+        min-height: unset;
+        padding-bottom: 50px;
+    }
+    .boxThongKeHome .thongKeContent {
+        padding: 0 20px;
+    }
+    #boxTinBai .headerComponent {
+        font-size: 25px;
+    }
+    #boxTinBai .boxTinBaiItem .imgTinBai {
+        height: auto;
+    }
+    #boxTinBai .boxTinBaiItem .titleTinBai {
+        margin: 15px 0px;
+        font-size: 18px;
+        margin: 10px 0;
+    }
+    #boxTinBai .boxTinBaiItem .desTinBai {
+        font-size: 14px;
+    }
+
+    #boxCauHoiThuongGap {
+        margin-top: 30px;
+    }
+    #boxCauHoiThuongGap .headerBox {
+        font-size: 25px;
+        padding: 25px;
+    }
+    #boxCauHoiThuongGap .boxCauHoiPanel {
+        background-color: white;
+        padding: 15px;
+    }
+
+    .boxQuestionItem {
+        margin-bottom: 30px;
+    }
+    .boxQuestionItem .qBlock {
+        padding: 7px;
+    }
+
+    .boxQuestionItem .bAnswer {
+        padding: 20px;
+    }
+
+    #boxFooter {
+        padding: 40px 0 20px 0;
+        text-align: center;
+    }
+    #boxFooter p {
+        color: white;
+        font-size: 16px;
+        margin-bottom: 10px;
+        font-family: Quicksand-Bold;
+    }
+    #boxFooter p:first-child {
+        text-transform: uppercase;
+    }
+    #boxDangKyBanner {
+        margin-top: 50px;
+    }
+    #boxDangKyBanner .imgItem {
+        height: 170px;
+        width: 100%;
+        margin-bottom: 15px;
+    }
+    .content-header h1 {
+        font-size: 1.4rem;
+    }
+    .info-box .info-box-text,
+    .info-box .progress-description {
+        font-size: 15px;
+    }
+    .card-title {
+        font-size: 18px;
+    }
+    .bannertop {
+        height: 150px;
+    }
+}

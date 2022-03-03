@@ -1,0 +1,359 @@
+body {
+    font-family: Roboto, 'Source Sans Pro', -apple-system, BlinkMacSystemFont,
+        'Segoe UI', 'Helvetica Neue', Arial, sans-serif, 'Apple Color Emoji',
+        'Segoe UI Emoji', 'Segoe UI Symbol' !important;
+    font-size: 14px;
+}
+
+.btn-nobg {
+    background: none;
+    border-color: none;
+    color: black;
+}
+
+.btn-nobg:hover {
+    background-color: #0984e3;
+    color: white;
+}
+.content-header {
+    padding: 5px 0;
+}
+.content-header h1 {
+    font-size: 20px;
+}
+.content-header .breadcrumb {
+    font-size: 14px;
+}
+.imgHinhAnh-Banner {
+    height: auto;
+    width: 100px;
+}
+.hide {
+    appearance: none;
+    background-color: initial;
+    cursor: default;
+    display: none !important;
+    padding: initial;
+    border: initial;
+}
+.with150{
+    width: 150px;
+}
+.width300{
+    width: 300px;
+}
+/* .table-hinetNew thead tr th:first-child,
+.table-hinetNew thead tr th:nth-child(2),
+.table-hinetNew tbody tr td:first-child,
+.table-hinetNew tbody tr th:first-child {
+    width: 30px;
+    text-align: center;
+} */
+.table-hinetNew tbody tr:hover,
+.table-hinetNew tr th:hover {
+    background-color: #ebf0f1;
+    cursor: pointer;
+}
+.tdHighlight {
+    background-color: #ebf0f1;
+}
+.table-hinetNew thead th {
+    border-bottom: 1px solid #dee2e6;
+}
+.table-hinetNew tbody tr td input.checkTd,
+.table-hinetNew tbody tr td .dropdowTableBtn {
+    visibility: hidden;
+}
+.lstItemHover {
+    display: none;
+}
+.lstItemHover button {
+    margin-left: 2px;
+}
+.table-hinetNew tbody tr:hover td .lstItemHover {
+    display: block;
+}
+.table-hinetNew tbody tr:hover td input.checkTd,
+.table-hinetNew tbody tr.tdHighlight td input.checkTd,
+.table-hinetNew tbody tr:hover td .dropdowTableBtn,
+.table-hinetNew tbody tr.tdHighlight td .dropdowTableBtn {
+    visibility: visible;
+}
+.right {
+    text-align: right;
+}
+.tblHinet-pagin .pagination {
+    justify-content: flex-end !important;
+}
+
+.nopadding {
+    padding: 0;
+}
+.dropdowTableBtn::after {
+    content: unset;
+}
+.dropdowTableBtn {
+    background-color: wheat;
+}
+.tableBoxMain {
+    display: flex;
+    justify-content: space-between;
+}
+/* .tableBoxMain .tableBoxMain-label {
+     font-weight: bold; 
+  } */
+.tableBoxMain .tableBoxMain-btnAction {
+    width: 30px;
+}
+.w100per {
+    width: 100%;
+}
+.mrb-10px {
+    margin-bottom: 10px;
+}
+
+section {
+    transition: display 3s linear;
+}
+
+.react-confirm-alert-body h1 {
+    font-size: 1.5rem;
+}
+.navAdmin {
+    display: block;
+    padding: 0;
+}
+.navRow {
+    flex-direction: row;
+}
+.notifications-menu .dropdown-toggle::after {
+    content: unset;
+}
+
+.table-responsive {
+    overflow-x: visible;
+}
+
+.tableBoxMain .dropdown-item {
+    font-size: 14px;
+}
+
+.boxIcon {
+    width: 20px;
+    display: inline-block;
+    text-align: center;
+}
+
+.tdNotData {
+    text-align: center;
+    font-style: italic;
+    color: #ddd;
+}
+.statusSendMailSuccess {
+    font-style: italic;
+    font-size: 13px;
+    color: green;
+}
+.react-time-picker__wrapper {
+    border: none;
+}
+.linkAdmin {
+    color: white;
+    text-decoration: none;
+}
+.linkAdmin:hover,
+.linkAdmin:active {
+    color: white;
+}
+.user-panel {
+    border-bottom: 1px solid #0781c7;
+}
+.img-circle {
+    border: 1px solid #5ca4ce;
+}
+.backgroundBlue {
+    background-color: #0781c7;
+}
+.colorBlue {
+    color: #0781c7;
+}
+.white {
+    color: white;
+}
+.main-sidebar {
+    border-right: 1px solid #0781c7;
+    background-color: white;
+}
+.LogoBoxItemAdmin {
+    padding: 0;
+    margin: 0;
+}
+.LogoBoxItemAdmin img {
+    height: 34px;
+}
+
+/* Login page css */
+body {
+    background-size: 100% auto;
+    margin: 0px;
+    padding: 0px;
+}
+
+h1.sitename {
+    font-size: 26px;
+    line-height: 30px;
+    text-transform: uppercase;
+    color: #2980b9;
+    margin: 10px;
+}
+
+h2.sitesoft {
+    font-size: 38px;
+    line-height: 30px;
+    color: #2980b9 !important;
+    margin: 20px;
+}
+h2.slogan {
+    font-size: 24px;
+    color: #fff;
+}
+
+.namesoft {
+    text-transform: uppercase;
+}
+
+#header-login {
+    height: 18vh;
+    text-align: center;
+    padding-top: calc(9vh - 51px);
+}
+
+#form-login {
+    background-size: cover;
+    /*background-image: url('/Content/Img/backgound.png');*/
+    background-color: #2980b9;
+    height: 82vh;
+}
+
+.left-form h3 {
+    font-size: 14px;
+    font-family: Arial;
+    font-weight: bold;
+}
+/* .left-form a {
+    color: yellow;
+    font-size: 30px;
+    font-family: Arial;
+} */
+
+.left-form a:hover {
+    color: #fff;
+}
+
+.fax-number a {
+    color: #fff;
+    font-size: 14px;
+    float: none !important;
+}
+
+.fax-number a:hover {
+    color: #00aeef;
+}
+.right-form,
+.left-form {
+    padding-top: calc(39vh - 190px);
+}
+.diachi span {
+    font-weight: bold;
+}
+
+.diachi {
+    padding: 0 50px;
+    float: left;
+    width: 100%;
+}
+
+.left-form a {
+    float: left;
+    width: 100%;
+    text-align: center;
+}
+.right-form .modal-content {
+    width: 100%;
+    background: white !important;
+}
+
+.right-form .modal-content .modal-header {
+    border-bottom: 2px solid #2980b9;
+}
+
+.right-form .modal-body {
+    padding: 15px 30px;
+}
+
+.right-form h2 {
+    color: #2c3e50;
+    font-size: 20px;
+    text-transform: uppercase;
+    font-weight: bold;
+    text-align: center;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.right-form .form-control {
+    height: 40px;
+    border-radius: 5px;
+    background: #f7f7f7;
+}
+.left-form {
+    color: #fff;
+}
+.right-form,
+.left-form {
+    margin-top: 15px;
+}
+
+.right-form .modal-header {
+    position: relative;
+    display: block;
+}
+.nav-treeview2 {
+    display: none;
+}
+.nav-treeview2 .nav-item {
+    display: block;
+    width: 100%;
+}
+.menu-open .nav-treeview2 {
+    display: block;
+}
+.nav-treeview2 .nav-item .nav-link {
+    padding-left: 3px !important;
+}
+.nav-treeview2 .nav-item .nav-icon {
+    font-size: 10px !important;
+}
+.wid200px {
+    width: 300px;
+}
+.width100 {
+    width: 100%;
+}
+.nav-tabs .nav-item.show .nav-link,
+.nav-tabs .nav-link.active {
+    background-color: #2980b9;
+    color: white;
+}
+.main-header {
+    z-index: 100;
+}
+.ant-drawer-body {
+    padding: 0 10px;
+}
+.ant-form-item {
+    margin-bottom: 3px;
+}
+.mrg10 {
+    margin: 10px;
+}
