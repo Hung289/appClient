@@ -9,7 +9,6 @@ import * as Constant from '@app/Constant';
 import axios from 'axios';
 import {
     Modal,
-    Button,
     Col,
     Dropdown,
     ListGroup,
@@ -33,6 +32,7 @@ import {
     COMMONCONFIG_EDIT_CLOSE,
     COMMONCONFIG_SEARCH_SAVE
 } from '@app/store/ActionType/CommonConfigTypeAction';
+import {Button} from 'antd';
 import AdminSecsionHead from '../AdminSecsionHead';
 
 // import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
@@ -66,14 +66,9 @@ const CommonConfigCreateAdm = (props) => {
         };
         return (
             <>
-                <Button
-                    variant=""
-                    className="btn-nobg"
-                    size="sm"
-                    onClick={handleShow}
-                >
-                    <i className="fa fa-plus" aria-hidden="true" />
-                    Tạo mới
+                <Button type="primary" onClick={handleShow}>
+                    <i className="fa fa-plus" aria-hidden="true" /> &nbsp; Tạo
+                    mới
                 </Button>
 
                 <Modal show={show} size="lg" onHide={handleClose}>

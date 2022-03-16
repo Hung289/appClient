@@ -162,10 +162,10 @@ const KQXetNghiemVGCAdm = (props) => {
                                                 key="CoBiVGC"
                                                 className="form-control "
                                             >
-                                                <option value="false">
+                                                <option value="False">
                                                     Âm tính
                                                 </option>
-                                                <option value="true">
+                                                <option value="True">
                                                     Dương tính
                                                 </option>
                                             </Field>
@@ -237,8 +237,8 @@ const KQXetNghiemVGCAdm = (props) => {
                                                 className="form-control "
                                             >
                                                 <option>--Chọn--</option>
-                                                <option value="true">Có</option>
-                                                <option value="flase">
+                                                <option value="True">Có</option>
+                                                <option value="False">
                                                     Không
                                                 </option>
                                             </Field>{' '}

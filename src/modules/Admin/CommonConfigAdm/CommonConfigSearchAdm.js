@@ -7,17 +7,10 @@ import {NotFoundImage} from '@modules/Common/NotFound';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 import * as Constant from '@app/Constant';
 import axios from 'axios';
-import {
-    Modal,
-    Button,
-    Col,
-    Dropdown,
-    ListGroup,
-    ListGroupItem,
-    Card
-} from 'react-bootstrap';
+import {Modal, Dropdown, ListGroup, ListGroupItem} from 'react-bootstrap';
+import {Card, notification, Form, Button, Row, Col, Input} from 'antd';
 import {Link, useHistory} from 'react-router-dom';
-import {Formik, useFormik, Form, Field, useFormikContex} from 'formik';
+import {Formik, useFormik, Field, useFormikContex} from 'formik';
 import {toast} from 'react-toastify';
 import * as CommonConfigSerivce from '@app/services/CommonConfigService';
 import {
@@ -32,7 +25,7 @@ import {COMMONCONFIG_SEARCH_SAVE} from '@app/store/ActionType/CommonConfigTypeAc
 // import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
 const CommonConfigSearchAdm = (props) => {
     const {IsShowSearch, searchModel, onSubmitSearchSave} = props;
-
+    const [form] = Form.useForm();
     const SearchSchema = Yup.object().shape({
         name: Yup.string().trim().min(2, 'Vui lòng nhập ít nhất 2 ký tự')
     });
@@ -45,64 +38,65 @@ const CommonConfigSearchAdm = (props) => {
                 <div className="container-fluid  mrb-10px">
                     <div className="row">
                         <div className="col-md-12">
-                            <Card>
-                                <Card.Header>
-                                    <strong>Tìm kiếm</strong>
-                                </Card.Header>
-                                <Card.Body>
-                                    <Formik
-                                        initialValues={{
-                                            Name: searchModel.Name
-                                        }}
-                                        validationSchema={SearchSchema}
-                                        onSubmit={(values) => {
-                                            onSubmitSearchSave(values);
-                                        }}
-                                    >
-                                        {({errors, touched}) => (
-                                            <Form>
-                                                <div>
-                                                    <div className="form-row">
-                                                        <div className="form-group col-md-4">
-                                                            <label htmlFor="inputEmail4">
-                                                                Tên nhóm
-                                                            </label>
-                                                            <Field
-                                                                name="Name"
-                                                                key="Name"
-                                                                className="form-control "
-                                                            />
-                                                            {errors.Name &&
-                                                            touched.Name ? (
-                                                                <>
-                                                                    <div className="invalid-feedback">
-                                                                        {
-                                                                            errors.Name
-                                                                        }
-                                                                    </div>
-                                                                </>
-                                                            ) : null}
-                                                        </div>
-                                                    </div>
-                                                    <div className="form-row">
-                                                        <Button
-                                                            variant="success"
-                                                            size="md"
-                                                            type="submit"
-                                                            className="button-action"
-                                                        >
-                                                            <i
-                                                                className="fa fa-search"
-                                                                aria-hidden="true"
-                                                            />{' '}
-                                                            Tìm kiếm
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            </Form>
-                                        )}
-                                    </Formik>
-                                </Card.Body>
+                            <Card title="Tìm kiếm">
+                                <Form
+                                    form={form}
+                                    name="basic"
+                                    labelCol={{span: 8}}
+                                    wrapperCol={{span: 16}}
+                                    initialValues={{remember: true}}
+                                    layout="vertical"
+                                    onFinish={(values) => {
+                                        onSubmitSearchSave(values);
+                                    }}
+                                    onFinishFailed={(errorInfo) => {
+                                        notification.error({
+                                            placement: 'bottomRight',
+                                            message: 'Cảnh báo',
+                                            description:
+                                                'Vui lòng kiểm tra lại dữ liệu nhập'
+                                        });
+                                    }}
+                                    autoComplete="off"
+                                >
+                                    <Row gutter={24}>
+                                        <Col span={8}>
+                                            <Form.Item
+                                                label="Tên nhóm"
+                                                name="Name"
+                                                rules={[
+                                                    {
+                                                        min:
+                                                            'Vui lòng nhập ít nhất 2 ký tự'
+                                                    }
+                                                ]}
+                                            >
+                                                <Input />
+                                            </Form.Item>
+                                        </Col>
+                                    </Row>
+                                    <Row>
+                                        <Col
+                                            span={24}
+                                            style={{textAlign: 'left'}}
+                                        >
+                                            <Button
+                                                type="primary"
+                                                htmlType="submit"
+                                            >
+                                                Tìm kiếm
+                                            </Button>
+                                            <Button
+                                                style={{margin: '0 8px'}}
+                                                onClick={() => {
+                                                    form.resetFields();
+                                                }}
+                                            >
+                                                Reset
+                                            </Button>
+                                        </Col>
+                                    </Row>
+                                </Form>
                             </Card>
                         </div>
                     </div>

@@ -45,6 +45,7 @@ const DangKyChoGhepTangTbl = React.memo((props) => {
         onInPhieuThan,
         onEditEntity,
         onInPhieuKhac,
+        onEditHLAEntity,
         setitemId,
         setshowTBXetNghiemModal,
         ChangeStatusAction,
@@ -402,7 +403,7 @@ const DangKyChoGhepTangTbl = React.memo((props) => {
     };
 
     let lstItem = [];
-    let pageSiz = 5;
+    let pageSiz = 10;
     let pageInd = 1;
     let Count = 0;
     if (lstEntity.ListItem !== undefined) {
@@ -435,6 +436,17 @@ const DangKyChoGhepTangTbl = React.memo((props) => {
                 >
                     Xóa
                 </Menu.Item>
+                <Menu.Item
+                    key={`capnhat_${record.Id}`}
+                    onClick={() => {
+                        onEditHLAEntity(record.Id);
+                        // handleEditShow();
+                    }}
+                    icon={<antIcon.EditOutlined />}
+                >
+                    Cập nhật kết quả HLA
+                </Menu.Item>
+
                 {record.TypePhieuDKGhepTang === 'than' ? (
                     <>
                         <Menu.Item
@@ -515,6 +527,23 @@ const DangKyChoGhepTangTbl = React.memo((props) => {
                     key="STT"
                     render={(text, record, index) => (
                         <div>{(pageInd - 1) * pageSiz + index + 1}</div>
+                    )}
+                />
+                <Column
+                    title="Thao tác"
+                    key="action"
+                    render={(text, record) => (
+                        <Dropdown.Button
+                            onClick={() =>
+                                onOpenDetailModal(
+                                    record.Id,
+                                    record.TypePhieuDKGhepTang
+                                )
+                            }
+                            overlay={() => getmenu(record)}
+                        >
+                            Chi tiết
+                        </Dropdown.Button>
                     )}
                 />
                 <Column
@@ -619,572 +648,7 @@ const DangKyChoGhepTangTbl = React.memo((props) => {
                     key="DienThoai"
                 />
                 <Column title="Nhóm máu" dataIndex="NhomMau" key="NhomMau" />
-                {/* <Column
-                    title="Loại chờ ghép"
-                    dataIndex="TenCoQuan"
-                    key="TenCoQuan"
-                /> */}
-                <Column
-                    title="Thao tác"
-                    key="action"
-                    render={(text, record) => (
-                        <Dropdown.Button
-                            onClick={() =>
-                                onOpenDetailModal(
-                                    record.Id,
-                                    record.TypePhieuDKGhepTang
-                                )
-                            }
-                            overlay={() => getmenu(record)}
-                        >
-                            Chi tiết
-                        </Dropdown.Button>
-                    )}
-                />
             </Table>
-
-            <>
-                {/* <div className="table-responsive">
-                    <table className="table table-hinetNew" id="dsTable">
-                        <thead>
-                            <tr>
-                                <th scope="col">
-                                    <input
-                                        type="checkbox"
-                                        className="checkAll"
-                                        onClick={(e) =>
-                                            CheckAllItem(e, 'dsTable')
-                                        }
-                                    />
-                                </th>
-                                <th scope="col">#</th>
-                                <th className="imgHinhAnhColAccount mw-image-avatar">
-                                    Ảnh
-                                </th>
-                                <th scope="col" className="widthColTableMedium">
-                                    Họ tên bệnh nhân
-                                </th>
-                                <th scope="col">Trạng thái</th>
-                                <th scope="col">Giới tính</th>
-                                <th scope="col">Ngày sinh</th>
-                                <th scope="col">Nghề nghiệp</th>
-                                <th scope="col">Điện thoại</th>
-                                <th scope="col">Nhóm máu</th>
-                                <th scope="col">Loại chờ ghép</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {lstItem.length > 0 ? (
-                                lstItem.map((item, key) => {
-                                    const rIndex =
-                                        (pageInd - 1) * pageSiz + key + 1;
-                                    return (
-                                        <tr
-                                            key={`${item.hoTenBN}-${item.NhomMau}-${key}`}
-                                            onClick={(e) =>
-                                                CheckRowsHinetTable(e)
-                                            }
-                                        >
-                                            <td>
-                                                <input
-                                                    className="checkTd"
-                                                    type="checkbox"
-                                                    data-id={item.Id}
-                                                    onClick={(e) =>
-                                                        CheckRowsHinetTable(e)
-                                                    }
-                                                />
-                                            </td>
-                                            <th scope="row">{rIndex}</th>
-
-                                            <td>
-                                                {item.Avatar !== '' ? (
-                                                    <>
-                                                        <img
-                                                            src={`${Constant.PathServer}${item.Avatar}`}
-                                                            onError={
-                                                                NotFoundUserImage
-                                                            }
-                                                            alt=""
-                                                            className="imgHinhAnhAccount img-thumbnail"
-                                                        />
-                                                    </>
-                                                ) : (
-                                                    <></>
-                                                )}
-                                            </td>
-                                            <td>
-                                                <div className="tableBoxMain">
-                                                    <div className="tableBoxMain-label">
-                                                        <strong>
-                                                            <div className="tableBoxMain-label">
-                                                                {item.DonDKBanCung !==
-                                                                null ? (
-                                                                    <>
-                                                                        {
-                                                                            item.HoTenBN
-                                                                        }
-                                                                        <div>
-                                                                            <i className="fa fa-check" />
-                                                                        </div>
-                                                                    </>
-                                                                ) : (
-                                                                    <>
-                                                                        {
-                                                                            item.HoTenBN
-                                                                        }
-                                                                    </>
-                                                                )}
-                                                            </div>
-                                                        </strong>
-                                                        <div>
-                                                            {item.IsGuiEmailThongBao ? (
-                                                                <span
-                                                                    className="statusSendMailSuccess"
-                                                                    title={CommonUtility.ShowDateTimeVN(
-                                                                        item.ThoiGianGuiEmailThongBao
-                                                                    )}
-                                                                >
-                                                                    <i className="fas fa-envelope" />{' '}
-                                                                    Đã gửi Mail
-                                                                </span>
-                                                            ) : (
-                                                                <span>
-                                                                    Chưa gửi
-                                                                    mail
-                                                                </span>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                    <div className="tableBoxMain-btnAction">
-                                                        <Dropdown>
-                                                            <Dropdown.Toggle
-                                                                size="sm"
-                                                                variant=""
-                                                                className="dropdowTableBtn"
-                                                            >
-                                                                <i
-                                                                    className="fa fa-ellipsis-h"
-                                                                    aria-hidden="true"
-                                                                />
-                                                            </Dropdown.Toggle>
-
-                                                            <Dropdown.Menu>
-                                                                {item.TypePhieuDKGhepTang ===
-                                                                'than' ? (
-                                                                    <>
-                                                                         <Dropdown.Item
-                                                                        href={`/admin/hosogheptangchitiet/${item.Id}`}
-                                                                    >
-                                                                        <span className="boxIcon">
-                                                                            <i className="fas fa-info-circle" />
-                                                                        </span>
-                                                                        <span>
-                                                                            Xem
-                                                                            chi
-                                                                            tiết
-                                                                        </span>
-                                                                    </Dropdown.Item> 
-                                                                        <Dropdown.Item
-                                                                            onClick={() =>
-                                                                                onOpenDetailModal(
-                                                                                    item.Id,
-                                                                                    'than'
-                                                                                )
-                                                                            }
-                                                                        >
-                                                                            <span className="boxIcon">
-                                                                                <i className="fas fa-info-circle" />
-                                                                            </span>
-                                                                            <span>
-                                                                                Xem
-                                                                                chi
-                                                                                tiết
-                                                                            </span>
-                                                                        </Dropdown.Item>
-                                                                        <Dropdown.Item
-                                                                        onClick={() =>
-                                                                            onOpenDetailKQModal(
-                                                                                item.Id
-                                                                            )
-                                                                        }
-                                                                    >
-                                                                        <span className="boxIcon">
-                                                                            <i className="fas fa-info-circle" />
-                                                                        </span>
-                                                                        <span>
-                                                                            Xem
-                                                                            kết
-                                                                            quả
-                                                                            xét
-                                                                            nghiệm
-                                                                        </span>
-                                                                    </Dropdown.Item>{' '}
-                                                                    </>
-                                                                ) : (
-                                                                     <Dropdown.Item
-                                                                    //     href={`/admin/hosogheptangchitiet/${item.Id}`}
-                                                                    // >
-                                                                    //     <span className="boxIcon">
-                                                                    //         <i className="fas fa-info-circle" />
-                                                                    //     </span>
-                                                                    //     <span>
-                                                                    //         Xem chi
-                                                                    //         tiết
-                                                                    //     </span>
-                                                                    // </Dropdown.Item>
-                                                                    <Dropdown.Item
-                                                                        onClick={() =>
-                                                                            onOpenDetailModal(
-                                                                                item.Id,
-                                                                                item.TenCoQuan
-                                                                            )
-                                                                        }
-                                                                    >
-                                                                        <span className="boxIcon">
-                                                                            <i className="fas fa-info-circle" />
-                                                                        </span>
-                                                                        <span>
-                                                                            Xem
-                                                                            chi
-                                                                            tiết
-                                                                        </span>
-                                                                    </Dropdown.Item>
-                                                                )}
-                                                                <Dropdown.Item
-                                                                    onClick={
-                                                                        () => {
-                                                                            setitemId(
-                                                                                item.Id
-                                                                            );
-                                                                            setshowTBXetNghiemModal(
-                                                                                true
-                                                                            );
-                                                                        }
-
-                                                                        // OpenThongBaoXNModalSV(
-                                                                        //     item.Id
-                                                                        // )
-                                                                    }
-                                                                >
-                                                                    <span className="boxIcon">
-                                                                        <i className="fas fa-envelope" />
-                                                                    </span>
-                                                                    <span>
-                                                                        Thông
-                                                                        báo hẹn
-                                                                        xét
-                                                                        nghiệm
-                                                                    </span>
-                                                                </Dropdown.Item>
-                                                                {item.Status ===
-                                                                DangKyChoGhepConstant.DaTiepNhan ? (
-                                                                    <Dropdown.Item
-                                                                        onClick={() =>
-                                                                            onUpDonDK(
-                                                                                item.Id
-                                                                            )
-                                                                        }
-                                                                    >
-                                                                        <span className="boxIcon">
-                                                                            <i className="fas fa-envelope" />
-                                                                        </span>
-                                                                        <span>
-                                                                            Tải
-                                                                            đơn
-                                                                            bản
-                                                                            cứng
-                                                                        </span>
-                                                                    </Dropdown.Item>
-                                                                ) : (
-                                                                    <></>
-                                                                )}
-                                                                {item.Status ===
-                                                                DangKyChoGhepConstant.HoanThanh ? (
-                                                                    <Dropdown.Item
-                                                                        onClick={() =>
-                                                                            onLyDoOut(
-                                                                                item.Id
-                                                                            )
-                                                                        }
-                                                                    >
-                                                                        <span className="boxIcon">
-                                                                            <i className="fas fa-edit" />
-                                                                        </span>
-                                                                        <span>
-                                                                            Lý
-                                                                            do
-                                                                            đưa
-                                                                            ra
-                                                                            ngoài
-                                                                            danh
-                                                                            sách
-                                                                        </span>
-                                                                    </Dropdown.Item>
-                                                                ) : (
-                                                                    <></>
-                                                                )}
-                                                                <ActionStatusRender
-                                                                    id={item.Id}
-                                                                    Cstatus={
-                                                                        item.Status
-                                                                    }
-                                                                />
-                                                                {item.TypePhieuDKGhepTang ===
-                                                                'than' ? (
-                                                                    <>
-                                                                        {/* <Dropdown.Item
-                                                                        onClick={() =>
-                                                                            onCreateKQXNEntity(
-                                                                                item.Id
-                                                                            )
-                                                                        }
-                                                                    >
-                                                                        <span className="boxIcon">
-                                                                            <i className="fas fa-plus" />
-                                                                        </span>
-                                                                        <span>
-                                                                            Thêm
-                                                                            kết
-                                                                            quả
-                                                                            xét
-                                                                            nghiệm
-                                                                        </span>
-                                                                    </Dropdown.Item> 
-                                                                        <Dropdown.Item
-                                                                            onClick={() =>
-                                                                                onInPhieuThan(
-                                                                                    item.Id
-                                                                                )
-                                                                            }
-                                                                        >
-                                                                            <span className="boxIcon">
-                                                                                <i className="fas fa-image" />
-                                                                            </span>
-                                                                            <span>
-                                                                                In
-                                                                                phiếu
-                                                                                đăng
-                                                                                ký
-                                                                            </span>
-                                                                        </Dropdown.Item>
-                                                                        <Dropdown.Item
-                                                                            onClick={() =>
-                                                                                onEditEntity(
-                                                                                    item.Id,
-                                                                                    'than'
-                                                                                )
-                                                                            }
-                                                                        >
-                                                                            <span className="boxIcon">
-                                                                                <i className="fas fa-edit" />
-                                                                            </span>
-                                                                            <span>
-                                                                                Sửa
-                                                                            </span>
-                                                                        </Dropdown.Item>
-                                                                    </>
-                                                                ) : (
-                                                                    <>
-                                                                        <Dropdown.Item
-                                                                            onClick={() =>
-                                                                                onInPhieuKhac(
-                                                                                    item.Id
-                                                                                )
-                                                                            }
-                                                                        >
-                                                                            <span className="boxIcon">
-                                                                                <i className="fas fa-image" />
-                                                                            </span>
-                                                                            <span>
-                                                                                In
-                                                                                phiếu
-                                                                                đăng
-                                                                                ký
-                                                                            </span>
-                                                                        </Dropdown.Item>
-                                                                        <Dropdown.Item
-                                                                            onClick={() =>
-                                                                                onEditEntity(
-                                                                                    item.Id,
-                                                                                    item.TenCoQuan
-                                                                                )
-                                                                            }
-                                                                        >
-                                                                            <span className="boxIcon">
-                                                                                <i className="fas fa-edit" />
-                                                                            </span>
-                                                                            <span>
-                                                                                Sửa
-                                                                            </span>
-                                                                        </Dropdown.Item>
-                                                                    </>
-                                                                )}
-                                                                <Dropdown.Item
-                                                                    onClick={() =>
-                                                                        DeleteAction(
-                                                                            item.Id
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    <span className="boxIcon">
-                                                                        <i className="fas fa-times" />
-                                                                    </span>
-                                                                    <span>
-                                                                        Xóa
-                                                                    </span>
-                                                                </Dropdown.Item>
-                                                            </Dropdown.Menu>
-                                                        </Dropdown>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                {DangKyChoGhepConstant.GetName(
-                                                    item.Status
-                                                )}
-                                            </td>
-                                            <td>
-                                                {CommonUtility.RenderGioiTinh(
-                                                    item.GioiTinh
-                                                )}
-                                            </td>
-                                            <td>
-                                                {CommonUtility.ShowDateVN(
-                                                    item.NgaySinh
-                                                )}
-                                            </td>
-                                            <td>{item.NgheNghiep}</td>
-                                            <td>{item.DienThoai}</td>
-                                            <td>{item.NhomMau}</td>
-                                            <td>{item.TenCoQuan}</td>
-                                            <td>
-                                            {item.TypePhieuDKGhepTang ===
-                                                'than' && (
-                                                <div className="dropdown">
-                                                    <button
-                                                        className="btn btn-primary btn-sm dropdown-toggle"
-                                                        type="button"
-                                                        id={`dropdownMenuButton${item.id}`}
-                                                        data-toggle="dropdown"
-                                                        aria-haspopup="true"
-                                                        aria-expanded="false"
-                                                    >
-                                                        Danh sách
-                                                    </button>
-                                                    <div
-                                                        className="dropdown-menu dropdown-menu-right wid200px"
-                                                        aria-labelledby={`dropdownMenuButton${item.id}`}
-                                                    >
-                                                        <div>
-                                                            <table className="width100">
-                                                                {item.ketQuaXetNghieChoGheps &&
-                                                                    item.ketQuaXetNghieChoGheps.map(
-                                                                        (
-                                                                            xn,
-                                                                            idxn
-                                                                        ) => {
-                                                                            return (
-                                                                                <tr>
-                                                                                    <td>
-                                                                                        {idxn +
-                                                                                            1}
-                                                                                    </td>
-                                                                                    <td>
-                                                                                        <a
-                                                                                            href="/"
-                                                                                            onClick={(
-                                                                                                e
-                                                                                            ) => {
-                                                                                                e.preventDefault();
-                                                                                                onOpenDetailKQModal(
-                                                                                                    item.Id
-                                                                                                );
-                                                                                            }}
-                                                                                        >
-                                                                                            {CommonUtility.ShowDateVN(
-                                                                                                xn.CreatedDate
-                                                                                            )}
-                                                                                        </a>
-                                                                                    </td>
-                                                                                    <td>
-                                                                                        {' '}
-                                                                                        <a
-                                                                                            title="Cập nhật kết quả"
-                                                                                            href="/"
-                                                                                            onClick={(
-                                                                                                e
-                                                                                            ) => {
-                                                                                                e.preventDefault();
-                                                                                                onEditKQEntity(
-                                                                                                    xn.Id
-                                                                                                );
-                                                                                            }}
-                                                                                        >
-                                                                                            <i className="fa fa-edit" />
-                                                                                        </a>{' '}
-                                                                                        <a
-                                                                                            href="/"
-                                                                                            title="Xóa bỏ kết quả"
-                                                                                            onClick={(
-                                                                                                e
-                                                                                            ) => {
-                                                                                                e.preventDefault();
-                                                                                                DeleteKetQuaXetNghiemAction(
-                                                                                                    xn.Id
-                                                                                                );
-                                                                                            }}
-                                                                                        >
-                                                                                            <i className="fa fa-trash red" />
-                                                                                        </a>
-                                                                                    </td>
-                                                                                </tr>
-                                                                            );
-                                                                        }
-                                                                    )}
-                                                            </table>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </td> 
-                                        </tr>
-                                    );
-                                })
-                            ) : (
-                                <NotDataToShow colNum={11} />
-                            )}
-                        </tbody>
-                        <thead>
-                            <tr>
-                                <th scope="col">
-                                    <input
-                                        type="checkbox"
-                                        className="checkAll"
-                                        onClick={(e) =>
-                                            CheckAllItem(e, 'dsTable')
-                                        }
-                                    />
-                                </th>
-                                <th scope="col">#</th>
-                                <th className="imgHinhAnhColAccount mw-image-avatar">
-                                    Ảnh
-                                </th>
-                                <th scope="col" className="widthColTableMedium">
-                                    Họ tên bệnh nhân
-                                </th>
-                                <th scope="col">Trạng thái</th>
-                                <th scope="col">Giới tính</th>
-                                <th scope="col">Ngày sinh</th>
-                                <th scope="col">Nghề nghiệp</th>
-                                <th scope="col">Điện thoại</th>
-                                <th scope="col">Nhóm máu</th>
-                                <th scope="col">Loại chờ ghép</th>
-                            </tr>
-                        </thead>
-                    </table>
-                </div> */}
-            </>
         </>
     );
 });

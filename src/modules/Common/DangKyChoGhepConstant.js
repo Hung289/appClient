@@ -7,6 +7,7 @@ export const HuyDonDK = 'HuyDonDK';
 export const DaCoDonDK = 'DaCoDonDK';
 export const DuaRaKhoiDS = 'DuaRaKhoiDS';
 export const HoanThanh = 'HoanThanh';
+export const DaGhepTang = 'DaGhepTang';
 export const TatCa = 'TatCa';
 
 export const GetName = (statusCode) => {
@@ -29,6 +30,8 @@ export const GetName = (statusCode) => {
             return 'Hủy đơn đăng ký';
         case HoanThanh:
             return 'Danh sách chờ ghép';
+        case DaGhepTang:
+            return 'Đã ghép mô tạng';
         default:
             return '';
     }
@@ -52,6 +55,8 @@ export const GetStyle = (statusCode) => {
             return 'HuyDangKy';
         case DaCoDonDK:
             return 'DaCoDonDK';
+        case DaGhepTang:
+            return 'DaGhepTang';
         case TatCa:
             return 'TatCa';
         default:

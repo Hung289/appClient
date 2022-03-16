@@ -1,3 +1,4 @@
+/* eslint-disable dot-notation */
 import React, {useState, useEffect, useRef} from 'react';
 import {confirmAlert} from 'react-confirm-alert'; // Import
 import 'react-confirm-alert/src/react-confirm-alert.css'; // Import css
@@ -8,17 +9,31 @@ import * as Constant from '@app/Constant';
 import * as CommonUtility from '@modules/Common/CommonUtility';
 import {Editor} from '@tinymce/tinymce-react';
 import axios from 'axios';
+import {Modal, ListGroup, ListGroupItem} from 'react-bootstrap';
 import {
-    Modal,
-    Button,
+    Drawer,
+    Space,
+    Row,
     Col,
+    Input,
+    Radio,
+    Select,
+    notification,
+    Descriptions,
+    Table,
+    Menu,
+    Avatar,
+    Pagination,
     Dropdown,
-    ListGroup,
-    ListGroupItem,
-    Card
-} from 'react-bootstrap';
+    Card,
+    Form,
+    Checkbox,
+    DatePicker,
+    Button
+} from 'antd';
+import * as antIcon from '@ant-design/icons';
 import {Link, useHistory, Redirect} from 'react-router-dom';
-import {Formik, useFormik, Form, Field, useFormikContex} from 'formik';
+import {Formik, useFormik, Field, useFormikContex} from 'formik';
 import {toast} from 'react-toastify';
 import * as tinTucService from '@app/services/tinTucService';
 import * as SaveImageEditor from '@app/services/SaveImageEditor';
@@ -135,8 +150,10 @@ const CreateTinTucAdm = (props) => {
         const [CreateContentEditor, setCreateContentEditor] = useState('');
 
         return (
-            <Formik
-                innerRef={formRef}
+            <Form
+                labelCol={{span: 24}}
+                wrapperCol={{span: 24}}
+                layout="vertical"
                 initialValues={{
                     title: '',
                     description: '',
@@ -149,12 +166,17 @@ const CreateTinTucAdm = (props) => {
                     KeyWord: '',
                     slugTitle: ''
                 }}
-                validationSchema={SignupSchema}
-                onSubmit={(values) => {
+                onFinish={(values) => {
+                    const publishTime =
+                        values['publishTime'] !== ''
+                            ? values['publishTime'].format('YYYY-MM-DD')
+                            : '';
                     const ObjSave = {
                         ...values,
-                        content: editorRef.current.getContent()
+                        content: editorRef.current.getContent(),
+                        publishTime
                     };
+                    console.log(ObjSave);
 
                     // same shape as initial values
                     if (FileSelected !== undefined && FileSelected.name) {
@@ -176,45 +198,66 @@ const CreateTinTucAdm = (props) => {
                     FileSelected = null;
                 }}
             >
-                {({errors, touched}) => (
-                    <Form ref={formCreateTinTuc}>
-                        <div className="form-group">
-                            <label htmlFor="title">
-                                Tiêu đề
-                                <span className="red">*</span>
-                            </label>
-                            <Field
-                                name="title"
-                                key="title"
-                                className="form-control "
-                            />
-                            {errors.title && touched.title ? (
-                                <>
-                                    <div className="invalid-feedback">
-                                        {errors.title}
-                                    </div>
-                                </>
-                            ) : null}
-                        </div>
-                        <div className="form-group">
-                            <label htmlFor="description">
-                                Mô tả<span className="red">*</span>
-                            </label>
-                            <Field
-                                as="textarea"
-                                rows={3}
-                                name="description"
-                                key="description"
-                                className="form-control"
-                            />
-                            {errors.description && touched.description ? (
-                                <div className="invalid-feedback">
-                                    {errors.description}
-                                </div>
-                            ) : null}
-                        </div>
-                        <div className="form-group">
-                            <label htmlFor="content">Nội dung</label>
+                <Row gutter={[10, 5]}>
+                    <Col
+                        lg={{span: 24}}
+                        md={{span: 24}}
+                        sm={{span: 24}}
+                        xs={{span: 24}}
+                    >
+                        <Form.Item
+                            name="title"
+                            label="Tiêu đề"
+                            rules={[
+                                {
+                                    min: 2,
+                                    message: 'Vui lòng nhập ít nhất 2 kí tự'
+                                },
+                                {
+                                    max: 255,
+                                    message: 'Vui lòng không nhập quá 255 ký tự'
+                                },
+                                {
+                                    required: true,
+                                    message: 'Vui lòng nhập thông tin này'
+                                }
+                            ]}
+                            validateTrigger={['onBlur', 'onChange']}
+                        >
+                            <Input name="title" />
+                        </Form.Item>
+                    </Col>
+
+                    <Col
+                        lg={{span: 24}}
+                        md={{span: 24}}
+                        sm={{span: 24}}
+                        xs={{span: 24}}
+                    >
+                        <Form.Item
+                            name="description"
+                            label="Mô tả"
+                            rules={[
+                                {
+                                    required: true,
+                                    message: 'Vui lòng nhập thông tin này'
+                                }
+                            ]}
+                            validateTrigger={['onBlur', 'onChange']}
+                        >
+                            <Input name="description" />
+                        </Form.Item>
+                    </Col>
+                </Row>
+
+                <Row>
+                    <Col
+                        lg={{span: 24}}
+                        md={{span: 24}}
+                        sm={{span: 24}}
+                        xs={{span: 24}}
+                    >
+                        <Form.Item label="Nội dung">
                             <Editor
                                 ref={editorRef}
                                 onInit={(evt, editor) => {
@@ -258,146 +301,109 @@ const CreateTinTucAdm = (props) => {
                                     }
                                 }}
                             />
+                        </Form.Item>
+                    </Col>
+                </Row>
 
-                            {errors.content && touched.content ? (
-                                <div className="invalid-feedback">
-                                    {errors.content}
-                                </div>
-                            ) : null}
-                        </div>
-
-                        <div className="form-group">
-                            <label htmlFor="categoryId">Loại tin bài</label>
-                            <Field
-                                as="select"
-                                name="categoryId"
-                                key="categoryId"
-                                className="form-control"
-                            >
-                                <option key={-1} value="">
+                <Row gutter={[10, 5]}>
+                    <Col
+                        lg={{span: 12}}
+                        md={{span: 12}}
+                        sm={{span: 12}}
+                        xs={{span: 24}}
+                    >
+                        <Form.Item name="categoryId" label="Loại tin bài">
+                            <Select name="categoryId" defaultValue="">
+                                <Select.Option value="" key="-1">
                                     --Chọn loại tin bài--
-                                </option>
+                                </Select.Option>
                                 {lstCatetory.map((item, ind) => {
                                     return (
-                                        <option key={ind} value={item.Id}>
+                                        <Select.Option
+                                            key={ind}
+                                            value={item.Id}
+                                        >
                                             {item.Name}
-                                        </option>
+                                        </Select.Option>
                                     );
                                 })}
-                            </Field>
-                            {errors.categoryId && touched.categoryId ? (
-                                <div className="invalid-feedback">
-                                    {errors.categoryId}
-                                </div>
-                            ) : null}
-                        </div>
-                        <div className="mb-3 custom-control custom-checkbox">
-                            <Field
-                                type="checkbox"
-                                name="isHot"
-                                key="isHot"
-                                id="isHot"
-                                className="custom-control-input"
-                            />
+                            </Select>
+                        </Form.Item>
+                    </Col>
+                    <Col
+                        lg={{span: 12}}
+                        md={{span: 12}}
+                        sm={{span: 12}}
+                        xs={{span: 24}}
+                    >
+                        <Form.Item
+                            name="status"
+                            key="status"
+                            label="Trạng thái"
+                        >
+                            <Select name="status" defaultValue="">
+                                <Select.Option value="">--Chọn--</Select.Option>
+                                <Select.Option value="BanThao">
+                                    Bản Thảo
+                                </Select.Option>
+                                <Select.Option value="PhatHanh">
+                                    Phát hành
+                                </Select.Option>
+                                <Select.Option value="Huy">Hủy</Select.Option>
+                            </Select>
+                        </Form.Item>
+                    </Col>
+                    <Col
+                        lg={{span: 12}}
+                        md={{span: 12}}
+                        sm={{span: 12}}
+                        xs={{span: 24}}
+                    >
+                        <Form.Item name="KeyWord" label="SEO KeyWord">
+                            <Input name="KeyWord" />
+                        </Form.Item>
+                    </Col>
 
-                            <label
-                                className="custom-control-label"
-                                htmlFor="isHot"
-                            >
-                                Tin bài nổi bật?
-                            </label>
-                            {errors.isHot && touched.isHot ? (
-                                <div className="invalid-feedback">
-                                    {errors.isHot}
-                                </div>
-                            ) : null}
-                        </div>
-                        <div className="form-group">
-                            <label htmlFor="status">Trạng thái</label>
-                            <Field
-                                as="select"
-                                name="status"
-                                key="status"
-                                className="form-control"
-                            >
-                                <option value="BanThao">Bản thảo</option>
-                                <option value="PhatHanh">Phát hành</option>
-                                <option value="Huy">Hủy</option>
-                            </Field>
-                            {errors.status && touched.status ? (
-                                <div className="invalid-feedback">
-                                    {errors.status}
-                                </div>
-                            ) : null}
-                        </div>
-                        <div className="form-group">
-                            <label htmlFor="publishTime">Ngày xuất bản</label>
-                            <Field
-                                type="date"
+                    <Col
+                        lg={{span: 12}}
+                        md={{span: 12}}
+                        sm={{span: 12}}
+                        xs={{span: 24}}
+                    >
+                        <Form.Item name="publishTime" label="Ngày xuất bản">
+                            <DatePicker
+                                format="DD/MM/YYYY"
                                 name="publishTime"
-                                key="publishTime"
-                                className="form-control "
+                                style={{width: '100%'}}
                             />
-                            {errors.publishTime && touched.publishTime ? (
-                                <>
-                                    <div className="invalid-feedback">
-                                        {errors.publishTime}
-                                    </div>
-                                </>
-                            ) : null}
-                        </div>
-
-                        <div className="form-group">
-                            <label htmlFor="KeyWord">Ảnh đại diện</label>
-                            <Field
-                                type="file"
-                                name="imageData"
-                                key="imageData"
-                                className="form-control img-padding"
-                                onChange={ChangeFileUpload}
-                            />
-                            {errors.KeyWord && touched.KeyWord ? (
-                                <>
-                                    <div className="invalid-feedback">
-                                        {errors.imageData}
-                                    </div>
-                                </>
-                            ) : null}
-                        </div>
-                        <div className="form-group">
-                            <label htmlFor="KeyWord">SEO KeyWord</label>
-                            <Field
-                                name="KeyWord"
-                                key="KeyWord"
-                                className="form-control "
-                            />
-                            {errors.KeyWord && touched.KeyWord ? (
-                                <>
-                                    <div className="invalid-feedback">
-                                        {errors.KeyWord}
-                                    </div>
-                                </>
-                            ) : null}
-                        </div>
-                        <div className="form-group">
-                            <Button
-                                variant="success"
-                                className="mgr15"
-                                type="submit"
-                            >
-                                Hoàn thành
-                            </Button>
-                            <Button
-                                variant="primary"
-                                type="button"
-                                onClick={() => BackDanhSach()}
-                            >
-                                Quay lại danh sách
-                            </Button>
-                        </div>
-                    </Form>
-                )}
-            </Formik>
+                        </Form.Item>
+                    </Col>
+                    <Col
+                        lg={{span: 24}}
+                        md={{span: 24}}
+                        sm={{span: 24}}
+                        xs={{span: 24}}
+                    >
+                        <Form.Item
+                            name="isHot"
+                            key="isHot"
+                            valuePropName="checked"
+                        >
+                            <Checkbox name="isHot" id="isHot">
+                                Tin bài nổi bật
+                            </Checkbox>
+                        </Form.Item>
+                    </Col>
+                </Row>
+                <Row style={{justifyContent: 'flex-end'}}>
+                    <Button type="primary" htmlType="submit" className="mgr15">
+                        Hoàn Thành
+                    </Button>
+                    <Button type="danger" onClick={() => BackDanhSach()}>
+                        Quay lại danh sách
+                    </Button>
+                </Row>
+            </Form>
         );
     };
 

@@ -12,6 +12,13 @@ export const ShowDateVN = (date) => {
     return '';
 };
 
+export const ShowYearVN = (date) => {
+    if (date != null) {
+        return moment(date).format('YYYY');
+    }
+    return '';
+};
+
 export const GetTypeFile = (props) => {
     const {path} = props;
     if (!path || path === '') {
@@ -163,4 +170,8 @@ export const RenderGioiTinh = (gt) => {
         default:
             return '';
     }
+};
+
+export const LamTronDiem = (gt) => {
+    return parseFloat(gt).toFixed(3);
 };

@@ -8,22 +8,14 @@ import {
     GetDsCheckedTableHinet,
     CheckAllItem
 } from '@modules/Common/TableCommon';
-import {
-    Button,
-    Card,
-    Col,
-    Dropdown,
-    ListGroup,
-    ListGroupItem,
-    Modal
-} from 'react-bootstrap';
+import {ListGroup, ListGroupItem} from 'react-bootstrap';
 import {
     DMNHOM_CLOSE_VIEWDETAIL,
     DMNHOM_CLOSE_VIEWEDIT,
     DMNHOM_EDIT_CLOSE,
     DMNHOM_SEARCH_SAVE
 } from '@app/store/ActionType/DMNhomDanhMucTypeAction';
-import {Field, Form, Formik, useFormik, useFormikContex} from 'formik';
+import {Field, Formik, useFormik, useFormikContex} from 'formik';
 import {Link, useHistory} from 'react-router-dom';
 import React, {useEffect, useRef, useState} from 'react';
 import {NotFoundImage} from '@modules/Common/NotFound';
@@ -32,6 +24,29 @@ import {confirmAlert} from 'react-confirm-alert'; // Import
 import {connect} from 'react-redux';
 import {toast} from 'react-toastify';
 import {ContextMenu, MenuItem, ContextMenuTrigger} from 'react-contextmenu';
+import {
+    Drawer,
+    Button,
+    Space,
+    Row,
+    Col,
+    Input,
+    Radio,
+    Select,
+    notification,
+    Descriptions,
+    Table,
+    Menu,
+    Avatar,
+    Pagination,
+    Dropdown,
+    Form,
+    Card,
+    DatePicker,
+    Modal
+} from 'antd';
+import moment from 'moment';
+import * as antIcon from '@ant-design/icons';
 import AdminSecsionHead from '../AdminSecsionHead';
 
 const DMNhomDanhMucAdm = (props) => {
@@ -78,6 +93,7 @@ const DMNhomDanhMucAdm = (props) => {
             LoadEntityData(objSearch);
         }
     });
+    let dataSelected;
 
     const SignupSchema = Yup.object().shape({
         GroupName: Yup.string()
@@ -87,100 +103,96 @@ const DMNhomDanhMucAdm = (props) => {
         GroupCode: Yup.string().trim().min(2, 'Vui lòng nhập ít nhất 2 ký tự')
     });
 
-    const SearchSchema = Yup.object().shape({
-        GroupName: Yup.string().trim().min(2, 'Vui lòng nhập ít nhất 2 ký tự'),
-        GroupCode: Yup.string().trim().min(2, 'Vui lòng nhập ít nhất 2 ký tự')
-    });
-
     function CreateModal() {
         const [show, setShow] = useState(false);
         const handleClose = () => setShow(false);
         const handleShow = () => setShow(true);
         const submitCreate = () => {
             if (formRef.current) {
-                formRef.current.handleSubmit();
+                formRef.current.submit();
             }
         };
         return (
             <>
-                <Button
-                    variant=""
-                    className="btn-nobg"
-                    size="sm"
-                    onClick={handleShow}
-                >
-                    <i className="fa fa-plus" aria-hidden="true" />
-                    Tạo mới
+                <Button type="primary" onClick={handleShow}>
+                    <i className="fa fa-plus" aria-hidden="true" /> &nbsp; Tạo
+                    mới
                 </Button>
 
-                <Modal show={show} size="lg" onHide={handleClose}>
-                    <Modal.Header closeButton>
-                        <Modal.Title>Tạo mới nhóm danh mục</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        <Formik
-                            innerRef={formRef}
-                            initialValues={{
-                                GroupName: '',
-                                GroupCode: ''
-                            }}
-                            validationSchema={SignupSchema}
-                            onSubmit={(values) => {
-                                const ObjSave = {
-                                    ...values
-                                };
-                                // same shape as initial values
-                                onCreateEntity(ObjSave);
-                            }}
-                        >
-                            {({errors, touched}) => (
-                                <Form ref={formCreateEntity}>
-                                    <div className="form-group">
-                                        <label htmlFor="GroupName">
-                                            Tên danh mục
-                                            <span className="red">*</span>
-                                        </label>
-                                        <Field
-                                            name="GroupName"
-                                            key="GroupName"
-                                            className="form-control "
-                                        />
-                                        {errors.Name && touched.Name ? (
-                                            <>
-                                                <div className="invalid-feedback">
-                                                    {errors.Name}
-                                                </div>
-                                            </>
-                                        ) : null}
-                                    </div>
-                                    <div className="form-group">
-                                        <label htmlFor="GroupCode">
-                                            Code<span className="red">*</span>
-                                        </label>
-                                        <Field
-                                            name="GroupCode"
-                                            key="GroupCode"
-                                            className="form-control"
-                                        />
-                                        {errors.GroupCode &&
-                                        touched.GroupCode ? (
-                                            <div className="invalid-feedback">
-                                                {errors.GroupCode}
-                                            </div>
-                                        ) : null}
-                                    </div>
-                                </Form>
-                            )}
-                        </Formik>
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button variant="secondary" onClick={handleClose}>
-                            Đóng
-                        </Button>
-                        <Button variant="primary" onClick={submitCreate}>
-                            Hoàn thành
-                        </Button>
-                    </Modal.Footer>
+                <Modal
+                    title="Thêm mới nhóm danh mục"
+                    centered
+                    visible={show}
+                    onOk={() => submitCreate()}
+                    onCancel={() => handleClose()}
+                    width={1000}
+                    zIndex={1040}
+                    okText="Hoàn thành"
+                    cancelText="Đóng"
+                >
+                    <Form
+                        ref={formRef}
+                        labelCol={{span: 24}}
+                        wrapperCol={{span: 24}}
+                        layout="vertical"
+                        initialValues={{
+                            GroupName: '',
+                            GroupCode: ''
+                        }}
+                        onFinish={(values) => {
+                            const ObjSave = {
+                                ...values
+                            };
+                            // same shape as initial values
+                            onCreateEntity(ObjSave);
+                        }}
+                    >
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    label="Tên danh mục"
+                                    name="GroupName"
+                                    rules={[
+                                        {
+                                            min: 2,
+                                            message:
+                                                'Vui lòng nhập ít nhất 2 ký tự'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input name="GroupName" />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    label="Code"
+                                    name="GroupCode"
+                                    rules={[
+                                        {
+                                            min: 2,
+                                            message:
+                                                'Vui lòng nhập ít nhất 2 ký tự'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input name="GroupCode" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+                    </Form>
                 </Modal>
             </>
         );
@@ -189,92 +201,91 @@ const DMNhomDanhMucAdm = (props) => {
     function EditModal() {
         const submitEdit = () => {
             if (formRef.current) {
-                formRef.current.handleSubmit();
+                formRef.current.submit();
             }
         };
         return (
             <>
                 <Modal
-                    show={showEditModal}
-                    size="lg"
-                    onHide={() => onCloseEntityEditModal()}
+                    title="Thêm mới nhóm danh mục"
+                    centered
+                    visible={showEditModal}
+                    onOk={() => submitEdit()}
+                    onCancel={() => onCloseEntityEditModal()}
+                    width={1000}
+                    zIndex={1040}
+                    okText="Hoàn thành"
+                    cancelText="Đóng"
                 >
-                    <Modal.Header closeButton>
-                        <Modal.Title>Cập nhật nhóm danh mục</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        <Formik
-                            innerRef={formRef}
-                            initialValues={{
-                                Id: entityObj.Id,
-                                GroupName: entityObj.GroupName,
-                                GroupCode: entityObj.GroupCode
-                            }}
-                            validationSchema={SignupSchema}
-                            vali
-                            onSubmit={(values) => {
-                                // same shape as initial values
-                                const ObjSave = {
-                                    ...values
-                                };
-                                onSaveEditEntity(ObjSave);
-                                // same shape as initial values
-                            }}
-                        >
-                            {({errors, touched}) => (
-                                <Form ref={formCreateEntity}>
-                                    <Field type="hidden" name="Id" key="Id" />
+                    <Form
+                        ref={formRef}
+                        labelCol={{span: 24}}
+                        wrapperCol={{span: 24}}
+                        layout="vertical"
+                        innerRef={formRef}
+                        initialValues={{
+                            Id: entityObj.Id,
+                            GroupName: entityObj.GroupName,
+                            GroupCode: entityObj.GroupCode
+                        }}
+                        onFinish={(values) => {
+                            // same shape as initial values
+                            const ObjSave = {
+                                ...values
+                            };
+                            onSaveEditEntity(ObjSave);
+                            // same shape as initial values
+                        }}
+                    >
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item name="Id" hidden>
+                                    <Input name="Id" />
+                                </Form.Item>
+                                <Form.Item
+                                    label="Tên danh mục"
+                                    name="GroupName"
+                                    rules={[
+                                        {
+                                            min: 2,
+                                            message:
+                                                'Vui lòng nhập ít nhất 2 ký tự'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input name="GroupName" />
+                                </Form.Item>
+                            </Col>
 
-                                    <div className="form-group">
-                                        <label htmlFor="GroupName">
-                                            Tên danh mục
-                                            <span className="red">*</span>
-                                        </label>
-                                        <Field
-                                            name="GroupName"
-                                            key="GroupName"
-                                            className="form-control "
-                                        />
-                                        {errors.GroupName &&
-                                        touched.GroupName ? (
-                                            <>
-                                                <div className="invalid-feedback">
-                                                    {errors.GroupName}
-                                                </div>
-                                            </>
-                                        ) : null}
-                                    </div>
-                                    <div className="form-group">
-                                        <label htmlFor="GroupCode">
-                                            Code<span className="red">*</span>
-                                        </label>
-                                        <Field
-                                            name="GroupCode"
-                                            key="GroupCode"
-                                            className="form-control"
-                                        />
-                                        {errors.GroupCode &&
-                                        touched.GroupCode ? (
-                                            <div className="invalid-feedback">
-                                                {errors.GroupCode}
-                                            </div>
-                                        ) : null}
-                                    </div>
-                                </Form>
-                            )}
-                        </Formik>
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button
-                            variant="secondary"
-                            onClick={() => onCloseEntityEditModal()}
-                        >
-                            Đóng
-                        </Button>
-                        <Button variant="primary" onClick={submitEdit}>
-                            Hoàn thành
-                        </Button>
-                    </Modal.Footer>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    label="Code"
+                                    name="GroupCode"
+                                    rules={[
+                                        {
+                                            min: 2,
+                                            message:
+                                                'Vui lòng nhập ít nhất 2 ký tự'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input name="GroupCode" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+                    </Form>
                 </Modal>
             </>
         );
@@ -282,44 +293,32 @@ const DMNhomDanhMucAdm = (props) => {
     function DetailModal() {
         return (
             <>
-                <Modal
-                    show={showDetailModal}
-                    size="lg"
-                    onHide={() => onCloseEntityModal()}
+                <Drawer
+                    placement="right"
+                    size="large"
+                    visible={showDetailModal}
+                    onClose={() => onCloseEntityModal()}
+                    extra={
+                        // eslint-disable-next-line react/jsx-wrap-multilines
+                        <Space>
+                            <Button
+                                type="danger"
+                                onClick={() => onCloseEntityModal()}
+                            >
+                                Đóng
+                            </Button>
+                        </Space>
+                    }
                 >
-                    <Modal.Header closeButton>
-                        <Modal.Title>Chi tiết nhóm danh mục</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        <ListGroup className="list-group-flush">
-                            <ListGroupItem>
-                                <dl className="row">
-                                    <dt className="col-sm-2">Tên danh mục</dt>
-                                    <dd className="col-sm-10">
-                                        {entityObj.GroupName}
-                                    </dd>
-                                </dl>
-                            </ListGroupItem>
-
-                            <ListGroupItem>
-                                <dl className="row">
-                                    <dt className="col-sm-2">Code</dt>
-                                    <dd className="col-sm-10">
-                                        {entityObj.GroupCode}
-                                    </dd>
-                                </dl>
-                            </ListGroupItem>
-                        </ListGroup>
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button
-                            variant="secondary"
-                            onClick={() => onCloseEntityModal()}
-                        >
-                            Đóng
-                        </Button>
-                    </Modal.Footer>
-                </Modal>
+                    <Descriptions title="Chi tiết banner" bordered column={2}>
+                        <Descriptions.Item label="Tên danh mục">
+                            {entityObj.GroupName}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Code">
+                            {entityObj.GroupCode}
+                        </Descriptions.Item>
+                    </Descriptions>
+                </Drawer>
             </>
         );
     }
@@ -375,85 +374,86 @@ const DMNhomDanhMucAdm = (props) => {
                 <div className="container-fluid mrb-10px">
                     <div className="row">
                         <div className="col-md-12">
-                            <Card>
-                                <Card.Header>
-                                    <strong>Tìm kiếm</strong>
-                                </Card.Header>
-                                <Card.Body>
-                                    <Formik
-                                        initialValues={{
-                                            QueryName: searchModel.QueryName,
-                                            QueryCode: searchModel.QueryCode
-                                        }}
-                                        validationSchema={SearchSchema}
-                                        onSubmit={(values) => {
-                                            onSubmitSearchSave(values);
-                                        }}
-                                    >
-                                        {({errors, touched}) => (
-                                            <Form>
-                                                <div>
-                                                    <div className="form-row">
-                                                        <div className="form-group col-md-4">
-                                                            <label htmlFor="QueryName">
-                                                                Tên danh mục
-                                                            </label>
-                                                            <Field
-                                                                name="QueryName"
-                                                                key="QueryName"
-                                                                className="form-control "
-                                                            />
-                                                            {errors.QueryName &&
-                                                            touched.QueryName ? (
-                                                                <>
-                                                                    <div className="invalid-feedback">
-                                                                        {
-                                                                            errors.QueryName
-                                                                        }
-                                                                    </div>
-                                                                </>
-                                                            ) : null}
-                                                        </div>
-                                                        <div className="form-group col-md-4">
-                                                            <label htmlFor="QueryCode">
-                                                                Mô tả
-                                                            </label>
-                                                            <Field
-                                                                name="QueryCode"
-                                                                key="QueryCode"
-                                                                className="form-control"
-                                                            />
-                                                            {errors.QueryCode &&
-                                                            touched.QueryCode ? (
-                                                                <>
-                                                                    <div className="invalid-feedback">
-                                                                        {
-                                                                            errors.QueryCode
-                                                                        }
-                                                                    </div>
-                                                                </>
-                                                            ) : null}
-                                                        </div>
-                                                    </div>
-                                                    <div className="form-row">
-                                                        <Button
-                                                            variant="success"
-                                                            size="md"
-                                                            type="submit"
-                                                            className="button-action"
-                                                        >
-                                                            <i
-                                                                className="fa fa-search"
-                                                                aria-hidden="true"
-                                                            />{' '}
-                                                            Tìm kiếm
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            </Form>
-                                        )}
-                                    </Formik>
-                                </Card.Body>
+                            <Card title="Tìm kiếm">
+                                <Form
+                                    labelCol={{span: 24}}
+                                    wrapperCol={{span: 24}}
+                                    layout="vertical"
+                                    initialValues={{
+                                        QueryName: searchModel.QueryName,
+                                        QueryCode: searchModel.QueryCode
+                                    }}
+                                    onFinish={(values) =>
+                                        onSubmitSearchSave(values)
+                                    }
+                                >
+                                    <Row gutter={[10, 5]}>
+                                        <Col
+                                            lg={{span: 12}}
+                                            md={{span: 12}}
+                                            sm={{span: 12}}
+                                            xs={{span: 24}}
+                                        >
+                                            <Form.Item
+                                                name="QueryName"
+                                                label="Tên danh mục"
+                                                rules={[
+                                                    {
+                                                        min: 2,
+                                                        message:
+                                                            'Vui lòng nhập ít nhất 2 kí tự'
+                                                    }
+                                                ]}
+                                                validateTrigger={[
+                                                    'onBlur',
+                                                    'onChange'
+                                                ]}
+                                            >
+                                                <Input name="QueryName" />
+                                            </Form.Item>
+                                        </Col>
+
+                                        <Col
+                                            lg={{span: 12}}
+                                            md={{span: 12}}
+                                            sm={{span: 12}}
+                                            xs={{span: 24}}
+                                        >
+                                            <Form.Item
+                                                name="QueryCode"
+                                                label="Code"
+                                                rules={[
+                                                    {
+                                                        min: 2,
+                                                        message:
+                                                            'Vui lòng nhập ít nhất 2 kí tự'
+                                                    }
+                                                ]}
+                                                validateTrigger={[
+                                                    'onBlur',
+                                                    'onChange'
+                                                ]}
+                                            >
+                                                <Input name="QueryCode" />
+                                            </Form.Item>
+                                        </Col>
+                                    </Row>
+                                    <Row>
+                                        <Col
+                                            lg={{span: 24}}
+                                            md={{span: 24}}
+                                            sm={{span: 24}}
+                                            xs={{span: 24}}
+                                        >
+                                            <Button
+                                                type="primary"
+                                                htmlType="submit"
+                                            >
+                                                Tìm kiếm
+                                            </Button>
+                                        </Col>
+                                    </Row>
+                                </Form>
                             </Card>
                         </div>
                     </div>
@@ -461,10 +461,11 @@ const DMNhomDanhMucAdm = (props) => {
             </section>
         );
     };
-    const NextPage = (pageInd) => {
+    const NextPage = (page, pageSize) => {
         const searchMd = {
             ...searchModel,
-            PageIndex: pageInd
+            PageIndex: page,
+            PageSize: pageSize
         };
         onSubmitSearchSave(searchMd);
     };
@@ -494,229 +495,121 @@ const DMNhomDanhMucAdm = (props) => {
         }
         return reder;
     };
-
+    const rowSelection = {
+        onChange: (selectedRowKeys, selectedRows) => {
+            dataSelected = selectedRowKeys;
+        }
+    };
     const RenderDsTable = () => {
         let lstItem = [];
         let pageSiz = 20;
         let pageInd = 1;
+        let Count = 0;
         if (lstEntity.ListItem !== undefined) {
             lstItem = lstEntity.ListItem;
             pageInd = lstEntity.CurrentPage;
+            Count = lstEntity.Count;
         }
         if (searchModel !== undefined) {
             pageSiz = searchModel.PageSize;
         }
+        const getMenu = (record) => (
+            <>
+                <Menu>
+                    <Menu.Item
+                        key={`sua_${record.Id}`}
+                        icon={<antIcon.EditOutlined />}
+                        onClick={() => onEditEntity(record.Id)}
+                    >
+                        Sửa
+                    </Menu.Item>
+                    <Menu.Item
+                        key={`xoa_${record.Id}`}
+                        icon={<antIcon.DeleteOutlined />}
+                        onClick={() => DeleteAction(record.Id)}
+                    >
+                        Xóa
+                    </Menu.Item>
+                    <Menu.Item
+                        key={`vaitro_${record.Id}`}
+                        icon={<antIcon.EditOutlined />}
+                    >
+                        <Link
+                            className="MauDen"
+                            to={`/admin/Dulieudanhmuc/${record.Id}`}
+                        >
+                            Quản lý danh mục
+                        </Link>
+                    </Menu.Item>
+                </Menu>
+            </>
+        );
+        const columns = [
+            {
+                title: 'STT',
+                key: 'STT',
+                render: (text, record, index) => (
+                    <div>{(pageInd - 1) * pageSiz + index + 1}</div>
+                )
+            },
+            {
+                title: 'Hành động',
+                key: 'HanhDong',
+                render: (text, record) => {
+                    return (
+                        <Dropdown.Button
+                            onClick={() => onOpenDetailModal(record.Id)}
+                            overlay={() => getMenu(record)}
+                        >
+                            Chi tiết
+                        </Dropdown.Button>
+                    );
+                }
+            },
+
+            {
+                title: 'Tên danh mục',
+                key: 'TenDanhMuc',
+                render: (text, record, index) => (
+                    <>
+                        {' '}
+                        <div>{record.GroupName}</div>
+                    </>
+                )
+            },
+            {
+                title: 'Code',
+                key: 'Code',
+                render: (text, record, index) => (
+                    <>
+                        {' '}
+                        <div>{record.GroupCode}</div>
+                    </>
+                )
+            }
+        ];
         return (
             <>
                 <EditModal />
                 <DetailModal />
-
-                <div className="table-responsive">
-                    <table className="table table-hinetNew" id="dsTable">
-                        <thead>
-                            <tr>
-                                <th scope="col">
-                                    <input
-                                        type="checkbox"
-                                        className="checkAll"
-                                        onClick={(e) =>
-                                            CheckAllItem(e, 'dsTable')
-                                        }
-                                    />
-                                </th>
-                                <th scope="col">#</th>
-
-                                <th scope="col" className="widthColTableMedium">
-                                    Code
-                                </th>
-                                <th scope="col">Tên danh mục</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {lstItem.length > 0 ? (
-                                lstItem.map((item, key) => {
-                                    const rIndex =
-                                        (pageInd - 1) * pageSiz + key + 1;
-                                    return (
-                                        <tr
-                                            key={key}
-                                            onClick={(e) =>
-                                                CheckRowsHinetTable(e)
-                                            }
-                                        >
-                                            <td>
-                                                <input
-                                                    className="checkTd"
-                                                    type="checkbox"
-                                                    data-id={item.Id}
-                                                    onClick={(e) =>
-                                                        CheckRowsHinetTable(e)
-                                                    }
-                                                />
-                                            </td>
-                                            <th scope="row">{rIndex}</th>
-                                            <td>
-                                                <div className="tableBoxMain">
-                                                    <div className="tableBoxMain-label">
-                                                        {item.GroupCode}
-                                                    </div>
-                                                    <div className="tableBoxMain-btnAction">
-                                                        <Dropdown>
-                                                            <Dropdown.Toggle
-                                                                size="sm"
-                                                                variant=""
-                                                                className="dropdowTableBtn"
-                                                            >
-                                                                <i
-                                                                    className="fa fa-ellipsis-h"
-                                                                    aria-hidden="true"
-                                                                />
-                                                            </Dropdown.Toggle>
-
-                                                            <Dropdown.Menu>
-                                                                <Dropdown.Item
-                                                                    onClick={() =>
-                                                                        onEditEntity(
-                                                                            item.Id
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    <span className="boxIcon">
-                                                                        <i className="fas fa-edit" />
-                                                                    </span>
-                                                                    <span>
-                                                                        Sửa
-                                                                    </span>
-                                                                </Dropdown.Item>
-                                                                <Dropdown.Item
-                                                                    onClick={() =>
-                                                                        DeleteAction(
-                                                                            item.Id
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    <span className="boxIcon">
-                                                                        <i className="fas fa-times" />
-                                                                    </span>
-                                                                    <span>
-                                                                        Xóa
-                                                                    </span>
-                                                                </Dropdown.Item>
-                                                                <Dropdown.Item
-                                                                    onClick={() =>
-                                                                        onOpenDetailModal(
-                                                                            item.Id
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    <span className="boxIcon">
-                                                                        <i className="fas fa-info-circle" />
-                                                                    </span>
-                                                                    <span>
-                                                                        Xem chi
-                                                                        tiết
-                                                                    </span>
-                                                                </Dropdown.Item>
-                                                                <Dropdown.Item>
-                                                                    <Link
-                                                                        className="MauDen"
-                                                                        to={`/admin/Dulieudanhmuc/${item.Id}`}
-                                                                    >
-                                                                        <span className="boxIcon">
-                                                                            <i className="fas fa-info-circle" />
-                                                                        </span>
-                                                                        <span>
-                                                                            Quản
-                                                                            lý
-                                                                            danh
-                                                                            mục
-                                                                        </span>
-                                                                    </Link>
-                                                                </Dropdown.Item>
-                                                            </Dropdown.Menu>
-                                                        </Dropdown>
-                                                    </div>
-                                                </div>
-                                            </td>
-
-                                            {/* <td>{item.GroupName}</td> */}
-                                            <td>{item.GroupName}</td>
-                                        </tr>
-                                    );
-                                })
-                            ) : (
-                                <NotDataToShow colNum={4} />
-                            )}
-                        </tbody>
-                        <thead>
-                            <tr>
-                                <th scope="col">
-                                    <input
-                                        type="checkbox"
-                                        className="checkAll"
-                                        onClick={(e) =>
-                                            CheckAllItem(e, 'dsTable')
-                                        }
-                                    />
-                                </th>
-                                <th scope="col">#</th>
-
-                                <th scope="col" className="widthColTableMedium">
-                                    Code
-                                </th>
-                                <th scope="col">Tên danh mục</th>
-                            </tr>
-                        </thead>
-                    </table>
-                </div>
-                <div>
-                    <div className="row">
-                        <div className="col-sm-6">
-                            Tổng số {lstEntity.Count} bản ghi trang hiện tại -
-                            tổng số {lstEntity.TotalPage} trang
-                        </div>
-                        <div className="col-sm-6 right">
-                            <nav
-                                aria-label="Page navigation "
-                                className="tblHinet-pagin"
-                            >
-                                <ul className="pagination pagination-sm">
-                                    <li className="page-item">
-                                        <Button
-                                            className="page-link"
-                                            onClick={() => NextPage(1)}
-                                            aria-label="Previous"
-                                        >
-                                            <span aria-hidden="true">
-                                                &laquo;
-                                            </span>
-                                            <span className="sr-only">
-                                                Previous
-                                            </span>
-                                        </Button>
-                                    </li>
-                                    <RenderPage />
-                                    <li className="page-item">
-                                        <Button
-                                            className="page-link"
-                                            onClick={() =>
-                                                NextPage(lstEntity.TotalPage)
-                                            }
-                                            aria-label="Next"
-                                        >
-                                            <span aria-hidden="true">
-                                                &raquo;
-                                            </span>
-                                            <span className="sr-only">
-                                                Next
-                                            </span>
-                                        </Button>
-                                    </li>
-                                </ul>
-                            </nav>
-                        </div>
-                    </div>
-                </div>
+                <Table
+                    id="dsTable"
+                    rowKey="Id"
+                    rowSelection={rowSelection}
+                    columns={columns}
+                    dataSource={lstItem}
+                    pagination={{
+                        total: Count,
+                        showSizeChanger: true,
+                        showQuickJumper: true,
+                        pageSize: pageSiz,
+                        current: pageInd,
+                        showTotal: (total) => `Tổng cộng ${total} bản ghi`,
+                        onChange: (page, pageSize) => {
+                            NextPage(page, pageSize);
+                        }
+                    }}
+                />
             </>
         );
     };
@@ -730,43 +623,43 @@ const DMNhomDanhMucAdm = (props) => {
                         <div className="col-md-12">
                             <div className="card">
                                 <div className="p-2 card-header">
-                                    <CreateModal />
-                                    <Button
-                                        size="sm"
-                                        variant=""
-                                        className="btn-nobg"
-                                        onClick={() => ToggleSearchPanel()}
-                                    >
-                                        {showPanelSearch ? (
-                                            <>
-                                                <i
-                                                    className="fa fa-times"
-                                                    aria-hidden="true"
-                                                />{' '}
-                                                Đóng tìm kiếm
-                                            </>
-                                        ) : (
-                                            <>
-                                                <i
-                                                    className="fa fa-search"
-                                                    aria-hidden="true"
-                                                />{' '}
-                                                Tìm kiếm
-                                            </>
-                                        )}
-                                    </Button>
-                                    <Button
-                                        size="sm"
-                                        variant=""
-                                        className="btn-nobg"
-                                        onClick={() => DeleteMulTiBtnAction()}
-                                    >
-                                        <i
-                                            className="fa fa-trash"
-                                            aria-hidden="true"
-                                        />{' '}
-                                        Xóa
-                                    </Button>
+                                    <Space>
+                                        <CreateModal />
+                                        <Button
+                                            type="primary"
+                                            onClick={() => ToggleSearchPanel()}
+                                        >
+                                            {showPanelSearch ? (
+                                                <>
+                                                    <i
+                                                        className="fa fa-times"
+                                                        aria-hidden="true"
+                                                    />{' '}
+                                                    &nbsp; Đóng tìm kiếm
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <i
+                                                        className="fa fa-search"
+                                                        aria-hidden="true"
+                                                    />{' '}
+                                                    &nbsp; Tìm kiếm
+                                                </>
+                                            )}
+                                        </Button>
+                                        <Button
+                                            type="danger"
+                                            onClick={() =>
+                                                DeleteMulTiBtnAction()
+                                            }
+                                        >
+                                            <i
+                                                className="fa fa-trash"
+                                                aria-hidden="true"
+                                            />{' '}
+                                            &nbsp; Xóa
+                                        </Button>
+                                    </Space>
                                 </div>
                                 <div className="card-body nopadding">
                                     <div className="tab-content">

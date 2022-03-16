@@ -23,7 +23,6 @@ import {NotFoundImage} from '@modules/Common/NotFound';
 import TimePicker from 'react-time-picker';
 import {
     Modal,
-    Button,
     Col,
     Dropdown,
     ListGroup,
@@ -40,6 +39,8 @@ import {
     useLocation,
     Redirect
 } from 'react-router-dom';
+
+import {Button, Space} from 'antd';
 import {Formik, useFormik, Form, Field, useFormikContex} from 'formik';
 import {toast} from 'react-toastify';
 import * as dangKyChoGhepTangService from '@app/services/dangKyChoGhepTangService';
@@ -87,6 +88,7 @@ import KQXetNghiemDetailAdm from './KQXetNghiemDetailAdm';
 import DangKyChoGhepTangChangeStatus from './DangKyChoGhepTangChangeStatus';
 import DangKyChoGhepTangTbl from './DangKyChoGhepTangTbl';
 import DangKyChoGhepTangThongBaoXN from './DangKyChoGhepTangThongBaoXN';
+import ChoGhepUpdateHLAAdm from './ChoGhepUpdateHLAAdm';
 
 // import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
 const DangKyChoGhepTangChoTiepNhanAdm = (props) => {
@@ -111,6 +113,8 @@ const DangKyChoGhepTangChoTiepNhanAdm = (props) => {
         onInPhieuKhac,
         onOpenEntityCreateModal
     } = props;
+    const [showEditHLA, setShowEditHLA] = useState(false);
+    const handleEditHLAClose = () => setShowEditHLA(false);
     const [typeModal, SettypeModal] = useState('');
     const [IsShowEditPopup, setIsShowEditPopup] = useState(false);
     const [IsShowCreatePopup, setIsShowCreatePopup] = useState(false);
@@ -136,6 +140,12 @@ const DangKyChoGhepTangChoTiepNhanAdm = (props) => {
     const [showChangeStatusModal, setshowChangeStatusModal] = useState(false);
     const [lstEntity, setlstEntity] = useState({});
 
+    const onEditHLAEntity = async (id) => {
+        dangKyChoGhepTangService.OpenEditModalSV(id).then((a) => {
+            setDetailData(a.entityObj);
+            setShowEditHLA(true);
+        });
+    };
     const LoadEntityData = (objSearch) => {
         setisload(true);
         dangKyChoGhepTangService
@@ -970,89 +980,84 @@ const DangKyChoGhepTangChoTiepNhanAdm = (props) => {
                                     />
 
                                     <ThongBaoHenKhamModal />
-                                    <Button
-                                        variant=""
-                                        className="btn-nobg"
-                                        size="sm"
-                                        onClick={() => {
-                                            SettypeModal('');
-                                            onCreateEntity();
-                                        }}
-                                    >
-                                        <i
-                                            className="fa fa-plus"
-                                            aria-hidden="true"
-                                        />
-                                        Tạo mới
-                                    </Button>
-                                    <Button
-                                        size="sm"
-                                        variant=""
-                                        className="btn-nobg"
-                                        onClick={() =>
-                                            setShowSearchPanel(!showSearchPanel)
-                                        }
-                                    >
-                                        {showSearchPanel ? (
-                                            <>
-                                                <i
-                                                    className="fa fa-times"
-                                                    aria-hidden="true"
-                                                />{' '}
-                                                Đóng tìm kiếm
-                                            </>
-                                        ) : (
-                                            <>
-                                                <i
-                                                    className="fa fa-search"
-                                                    aria-hidden="true"
-                                                />{' '}
-                                                Tìm kiếm
-                                            </>
-                                        )}
-                                    </Button>
-                                    <Button
-                                        size="sm"
-                                        variant=""
-                                        className="btn-nobg"
-                                        onClick={() => DeleteMulTiBtnAction()}
-                                    >
-                                        <i
-                                            className="fa fa-trash"
-                                            aria-hidden="true"
-                                        />{' '}
-                                        Xóa
-                                    </Button>
-                                    <Button
-                                        size="sm"
-                                        variant=""
-                                        className="btn-nobg"
-                                        onClick={() =>
-                                            setshowThongBaoXNMutiModal(true)
-                                        }
-                                    >
-                                        <i
-                                            className="fas fa-envelope"
-                                            aria-hidden="true"
-                                        />
-                                        Thông báo hẹn xét nghiệm
-                                    </Button>
-                                    <Button
-                                        size="sm"
-                                        variant=""
-                                        className="btn-nobg"
-                                    >
-                                        <a
-                                            href="/admin/dangkychogheptang/importExcel"
-                                            style={{color: 'black'}}
+                                    <Space>
+                                        <Button
+                                            type="primary"
+                                            onClick={() => {
+                                                SettypeModal('');
+                                                onCreateEntity();
+                                            }}
                                         >
                                             <i
-                                                className="fa fa-upload"
+                                                className="fa fa-plus"
+                                                aria-hidden="true"
+                                            />
+                                            &nbsp; Tạo mới
+                                        </Button>
+                                        <Button
+                                            type="primary"
+                                            onClick={() =>
+                                                setShowSearchPanel(
+                                                    !showSearchPanel
+                                                )
+                                            }
+                                        >
+                                            {showSearchPanel ? (
+                                                <>
+                                                    <i
+                                                        className="fa fa-times"
+                                                        aria-hidden="true"
+                                                    />{' '}
+                                                    &nbsp; Đóng tìm kiếm
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <i
+                                                        className="fa fa-search"
+                                                        aria-hidden="true"
+                                                    />{' '}
+                                                    Tìm kiếm
+                                                </>
+                                            )}
+                                        </Button>
+                                        <Button
+                                            type="danger"
+                                            onClick={() =>
+                                                DeleteMulTiBtnAction()
+                                            }
+                                        >
+                                            <i
+                                                className="fa fa-trash"
+                                                aria-hidden="true"
+                                            />
+                                            &nbsp; Xóa
+                                        </Button>
+                                        <Button
+                                            type="primary"
+                                            onClick={() =>
+                                                setshowThongBaoXNMutiModal(true)
+                                            }
+                                        >
+                                            <i
+                                                className="fas fa-envelope"
                                                 aria-hidden="true"
                                             />{' '}
-                                            Nhập Excel chờ Ghép thận
-                                        </a>
-                                    </Button>
+                                            &nbsp; Thông báo hẹn xét nghiệm
+                                        </Button>
+                                        <Button type="primary">
+                                            <a
+                                                href="/admin/dangkychogheptang/importExcel"
+                                                style={{color: 'black'}}
+                                            >
+                                                <i
+                                                    className="fa fa-upload"
+                                                    aria-hidden="true"
+                                                />{' '}
+                                                &nbsp; Nhập Excel chờ Ghép thận
+                                            </a>
+                                        </Button>
+                                    </Space>
+
                                     {/* <Button size="sm" className="button-action">
                                         <i
                                             className="fa fa-reply"
@@ -1111,6 +1116,15 @@ const DangKyChoGhepTangChoTiepNhanAdm = (props) => {
                                             entityObj={entityObj}
                                             onReloadPage={onReloadPage}
                                         />
+                                        <ChoGhepUpdateHLAAdm
+                                            showEditHLA={showEditHLA}
+                                            entityObj={DetailData}
+                                            handleEditHLAClose={
+                                                handleEditHLAClose
+                                            }
+                                            OnLoadingAction={setisload}
+                                            onReloadPage={onReloadPage}
+                                        />
                                         <DangKyChoGhepTangTbl
                                             lstEntity={lstEntity}
                                             coquan={coquan}
@@ -1125,6 +1139,7 @@ const DangKyChoGhepTangChoTiepNhanAdm = (props) => {
                                             }
                                             onInPhieuThan={onInPhieuThan}
                                             onEditEntity={onEditEntity}
+                                            onEditHLAEntity={onEditHLAEntity}
                                             onInPhieuKhac={onInPhieuKhac}
                                             setitemId={setitemId}
                                             onUpDonDK={onUpDonDK}

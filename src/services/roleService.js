@@ -57,6 +57,7 @@ export const GetRoleOperaion = async (id) => {
 };
 
 export const SaveRoleUser = async (obj) => {
+    console.log(JSON.stringify(obj));
     const data = await fetch(`${Constant.PathServer}/api/Role/SaveRoleUser`, {
         method: 'POST', // *GET, POST, PUT, DELETE, etc.
         mode: 'cors', // no-cors, *cors, same-origin

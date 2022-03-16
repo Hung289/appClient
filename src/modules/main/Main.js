@@ -37,6 +37,9 @@ import PageLoading from '../../components/page-loading/PageLoading';
 import * as ActionTypes from '../../store/actions';
 import DKHienExcel from '../Admin/DangKyHienTangAdm/DKHienExcel';
 import DKGhepExcel from '../Admin/DangKyChoGhepTangAdm/DKGhepExcel';
+import HienTangCoQuanStatusAdm from '../Admin/HienTangCoQuanAdm/HienTangCoQuanStatusAdm';
+import MatchingNhomMauAdm from '../Admin/MatchingNhomMauAdm/MatchingNhomMauAdm';
+
 import 'antd/dist/antd.css';
 
 const Main = ({onUserLoad, onUserLogout, history}) => {
@@ -259,6 +262,16 @@ const Main = ({onUserLoad, onUserLogout, history}) => {
                                 exact
                                 path={`${AdminSiteName}/hosohientang/:typeStatus`}
                                 component={DangKyHienTangChoTiepNhanAdm}
+                            />
+                            <Route
+                                exact
+                                path={`${AdminSiteName}/hientangcoquan`}
+                                component={HienTangCoQuanStatusAdm}
+                            />
+                            <Route
+                                exact
+                                path={`${AdminSiteName}/matchingnhommau`}
+                                component={MatchingNhomMauAdm}
                             />
                         </Switch>
                     </section>

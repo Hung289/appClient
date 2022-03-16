@@ -15,17 +15,9 @@ import * as Constant from '@app/Constant';
 import * as CommonUtility from '@modules/Common/CommonUtility';
 import {Editor} from '@tinymce/tinymce-react';
 import axios from 'axios';
-import {
-    Modal,
-    Button,
-    Col,
-    Dropdown,
-    ListGroup,
-    ListGroupItem,
-    Card
-} from 'react-bootstrap';
+import {Modal, ListGroup, ListGroupItem} from 'react-bootstrap';
 import {Link, useHistory} from 'react-router-dom';
-import {Formik, useFormik, Form, Field, useFormikContex} from 'formik';
+import {Formik, useFormik, Field, useFormikContex} from 'formik';
 import {toast} from 'react-toastify';
 import {ContextMenu, MenuItem, ContextMenuTrigger} from 'react-contextmenu';
 import * as tinTucService from '@app/services/tinTucService';
@@ -38,8 +30,28 @@ import {
     TINTUC_EDIT_CLOSE,
     TINTUC_SEARCH_SAVE
 } from '@app/store/ActionType/TinTucTypeAction';
-import AdminSecsionHead from '../AdminSecsionHead';
+import {
+    Drawer,
+    Button,
+    Space,
+    Row,
+    Col,
+    Input,
+    Radio,
+    Select,
+    notification,
+    Descriptions,
+    Table,
+    Menu,
+    Avatar,
+    Pagination,
+    Dropdown,
+    Card,
+    Form
+} from 'antd';
+import * as antIcon from '@ant-design/icons';
 
+import AdminSecsionHead from '../AdminSecsionHead';
 // import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
 const TinTucAdm = (props) => {
     const formCreateTinTuc = useRef(null);
@@ -74,7 +86,14 @@ const TinTucAdm = (props) => {
     function ToggleSearchPanel() {
         SetshowPanelSearch(!showPanelSearch);
     }
-
+    const SignupSchema = Yup.object().shape({
+        title: Yup.string()
+            .trim()
+            .min(2, 'Vui lòng nhập ít nhất 2 ký tự')
+            .max(255, 'Vui lòng nhập không quá 255 ký tự')
+            .required('Vui lòng nhập thông tin này'),
+        description: Yup.string().trim().required('Vui lòng nhập thông tin này')
+    });
     // const [Isloaded, SetIsloaded] = useState(false);
 
     useEffect(() => {
@@ -95,24 +114,7 @@ const TinTucAdm = (props) => {
             LoadTinTucData(objSearch);
         }
     });
-    const SignupSchema = Yup.object().shape({
-        title: Yup.string()
-            .trim()
-            .min(2, 'Vui lòng nhập ít nhất 2 ký tự')
-            .max(255, 'Vui lòng nhập không quá 255 ký tự')
-            .required('Vui lòng nhập thông tin này'),
-        description: Yup.string().trim().required('Vui lòng nhập thông tin này')
-    });
-
-    const SearchSchema = Yup.object().shape({
-        TitleFilter: Yup.string().min(2, 'Vui lòng nhập ít nhất 2 ký tự'),
-        MotaFilter: Yup.string().min(2, 'Vui lòng nhập ít nhất 2 ký tự'),
-        KeywordFilter: Yup.string().min(2, 'Vui lòng nhập ít nhất 2 ký tự'),
-        IsHotFilter: Yup.string().nullable(),
-        TrangThaiFilter: Yup.string().nullable(),
-        CategoryIdFilter: Yup.string().nullable()
-    });
-
+    let dataSelected;
     function ChangeFileUpload(event) {
         // eslint-disable-next-line prefer-destructuring
         let Arr = event.target.files;
@@ -819,116 +821,68 @@ const TinTucAdm = (props) => {
 
     function DetailModal() {
         return (
-            <>
-                <Modal
-                    show={showDetailModal}
-                    size="lg"
-                    onHide={() => onCloseTinTucModal()}
-                >
-                    <Modal.Header closeButton>
-                        <Modal.Title>Chi tiết tin tức</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        <ListGroup className="list-group-flush">
-                            <ListGroupItem>
-                                <dl className="row">
-                                    <dt className="col-sm-2">Ảnh đại diện</dt>
-                                    <dd className="col-sm-10">
-                                        {tintucObj.ImageData !== '' ? (
-                                            <>
-                                                <img
-                                                    src={`${Constant.PathServer}${tintucObj.ImageData}`}
-                                                    alt=""
-                                                    className="imgHinhAnh img-thumbnail"
-                                                />
-                                            </>
-                                        ) : (
-                                            <></>
-                                        )}
-                                    </dd>
-                                </dl>
-                            </ListGroupItem>
-                            <ListGroupItem>
-                                <dl className="row">
-                                    <dt className="col-sm-2">Tiêu đề</dt>
-                                    <dd className="col-sm-10">
-                                        {tintucObj.Title}
-                                    </dd>
-                                </dl>
-                            </ListGroupItem>
-
-                            <ListGroupItem>
-                                <dl className="row">
-                                    <dt className="col-sm-2">Mô tả</dt>
-                                    <dd className="col-sm-10">
-                                        {tintucObj.Description}
-                                    </dd>
-                                </dl>
-                            </ListGroupItem>
-                            <ListGroupItem>
-                                <dl className="row">
-                                    <dt className="col-sm-2">Trạng thái</dt>
-                                    <dd className="col-sm-10">
-                                        {tintucObj.Status}
-                                    </dd>
-                                </dl>
-                            </ListGroupItem>
-                            <ListGroupItem>
-                                <dl className="row">
-                                    <dt className="col-sm-2">Ngày phát hành</dt>
-                                    <dd className="col-sm-10">
-                                        {CommonUtility.ShowDateVN(
-                                            tintucObj.PublishTime
-                                        )}
-                                    </dd>
-                                </dl>
-                            </ListGroupItem>
-                            <ListGroupItem>
-                                <dl className="row">
-                                    <dt className="col-sm-2">
-                                        Tin bài nổi bật?
-                                    </dt>
-                                    <dd className="col-sm-10">
-                                        {tintucObj.IsHot ? (
-                                            <i className="fas fa-check" />
-                                        ) : (
-                                            <i className="fas fa-times" />
-                                        )}
-                                    </dd>
-                                </dl>
-                            </ListGroupItem>
-                            <ListGroupItem>
-                                <dl className="row">
-                                    <dt className="col-sm-2">Nội dung</dt>
-                                    <dd className="col-sm-10">
-                                        <div
-                                            dangerouslySetInnerHTML={{
-                                                __html: tintucObj.Content
-                                            }}
-                                        />
-                                    </dd>
-                                </dl>
-                            </ListGroupItem>
-                            <ListGroupItem>
-                                <dl className="row">
-                                    <dt className="col-sm-2">KeyWord</dt>
-                                    <dd className="col-sm-10">
-                                        {tintucObj.KeyWord}
-                                    </dd>
-                                </dl>
-                            </ListGroupItem>
-                        </ListGroup>
-                    </Modal.Body>
-                    <Modal.Footer>
+            <Drawer
+                placement="right"
+                size="large"
+                visible={showDetailModal}
+                onClose={() => onCloseTinTucModal()}
+                extra={
+                    // eslint-disable-next-line react/jsx-wrap-multilines
+                    <Space>
                         <Button
-                            variant="secondary"
+                            type="danger"
                             onClick={() => onCloseTinTucModal()}
                         >
                             Đóng
                         </Button>
-                    </Modal.Footer>
-                </Modal>
-            </>
+                    </Space>
+                }
+            >
+                <Descriptions title="Chi tiết tin tức" bordered>
+                    <Descriptions.Item label="Ảnh đại diện">
+                        {tintucObj.ImageData !== '' ? (
+                            <>
+                                <img
+                                    src={`${Constant.PathServer}${tintucObj.ImageData}`}
+                                    alt=""
+                                    className="imgHinhAnh img-thumbnail"
+                                />
+                            </>
+                        ) : (
+                            <></>
+                        )}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Tiêu đề">
+                        {tintucObj.Title}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Mô tả">
+                        {tintucObj.Description}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Trạng thái">
+                        {tintucObj.Status}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Ngày phát hành">
+                        {CommonUtility.ShowDateVN(tintucObj.PublishTime)}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Tin bài nổi bật">
+                        {tintucObj.IsHot ? (
+                            <i className="fas fa-check" />
+                        ) : (
+                            <i className="fas fa-times" />
+                        )}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="KeyWord" span={6}>
+                        {tintucObj.KeyWord}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Nội dung">
+                        <div
+                            dangerouslySetInnerHTML={{
+                                __html: tintucObj.Content
+                            }}
+                        />
+                    </Descriptions.Item>
+                </Descriptions>
+            </Drawer>
         );
     }
 
@@ -959,9 +913,8 @@ const TinTucAdm = (props) => {
                 {
                     label: 'Xác nhận',
                     onClick: () => {
-                        const dsId = GetDsCheckedTableHinet('dsTable');
-                        if (dsId != null && dsId.length > 0) {
-                            onDeleteMultiEntity(dsId);
+                        if (dataSelected != null && dataSelected.length > 0) {
+                            onDeleteMultiEntity(dataSelected);
                         } else {
                             toast.onError('Vui lòng chọn ít nhất một bản ghi');
                         }
@@ -985,227 +938,199 @@ const TinTucAdm = (props) => {
                 <div className="container-fluid  mrb-10px">
                     <div className="row">
                         <div className="col-md-12">
-                            <Card>
-                                <Card.Header>
-                                    <strong>Tìm kiếm</strong>
-                                </Card.Header>
-                                <Card.Body>
-                                    <Formik
-                                        initialValues={{
-                                            TitleFilter:
-                                                searchModel.TitleFilter,
-                                            MotaFilter: searchModel.MotaFilter,
-                                            KeywordFilter:
-                                                searchModel.KeywordFilter,
-                                            IsHotFilter:
-                                                searchModel.IsHotFilter,
-                                            TrangThaiFilter:
-                                                searchModel.TrangThaiFilter,
-                                            CategoryIdFilter:
-                                                searchModel.CategoryIdFilter
-                                        }}
-                                        validationSchema={SearchSchema}
-                                        onSubmit={(values) => {
-                                            onSubmitSearchSave(values);
-                                        }}
-                                    >
-                                        {({errors, touched}) => (
-                                            <Form>
-                                                <div>
-                                                    <div className="form-row">
-                                                        <div className="form-group col-md-4">
-                                                            <label htmlFor="TitleFilter">
-                                                                Tiêu đề
-                                                            </label>
-                                                            <Field
-                                                                name="TitleFilter"
-                                                                key="TitleFilter"
-                                                                className="form-control "
-                                                            />
-                                                            {errors.TitleFilter &&
-                                                            touched.TitleFilter ? (
-                                                                <>
-                                                                    <div className="invalid-feedback">
-                                                                        {
-                                                                            errors.TitleFilter
-                                                                        }
-                                                                    </div>
-                                                                </>
-                                                            ) : null}
-                                                        </div>
-                                                        <div className="form-group col-md-4">
-                                                            <label htmlFor="MotaFilter">
-                                                                Mô tả
-                                                            </label>
-                                                            <Field
-                                                                name="MotaFilter"
-                                                                key="MotaFilter"
-                                                                className="form-control "
-                                                            />
-                                                            {errors.MotaFilter &&
-                                                            touched.MotaFilter ? (
-                                                                <>
-                                                                    <div className="invalid-feedback">
-                                                                        {
-                                                                            errors.MotaFilter
-                                                                        }
-                                                                    </div>
-                                                                </>
-                                                            ) : null}
-                                                        </div>
-                                                        <div className="form-group col-md-4">
-                                                            <label htmlFor="KeywordFilter">
-                                                                KeyWord
-                                                            </label>
-                                                            <Field
-                                                                name="KeywordFilter"
-                                                                key="KeywordFilter"
-                                                                className="form-control "
-                                                            />
-                                                            {errors.KeywordFilter &&
-                                                            touched.KeywordFilter ? (
-                                                                <>
-                                                                    <div className="invalid-feedback">
-                                                                        {
-                                                                            errors.KeywordFilter
-                                                                        }
-                                                                    </div>
-                                                                </>
-                                                            ) : null}
-                                                        </div>
-                                                    </div>
-                                                    <div className="form-row">
-                                                        <div className="form-group col-md-4">
-                                                            <label htmlFor="IsHotFilter">
-                                                                Nổi bật
-                                                            </label>
-                                                            <Field
-                                                                as="select"
-                                                                name="IsHotFilter"
-                                                                key="IsHotFilter"
-                                                                className="form-control"
-                                                            >
-                                                                <option value="">
-                                                                    --Chọn--
-                                                                </option>
-                                                                <option value="On">
-                                                                    Có
-                                                                </option>
-                                                                <option value="Off">
-                                                                    Không
-                                                                </option>
-                                                            </Field>
-                                                            {errors.IsHotFilter &&
-                                                            touched.IsHotFilter ? (
-                                                                <>
-                                                                    <div className="invalid-feedback">
-                                                                        {
-                                                                            errors.IsHotFilter
-                                                                        }
-                                                                    </div>
-                                                                </>
-                                                            ) : null}
-                                                        </div>
-                                                        <div className="form-group col-md-4">
-                                                            <label htmlFor="TrangThaiFilter">
-                                                                Trạng thái
-                                                            </label>
-                                                            <Field
-                                                                as="select"
-                                                                name="TrangThaiFilter"
-                                                                key="TrangThaiFilter"
-                                                                className="form-control "
-                                                            >
-                                                                <option value="">
-                                                                    --Chọn--
-                                                                </option>
-                                                                <option value="BanThao">
-                                                                    Bản thảo
-                                                                </option>
-                                                                <option value="PhatHanh">
-                                                                    Phát hành
-                                                                </option>
-                                                                <option value="Huy">
-                                                                    Hủy
-                                                                </option>
-                                                            </Field>
-                                                            {errors.TrangThaiFilter &&
-                                                            touched.TrangThaiFilter ? (
-                                                                <>
-                                                                    <div className="invalid-feedback">
-                                                                        {
-                                                                            errors.TrangThaiFilter
-                                                                        }
-                                                                    </div>
-                                                                </>
-                                                            ) : null}
-                                                        </div>
-                                                        <div className="form-group col-md-4">
-                                                            <label htmlFor="CategoryIdFilter">
-                                                                Loại tin bài
-                                                            </label>
-                                                            <Field
-                                                                as="select"
-                                                                name="CategoryIdFilter"
-                                                                key="CategoryIdFilter"
-                                                                className="form-control"
-                                                            >
-                                                                <option value="">
-                                                                    --Chọn--
-                                                                </option>
-                                                                {lstCatetory.map(
-                                                                    (
-                                                                        item,
-                                                                        ind
-                                                                    ) => {
-                                                                        return (
-                                                                            <option
-                                                                                key={
-                                                                                    ind
-                                                                                }
-                                                                                value={
-                                                                                    item.Id
-                                                                                }
-                                                                            >
-                                                                                {
-                                                                                    item.Name
-                                                                                }
-                                                                            </option>
-                                                                        );
+                            <Card title="Tìm kiếm">
+                                <Form
+                                    labelCol={{span: 24}}
+                                    wrapperCol={{span: 24}}
+                                    layout="vertical"
+                                    initialValues={{
+                                        TitleFilter: searchModel.TitleFilter,
+                                        MotaFilter: searchModel.MotaFilter,
+                                        KeywordFilter:
+                                            searchModel.KeywordFilter,
+                                        IsHotFilter: searchModel.IsHotFilter,
+                                        TrangThaiFilter:
+                                            searchModel.TrangThaiFilter,
+                                        CategoryIdFilter:
+                                            searchModel.CategoryIdFilter
+                                    }}
+                                    onFinish={(values) =>
+                                        onSubmitSearchSave(values)
+                                    }
+                                >
+                                    <Row gutter={[10, 5]}>
+                                        <Col
+                                            lg={{span: 8}}
+                                            md={{span: 8}}
+                                            sm={{span: 12}}
+                                            xs={{span: 24}}
+                                        >
+                                            <Form.Item
+                                                name="TitleFilter"
+                                                label="Tiêu đề"
+                                                rules={[
+                                                    {
+                                                        min: 2,
+                                                        message:
+                                                            'Vui lòng nhập ít nhất 2 ký tự'
+                                                    }
+                                                ]}
+                                                validateTrigger={[
+                                                    'onBlur',
+                                                    'onChange'
+                                                ]}
+                                            >
+                                                <Input name="TitleFilter" />
+                                            </Form.Item>
+                                        </Col>
+
+                                        <Col
+                                            lg={{span: 8}}
+                                            md={{span: 8}}
+                                            sm={{span: 12}}
+                                            xs={{span: 24}}
+                                        >
+                                            <Form.Item
+                                                name="MotaFilter"
+                                                label="Mô tả"
+                                                rules={[
+                                                    {
+                                                        min: 2,
+                                                        message:
+                                                            'Vui lòng nhập ít nhất 2 ký tự'
+                                                    }
+                                                ]}
+                                                validateTrigger={[
+                                                    'onBlur',
+                                                    'onChange'
+                                                ]}
+                                            >
+                                                <Input name="MotaFilter" />
+                                            </Form.Item>
+                                        </Col>
+
+                                        <Col
+                                            lg={{span: 8}}
+                                            md={{span: 8}}
+                                            sm={{span: 12}}
+                                            xs={{span: 24}}
+                                        >
+                                            <Form.Item
+                                                name="KeywordFilter"
+                                                label="Keyword"
+                                                rules={[
+                                                    {
+                                                        min: 2,
+                                                        message:
+                                                            'Vui lòng nhập ít nhất 2 ký tự'
+                                                    }
+                                                ]}
+                                                validateTrigger={[
+                                                    'onBlur',
+                                                    'onChange'
+                                                ]}
+                                            >
+                                                <Input name="KeywordFilter" />
+                                            </Form.Item>
+                                        </Col>
+                                    </Row>
+
+                                    <Row gutter={[10, 20]}>
+                                        <Col
+                                            lg={{span: 8}}
+                                            md={{span: 8}}
+                                            sm={{span: 12}}
+                                            xs={{span: 24}}
+                                        >
+                                            <Form.Item
+                                                label="Nổi bật"
+                                                name="IsHotFilter"
+                                            >
+                                                <Select>
+                                                    <Select.Option value="">
+                                                        --Chọn--
+                                                    </Select.Option>
+                                                    <Select.Option value="On">
+                                                        Có
+                                                    </Select.Option>
+                                                    <Select.Option value="Off">
+                                                        Không
+                                                    </Select.Option>
+                                                </Select>
+                                            </Form.Item>
+                                        </Col>
+
+                                        <Col
+                                            lg={{span: 8}}
+                                            md={{span: 8}}
+                                            sm={{span: 12}}
+                                            xs={{span: 24}}
+                                        >
+                                            <Form.Item
+                                                label="Trạng thái"
+                                                name="TrangThaiFilter"
+                                            >
+                                                <Select>
+                                                    <Select.Option value="">
+                                                        --Chọn--
+                                                    </Select.Option>
+                                                    <Select.Option value="BanThao">
+                                                        Bản thảo
+                                                    </Select.Option>
+                                                    <Select.Option value="PhatHanh">
+                                                        Phát hành
+                                                    </Select.Option>
+                                                    <Select.Option value="Huy">
+                                                        Hủy
+                                                    </Select.Option>
+                                                </Select>
+                                            </Form.Item>
+                                        </Col>
+
+                                        <Col
+                                            lg={{span: 8}}
+                                            md={{span: 8}}
+                                            sm={{span: 12}}
+                                            xs={{span: 24}}
+                                        >
+                                            <Form.Item
+                                                label="Loại tin bài"
+                                                name="CategoryIdFilter"
+                                            >
+                                                <Select>
+                                                    <Select.Option value="">
+                                                        --Chọn--
+                                                    </Select.Option>
+                                                    {lstCatetory.map(
+                                                        (item, index) => {
+                                                            return (
+                                                                <Select.Option
+                                                                    key={index}
+                                                                    value={
+                                                                        item.Id
                                                                     }
-                                                                )}
-                                                            </Field>
-                                                            {errors.CategoryIdFilter &&
-                                                            touched.CategoryIdFilter ? (
-                                                                <>
-                                                                    <div className="invalid-feedback">
-                                                                        {
-                                                                            errors.CategoryIdFilter
-                                                                        }
-                                                                    </div>
-                                                                </>
-                                                            ) : null}
-                                                        </div>
-                                                    </div>
-                                                    <div className="form-row">
-                                                        <Button
-                                                            variant="success"
-                                                            size="md"
-                                                            type="submit"
-                                                            className="button-action"
-                                                        >
-                                                            <i
-                                                                className="fa fa-search"
-                                                                aria-hidden="true"
-                                                            />{' '}
-                                                            Tìm kiếm
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            </Form>
-                                        )}
-                                    </Formik>
-                                </Card.Body>
+                                                                >
+                                                                    {item.Name}
+                                                                </Select.Option>
+                                                            );
+                                                        }
+                                                    )}
+                                                </Select>
+                                            </Form.Item>
+                                        </Col>
+                                    </Row>
+
+                                    <Row>
+                                        <Col>
+                                            <Button
+                                                type="primary"
+                                                htmlType="submit"
+                                            >
+                                                Tìm kiếm
+                                            </Button>
+                                        </Col>
+                                    </Row>
+                                </Form>
                             </Card>
                         </div>
                     </div>
@@ -1213,10 +1138,11 @@ const TinTucAdm = (props) => {
             </section>
         );
     };
-    const NextPage = (pageInd) => {
+    const NextPage = (page, pageSize) => {
         const searchMd = {
             ...searchModel,
-            PageIndex: pageInd
+            PageIndex: page,
+            PageSize: pageSize
         };
         onSubmitSearchSave(searchMd);
     };
@@ -1249,268 +1175,197 @@ const TinTucAdm = (props) => {
 
     const RenderDsTable = () => {
         let lstItem = [];
-        let pageSiz = 20;
+        let pageSiz = 5;
         let pageInd = 1;
+        let Count = 0;
         if (lstTinTuc.ListItem !== undefined) {
             lstItem = lstTinTuc.ListItem;
             pageInd = lstTinTuc.CurrentPage;
+            Count = lstTinTuc.Count;
         }
         if (searchModel !== undefined) {
             pageSiz = searchModel.PageSize;
         }
+        const rowSelection = {
+            // onChange: (selectedRowKeys, selectedRows) => {
+            //     dataSelected = selectedRowKeys;
+            // },
+            // getCheckboxProps: (record) => ({
+            //     // disabled: record.name === 'Disabled User',
+            //     // // Column configuration not to be checked
+            //     // name: record.name
+            // })
+            onChange: (selectedRowKeys, selectedRows) => {
+                // console.log(
+                //     `selectedRowKeys: ${selectedRowKeys}`,
+                //     'selectedRows: ',
+                //     selectedRows
+                // );
+                dataSelected = selectedRowKeys;
+            }
+        };
+        const getMenu = (record) => (
+            <>
+                <Menu>
+                    <Menu.Item
+                        key={`sua_${record.Id}`}
+                        icon={<antIcon.EditOutlined />}
+                        onClick={
+                            () => {
+                                props.history.push(
+                                    `/Admin/CapNhatTinBai/${record.Id}`
+                                );
+                            }
+                            // onEditTinTuc(item.Id)
+                        }
+                    >
+                        Sửa
+                    </Menu.Item>
+                    <Menu.Item
+                        key={`xoa_${record.Id}`}
+                        icon={<antIcon.DeleteOutlined />}
+                        onClick={() => DeleteAction(record.Id)}
+                    >
+                        Xóa
+                    </Menu.Item>
+                </Menu>
+            </>
+        );
+        const columns = [
+            {
+                title: 'STT',
+                key: 'STT',
+                render: (text, record, index) => (
+                    <div>{(pageInd - 1) * pageSiz + index + 1}</div>
+                )
+            },
+            {
+                title: 'Thao tác',
+                key: 'action',
+                render: (text, record) => (
+                    <Dropdown.Button
+                        onClick={() => onOpenDetailModal(record.Id)}
+                        overlay={() => getMenu(record)}
+                    >
+                        Chi tiết
+                    </Dropdown.Button>
+                )
+            },
+            {
+                title: 'Ảnh',
+                key: 'Avatar',
+                className: 'imgHinhAnhCol .mw-image-avatar',
+                render: (text, record, index) => {
+                    return (
+                        <div>
+                            {record.ImageData !== '' ? (
+                                <>
+                                    <img
+                                        src={`${Constant.PathServer}${record.ImageData}`}
+                                        alt=""
+                                        onError={NotFoundImage}
+                                        className="imgHinhAnhAccount img-thumbnail"
+                                    />
+                                </>
+                            ) : (
+                                <></>
+                            )}
+                        </div>
+                    );
+                }
+            },
+            {
+                title: 'Tiêu đề',
+                key: 'TieuDe',
+                render: (text, record, index) => {
+                    return (
+                        <div className="tableBoxMain">
+                            <div className="tableBoxMain-label">
+                                {record.Title}
+                            </div>
+                        </div>
+                    );
+                }
+            },
+            {
+                title: 'Mô tả',
+                key: 'MoTa',
+                render: (text, record, index) => {
+                    return <div>{record.Description}</div>;
+                }
+            },
+            {
+                title: 'Nổi bật',
+                key: 'NoiBat',
+                render: (text, record, index) => {
+                    return record.IsHot ? (
+                        <i className="fas fa-check" />
+                    ) : (
+                        <i className="fas fa-times" />
+                    );
+                }
+            },
+            {
+                title: 'Trạng Thái',
+                key: 'TrangThai',
+                render: (text, record, index) => {
+                    return <div>{record.StatusName}</div>;
+                }
+            },
+            {
+                title: 'Loại tin bài',
+                key: 'LoaiTinBai',
+                render: (text, record, index) => {
+                    return (
+                        <div>
+                            {record.categoryNews != null
+                                ? record.categoryNews.Name
+                                : ''}
+                        </div>
+                    );
+                }
+            },
+            {
+                title: 'Ngày phát hành',
+                key: 'NgayPhatHanh',
+                render: (text, record, index) => {
+                    return (
+                        <div>
+                            {CommonUtility.ShowDateVN(record.PublishTime)}
+                        </div>
+                    );
+                }
+            },
+            {
+                title: 'KeyWord',
+                key: 'Keyword',
+                render: (text, record, index) => {
+                    return <div>{record.KeyWord}</div>;
+                }
+            }
+        ];
         return (
             <>
                 <EditModal />
                 <DetailModal />
 
-                <div className="table-responsive">
-                    <table className="table table-hinetNew" id="dsTable">
-                        <thead>
-                            <tr>
-                                <th scope="col">
-                                    <input
-                                        type="checkbox"
-                                        className="checkAll"
-                                        onClick={(e) =>
-                                            CheckAllItem(e, 'dsTable')
-                                        }
-                                    />
-                                </th>
-                                <th scope="col">#</th>
-                                <th
-                                    scope="col"
-                                    className="imgHinhAnhCol .mw-image-avatar "
-                                >
-                                    Ảnh
-                                </th>
-                                <th scope="col" className="widthColTableMedium">
-                                    Tiêu đề
-                                </th>
-                                <th scope="col">Mô tả</th>
-                                <th scope="col">Nổi bật</th>
-                                <th scope="col">Loại tin bài</th>
-                                <th scope="col">Trạng thái</th>
-                                <th scope="col">Ngày phát hành</th>
-                                <th scope="col">KeyWord</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {lstItem.length > 0 ? (
-                                lstItem.map((item, key) => {
-                                    const rIndex =
-                                        (pageInd - 1) * pageSiz + key + 1;
-                                    return (
-                                        <tr
-                                            key={key}
-                                            onClick={(e) =>
-                                                CheckRowsHinetTable(e)
-                                            }
-                                        >
-                                            <td>
-                                                <input
-                                                    className="checkTd"
-                                                    type="checkbox"
-                                                    data-id={item.Id}
-                                                    onClick={(e) =>
-                                                        CheckRowsHinetTable(e)
-                                                    }
-                                                />
-                                            </td>
-                                            <th scope="row">{rIndex}</th>
-                                            <td>
-                                                {item.ImageData !== '' ? (
-                                                    <>
-                                                        <img
-                                                            src={`${Constant.PathServer}${item.ImageData}`}
-                                                            onError={
-                                                                NotFoundImage
-                                                            }
-                                                            alt=""
-                                                            className="imgHinhAnh img-thumbnail"
-                                                        />
-                                                    </>
-                                                ) : (
-                                                    <></>
-                                                )}
-                                            </td>
-                                            <td>
-                                                <div className="tableBoxMain">
-                                                    <div className="tableBoxMain-label">
-                                                        {item.Title}
-                                                    </div>
-                                                    <div className="tableBoxMain-btnAction">
-                                                        <Dropdown>
-                                                            <Dropdown.Toggle
-                                                                size="sm"
-                                                                variant=""
-                                                                className="dropdowTableBtn"
-                                                            >
-                                                                <i
-                                                                    className="fa fa-ellipsis-h"
-                                                                    aria-hidden="true"
-                                                                />
-                                                            </Dropdown.Toggle>
-
-                                                            <Dropdown.Menu>
-                                                                <Dropdown.Item
-                                                                    onClick={
-                                                                        () => {
-                                                                            props.history.push(
-                                                                                `/Admin/CapNhatTinBai/${item.Id}`
-                                                                            );
-                                                                        }
-                                                                        // onEditTinTuc(item.Id)
-                                                                    }
-                                                                >
-                                                                    <span className="boxIcon">
-                                                                        <i className="fas fa-edit" />
-                                                                    </span>
-                                                                    <span>
-                                                                        Sửa
-                                                                    </span>
-                                                                </Dropdown.Item>
-                                                                <Dropdown.Item
-                                                                    onClick={() =>
-                                                                        DeleteAction(
-                                                                            item.Id
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    <span className="boxIcon">
-                                                                        <i className="fas fa-times" />
-                                                                    </span>
-                                                                    <span>
-                                                                        Xóa
-                                                                    </span>
-                                                                </Dropdown.Item>
-                                                                <Dropdown.Item
-                                                                    onClick={() =>
-                                                                        onOpenDetailModal(
-                                                                            item.Id
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    <span className="boxIcon">
-                                                                        <i className="fas fa-info-circle" />
-                                                                    </span>
-                                                                    <span>
-                                                                        Xem chi
-                                                                        tiết
-                                                                    </span>
-                                                                </Dropdown.Item>
-                                                            </Dropdown.Menu>
-                                                        </Dropdown>
-                                                    </div>
-                                                </div>
-                                            </td>
-
-                                            <td>{item.Description}</td>
-                                            <td>
-                                                {item.IsHot ? (
-                                                    <i className="fas fa-check" />
-                                                ) : (
-                                                    <i className="fas fa-times" />
-                                                )}
-                                            </td>
-                                            <td>
-                                                {item.categoryNews != null
-                                                    ? item.categoryNews.Name
-                                                    : ''}
-                                            </td>
-                                            <td>{item.StatusName}</td>
-                                            <td>
-                                                {CommonUtility.ShowDateVN(
-                                                    item.PublishTime
-                                                )}
-                                            </td>
-                                            <td>{item.KeyWord}</td>
-                                        </tr>
-                                    );
-                                })
-                            ) : (
-                                <NotDataToShow colNum={10} />
-                            )}
-                        </tbody>
-                        <thead>
-                            <tr>
-                                <th scope="col">
-                                    <input
-                                        type="checkbox"
-                                        className="checkAll"
-                                        onClick={(e) =>
-                                            CheckAllItem(e, 'dsTable')
-                                        }
-                                    />
-                                </th>
-                                <th scope="col">#</th>
-                                <th
-                                    scope="col"
-                                    className="imgHinhAnhCol .mw-image-avatar "
-                                >
-                                    Ảnh
-                                </th>
-                                <th scope="col" className="widthColTableMedium">
-                                    Tiêu đề
-                                </th>
-                                <th scope="col">Mô tả</th>
-                                <th scope="col">Nổi bật</th>
-                                <th scope="col">Loại tin bài</th>
-                                <th scope="col">Trạng thái</th>
-                                <th scope="col">Ngày phát hành</th>
-                                <th scope="col">KeyWord</th>
-                            </tr>
-                        </thead>
-                    </table>
-                </div>
-                <div>
-                    <div className="row">
-                        <div className="col-sm-6">
-                            Tổng số {lstTinTuc.Count} bản ghi trang hiện tại -
-                            tổng số {lstTinTuc.TotalPage} trang
-                        </div>
-
-                        <div className="col-sm-6 right">
-                            <nav
-                                aria-label="Page navigation "
-                                className="tblHinet-pagin"
-                            >
-                                <ul className="pagination pagination-sm">
-                                    <li className="page-item">
-                                        <Button
-                                            className="page-link"
-                                            onClick={() => NextPage(1)}
-                                            aria-label="Previous"
-                                        >
-                                            <span aria-hidden="true">
-                                                &laquo;
-                                            </span>
-                                            <span className="sr-only">
-                                                Previous
-                                            </span>
-                                        </Button>
-                                    </li>
-                                    <RenderPage />
-                                    <li className="page-item">
-                                        <Button
-                                            className="page-link"
-                                            onClick={() =>
-                                                NextPage(lstTinTuc.TotalPage)
-                                            }
-                                            aria-label="Next"
-                                        >
-                                            <span aria-hidden="true">
-                                                &raquo;
-                                            </span>
-                                            <span className="sr-only">
-                                                Next
-                                            </span>
-                                        </Button>
-                                    </li>
-                                </ul>
-                            </nav>
-                        </div>
-                    </div>
-                </div>
+                <Table
+                    rowKey="Id"
+                    columns={columns}
+                    rowSelection={rowSelection}
+                    dataSource={lstItem}
+                    pagination={{
+                        total: Count,
+                        showSizeChanger: true,
+                        showQuickJumper: true,
+                        pageSize: pageSiz,
+                        current: pageInd,
+                        showTotal: (total) => `Tổng cộng ${total} bản ghi`,
+                        onChange: (page, pageSize) => {
+                            NextPage(page, pageSize);
+                        }
+                    }}
+                />
             </>
         );
     };
@@ -1525,58 +1380,59 @@ const TinTucAdm = (props) => {
                         <div className="col-md-12">
                             <div className="card">
                                 <div className="p-2 card-header">
-                                    <Button
-                                        size="sm"
-                                        variant=""
-                                        className="btn-nobg"
-                                        onClick={() =>
-                                            props.history.push(
-                                                '/Admin/TaoMoiTinBai'
-                                            )
-                                        }
-                                    >
-                                        <i
-                                            className="fa fa-plus"
-                                            aria-hidden="true"
-                                        />{' '}
-                                        Tạo mới
-                                    </Button>
-                                    <Button
-                                        size="sm"
-                                        variant=""
-                                        className="btn-nobg"
-                                        onClick={() => ToggleSearchPanel()}
-                                    >
-                                        {showPanelSearch ? (
-                                            <>
-                                                <i
-                                                    className="fa fa-times"
-                                                    aria-hidden="true"
-                                                />{' '}
-                                                Đóng tìm kiếm
-                                            </>
-                                        ) : (
-                                            <>
-                                                <i
-                                                    className="fa fa-search"
-                                                    aria-hidden="true"
-                                                />{' '}
-                                                Tìm kiếm
-                                            </>
-                                        )}
-                                    </Button>
-                                    <Button
-                                        size="sm"
-                                        variant=""
-                                        className="btn-nobg"
-                                        onClick={() => DeleteMulTiBtnAction()}
-                                    >
-                                        <i
-                                            className="fa fa-trash"
-                                            aria-hidden="true"
-                                        />{' '}
-                                        Xóa
-                                    </Button>
+                                    <Space>
+                                        <Button
+                                            type="primary"
+                                            onClick={() =>
+                                                props.history.push(
+                                                    '/Admin/TaoMoiTinBai'
+                                                )
+                                            }
+                                        >
+                                            <i
+                                                className="fa fa-plus"
+                                                aria-hidden="true"
+                                            />
+                                            {'  '}
+                                            Tạo mới
+                                        </Button>
+
+                                        <Button
+                                            type="primary"
+                                            onClick={() => ToggleSearchPanel()}
+                                        >
+                                            {showPanelSearch ? (
+                                                <>
+                                                    <i
+                                                        className="fa fa-times"
+                                                        aria-hidden="true"
+                                                    />{' '}
+                                                    Đóng tìm kiếm
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <i
+                                                        className="fa fa-search"
+                                                        aria-hidden="true"
+                                                    />{' '}
+                                                    Tìm kiếm
+                                                </>
+                                            )}
+                                        </Button>
+
+                                        <Button
+                                            type="danger"
+                                            onClick={() =>
+                                                DeleteMulTiBtnAction()
+                                            }
+                                        >
+                                            <i
+                                                className="fa fa-trash"
+                                                aria-hidden="true"
+                                            />{' '}
+                                            &nbsp; Xóa
+                                        </Button>
+                                    </Space>
                                 </div>
                                 <div className="card-body">
                                     <div className="tab-content">

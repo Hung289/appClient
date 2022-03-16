@@ -16,8 +16,6 @@ import * as DangKyHienGuiTheConstant from '@modules/Common/DangKyHienGuiTheConst
 import axios from 'axios';
 import {
     Modal,
-    Button,
-    Col,
     Dropdown,
     ListGroup,
     ListGroupItem,
@@ -25,8 +23,24 @@ import {
     Tabs,
     Tab
 } from 'react-bootstrap';
+
+import {
+    Form,
+    Input,
+    DatePicker,
+    Space,
+    Radio,
+    Select,
+    Row,
+    Col,
+    layout,
+    Layout,
+    Upload,
+    Button,
+    Checkbox
+} from 'antd';
 import {Link, StaticRouter, useHistory, useParams} from 'react-router-dom';
-import {Formik, useFormik, Form, Field, useFormikContex} from 'formik';
+
 import {toast} from 'react-toastify';
 import * as dangKyHienTangService from '@app/services/dangKyHienTangService';
 import {
@@ -58,11 +72,14 @@ import ReactLoading from 'react-loading';
 
 import AdminSecsionHead from '../AdminSecsionHead';
 import DangKyHienEditAdm from './DangKyHienEditAdm';
+import UpdateHLAAdm from './UpdateHLAAdm';
+
 import DangKyHienCreateAdm from './DangKyHienCreateAdm';
 import DangKyHienSearchAdm from './DangKyHienSearchAdm';
 import DangKyHienDetailAdm from './DangKyHienDetailAdm';
 import DangKyHienTangChangeStatus from './DangKyHienTangChangeStatus';
 import DangKyHienTbl from './DangKyHienTbl';
+import HienTangCoQuanCreateAdm from '../HienTangCoQuanAdm/HienTangCoQuanCreateAdm';
 
 // import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
 const DangKyHienTangChoTiepNhanAdm = (props) => {
@@ -89,7 +106,18 @@ const DangKyHienTangChoTiepNhanAdm = (props) => {
         // searchModel,
         onSubmitSearchSave
     } = props;
+    const [showEditHLA, setShowEditHLA] = useState(false);
+    const handleEditHLAShow = () => setShowEditHLA(true);
+
+    const handleEditHLAClose = () => setShowEditHLA(false);
+    const [showEditVGB, setShowEditVGB] = useState(false);
+    const handleEditVGBShow = () => setShowEditVGB(true);
+
+    const handleEditVGBClose = () => setShowEditVGB(false);
     const [IsShowEditPopup, setIsShowEditPopup] = useState(false);
+    const [IsShowHienTangCoQuanPopup, setIsShowHienTangCoQuanPopup] = useState(
+        false
+    );
     const [IsShowCreatePopup, setIsShowCreatePopup] = useState(false);
     const [lstEntity, setlstEntity] = useState({});
     const [DetailData, setDetailData] = useState({});
@@ -106,6 +134,8 @@ const DangKyHienTangChoTiepNhanAdm = (props) => {
     const [itemId, setitemId] = useState(0);
     const [showChangeStatusModal, setshowChangeStatusModal] = useState(false);
     const [showDonModal, setshowDonModal] = useState(false);
+    const [DanhMucData, setDanhMucData] = useState({});
+
     const LoadEntityData = (typeStatusInp, objSearch) => {
         setisload(true);
         dangKyHienTangService
@@ -131,9 +161,29 @@ const DangKyHienTangChoTiepNhanAdm = (props) => {
         setshowChangeStatusModal(true);
     };
     const onEditEntity = async (id) => {
+        dangKyHienTangService.GetDetailDto(id).then((b) => {
+            setDetailData(b);
+            setIsShowEditPopup(true);
+        });
+    };
+
+    const onHienTangCoQuan = async (id) => {
+        dangKyHienTangService.GetDetailDto(id).then((data) => {
+            setDetailData(data);
+            setIsShowHienTangCoQuanPopup(true);
+        });
+    };
+
+    const onEditHLAEntity = async (id) => {
         dangKyHienTangService.OpenEditModalSV(id).then((b) => {
             setDetailData(b.entityObj);
-            setIsShowEditPopup(true);
+            setShowEditHLA(true);
+        });
+    };
+    const onEditVGBEntity = async (id) => {
+        dangKyHienTangService.OpenEditModalSV(id).then((b) => {
+            setDetailData(b.entityObj);
+            setShowEditVGB(true);
         });
     };
     const onUpDonDK = async (id) => {
@@ -223,6 +273,9 @@ const DangKyHienTangChoTiepNhanAdm = (props) => {
         }
     }
     useEffect(() => {
+        dangKyHienTangService.InitDanhMuc().then((rs) => {
+            setDanhMucData(rs);
+        });
         let isUnmount = false;
         // Update the document title using the browser API
         onReloadPage();
@@ -357,85 +410,88 @@ const DangKyHienTangChoTiepNhanAdm = (props) => {
                     size="md"
                     onHide={() => setshowDonModal(false)}
                 >
-                    <Modal.Header closeButton>
-                        <Modal.Title>
-                            Lưu thông tin đăng ký bản cứng
-                        </Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        <Formik
-                            innerRef={formRef}
-                            initialValues={{
-                                Id: itemId
-                            }}
-                            validationSchema={DonDKBanCungSchema}
-                            onSubmit={(values) => {
-                                let DonDK = false;
-                                const ObjSave = {
-                                    ...values
-                                };
-                                if (
-                                    FileSelectedDonDK !== undefined &&
-                                    FileSelectedDonDK.data
-                                ) {
-                                    ObjSave.imgDonDK = FileSelectedDonDK;
-                                    DonDK = true;
-                                }
-                                if (DonDK) {
-                                    SaveDonDKBanCung(ObjSave);
-                                } else {
-                                    toast.error('Bạn chưa tải file lên');
-                                }
-                            }}
-                        >
-                            {({errors, touched, setFieldValue}) => (
-                                <Form ref={formCreateEntity}>
-                                    <Field type="hidden" name="Id" key="Id" />
-                                    <div className="form-group ">
-                                        <label htmlFor="DonDKBanCung">
-                                            File đơn đăng ký bản cứng
-                                            <span className="red">*</span>
-                                        </label>
-                                        <Field
-                                            type="file"
-                                            id="DonDKBanCung"
+                    <Form
+                        onFinish={(values) => {
+                            let DonDK = false;
+                            const ObjSave = {
+                                ...values
+                            };
+                            if (
+                                FileSelectedDonDK !== undefined &&
+                                FileSelectedDonDK.data
+                            ) {
+                                ObjSave.imgDonDK = FileSelectedDonDK;
+                                DonDK = true;
+                            }
+                            if (DonDK) {
+                                SaveDonDKBanCung(ObjSave);
+                            } else {
+                                toast.error('Bạn chưa tải file lên');
+                            }
+                        }}
+                        labelCol={{span: 24}}
+                        wrapperCol={{span: 24}}
+                        layout="vertical"
+                        initialValues={{
+                            Id: itemId
+                        }}
+                    >
+                        <Modal.Header closeButton>
+                            <Modal.Title>
+                                Lưu thông tin đăng ký bản cứng
+                            </Modal.Title>
+                        </Modal.Header>
+                        <Modal.Body>
+                            <Form.Item name="Id" hidden>
+                                <Input name="Id" />
+                            </Form.Item>
+                            <Row gutter={[10, 5]}>
+                                <Col
+                                    lg={{span: 10}}
+                                    md={{span: 16}}
+                                    sm={{span: 24}}
+                                    xs={{span: 24}}
+                                >
+                                    <Form.Item
+                                        label="File đơn đăng ký bản cứng"
+                                        rules={[
+                                            {
+                                                required: true,
+                                                message:
+                                                    'Vui lòng nhập thông tin này'
+                                            }
+                                        ]}
+                                        name="DonDKBanCung"
+                                        validateTrigger={['onBlur', 'onChange']}
+                                    >
+                                        <Input
                                             name="DonDKBanCung"
-                                            key="DonDKBanCung"
-                                            className="form-control img-padding"
+                                            type="file"
                                             onChange={ChangeFileUploadDonDK}
                                         />
-
-                                        {errors.DonDKBanCung &&
-                                        touched.DonDKBanCung ? (
-                                            <>
-                                                <div className="invalid-feedback">
-                                                    {errors.DonDKBanCung}
-                                                </div>
-                                            </>
-                                        ) : null}
-                                        <div>
-                                            <i>
-                                                {' '}
-                                                Vui lòng tải file có định dạng:
-                                                .png, .jpg, .jpeg, .pdf{' '}
-                                            </i>
-                                        </div>
+                                    </Form.Item>
+                                    <div>
+                                        <i>
+                                            {' '}
+                                            Vui lòng tải file có định dạng:
+                                            .png, .jpg, .jpeg, .pdf{' '}
+                                        </i>
                                     </div>
-                                </Form>
-                            )}
-                        </Formik>
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button
-                            variant="secondary"
-                            onClick={() => setshowDonModal(false)}
-                        >
-                            Đóng
-                        </Button>
-                        <Button variant="primary" onClick={submitDon}>
-                            Hoàn thành
-                        </Button>
-                    </Modal.Footer>
+                                </Col>
+                            </Row>
+                        </Modal.Body>
+                        <Modal.Footer>
+                            <Button
+                                variant="secondary"
+                                onClick={() => setshowDonModal(false)}
+                            >
+                                Đóng
+                            </Button>
+                            <Button type="primary" htmlType="submit">
+                                Hoàn thành
+                            </Button>
+                        </Modal.Footer>
+                    </Form>
                 </Modal>
             </>
         );
@@ -478,6 +534,7 @@ const DangKyHienTangChoTiepNhanAdm = (props) => {
                                         setIsShowCreatePopup={
                                             setIsShowCreatePopup
                                         }
+                                        danhMucData={DanhMucData}
                                         OnLoadingAction={setisload}
                                         onReloadPage={onReloadPage}
                                     />
@@ -492,103 +549,127 @@ const DangKyHienTangChoTiepNhanAdm = (props) => {
                                         }
                                         statusNew={statusNew}
                                     />
-                                    <Button
-                                        variant=""
-                                        className="btn-nobg"
-                                        size="sm"
-                                        onClick={() => onCreateEntity()}
-                                    >
-                                        <i
-                                            className="fa fa-plus"
-                                            aria-hidden="true"
-                                        />
-                                        Tạo mới
-                                    </Button>
-                                    <Button
-                                        variant=""
-                                        className="btn-nobg "
-                                        size="sm"
-                                        onClick={() =>
-                                            setShowSearchPanel(!showSearchPanel)
-                                        }
-                                    >
-                                        {showSearchPanel ? (
-                                            <>
-                                                <i
-                                                    className="fa fa-times"
-                                                    aria-hidden="true"
-                                                />{' '}
-                                                Đóng tìm kiếm
-                                            </>
-                                        ) : (
-                                            <>
-                                                <i
-                                                    className="fa fa-search"
-                                                    aria-hidden="true"
-                                                />{' '}
-                                                Tìm kiếm
-                                            </>
-                                        )}
-                                    </Button>
-                                    <Button
-                                        size="sm"
-                                        variant=""
-                                        className="btn-nobg"
-                                        onClick={() => DeleteMulTiBtnAction()}
-                                    >
-                                        <i
-                                            className="fa fa-trash"
-                                            aria-hidden="true"
-                                        />{' '}
-                                        Xóa
-                                    </Button>
-                                    <Button
-                                        size="sm"
-                                        variant=""
-                                        className="btn-nobg"
-                                        onClick={() => OnChangGuiTheMuti()}
-                                    >
-                                        <i
-                                            className="fa fa-envelope"
-                                            aria-hidden="true"
-                                        />{' '}
-                                        Thông báo gửi thẻ
-                                    </Button>
-                                    <Button
-                                        size="sm"
-                                        variant=""
-                                        className="btn-nobg"
-                                    >
-                                        <a
-                                            href="/admin/dangkyhientang/importExcel"
-                                            style={{color: 'black'}}
+                                    <Space>
+                                        <Button
+                                            type="primary"
+                                            size="sm"
+                                            onClick={() => onCreateEntity()}
                                         >
                                             <i
-                                                className="fa fa-upload"
+                                                className="fa fa-plus"
                                                 aria-hidden="true"
-                                            />{' '}
-                                            Nhập Excel Hiến tạng
-                                        </a>
-                                    </Button>
-                                    {/* <Button size="sm" className="button-action">
-                                        <i
-                                            className="fa fa-reply"
-                                            aria-hidden="true"
-                                        />{' '}
-                                        Quay lại
-                                    </Button> */}
+                                            />
+                                            {'  '}
+                                            Tạo mới
+                                        </Button>
+                                        <Button
+                                            type="primary"
+                                            size="sm"
+                                            onClick={() =>
+                                                setShowSearchPanel(
+                                                    !showSearchPanel
+                                                )
+                                            }
+                                        >
+                                            {showSearchPanel ? (
+                                                <>
+                                                    <i
+                                                        className="fa fa-times"
+                                                        aria-hidden="true"
+                                                    />
+                                                    {'  '}
+                                                    Đóng tìm kiếm
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <i
+                                                        className="fa fa-search"
+                                                        aria-hidden="true"
+                                                    />
+                                                    {'  '}
+                                                    Tìm kiếm
+                                                </>
+                                            )}
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            type="danger"
+                                            onClick={() =>
+                                                DeleteMulTiBtnAction()
+                                            }
+                                        >
+                                            <i
+                                                className="fa fa-trash"
+                                                aria-hidden="true"
+                                            />
+                                            {'  '}
+                                            Xóa
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            type="primary"
+                                            onClick={() => OnChangGuiTheMuti()}
+                                        >
+                                            <i
+                                                className="fa fa-envelope"
+                                                aria-hidden="true"
+                                            />
+                                            {'  '}
+                                            Thông báo gửi thẻ
+                                        </Button>
+                                        <Button size="sm" type="primary">
+                                            <a href="/admin/dangkyhientang/importExcel">
+                                                <i
+                                                    className="fa fa-upload"
+                                                    aria-hidden="true"
+                                                />
+                                                {'  '}
+                                                Nhập Excel Hiến tạng
+                                            </a>
+                                        </Button>
+                                    </Space>
                                 </div>
                                 <div className="card-body nopadding">
                                     <div className="tab-content">
+                                        <HienTangCoQuanCreateAdm
+                                            IsShowCreatePopup={
+                                                IsShowHienTangCoQuanPopup
+                                            }
+                                            entityObj={DetailData}
+                                            setIsShowCreatePopup={
+                                                setIsShowHienTangCoQuanPopup
+                                            }
+                                            OnLoadingAction={setisload}
+                                            onReloadPage={onReloadPage}
+                                        />
                                         <DangKyHienEditAdm
                                             IsShowEditPopup={IsShowEditPopup}
                                             entityObj={DetailData}
                                             onCloseEntityEditModal={() => {
                                                 setIsShowEditPopup(false);
                                             }}
+                                            danhMucData={DanhMucData}
                                             OnLoadingAction={setisload}
                                             onReloadPage={onReloadPage}
                                         />
+                                        <UpdateHLAAdm
+                                            showEditHLA={showEditHLA}
+                                            entityObj={DetailData}
+                                            handleEditHLAClose={
+                                                handleEditHLAClose
+                                            }
+                                            OnLoadingAction={setisload}
+                                            onReloadPage={onReloadPage}
+                                        />
+                                        {/* <UpdateViemGanB
+                                            showEditVGB={showEditVGB}
+                                            entityObj={DetailData}
+                                            handleEditVGBClose={
+                                                handleEditVGBClose
+                                            }
+                                            OnLoadingAction={setisload}
+                                            onReloadPage={onReloadPage}
+                                        /> */}
                                         <DangKyHienDetailAdm
                                             showDetailModal={showDetailModal}
                                             setshowDetailModal={
@@ -604,6 +685,9 @@ const DangKyHienTangChoTiepNhanAdm = (props) => {
                                             onInPhieu={onInPhieu}
                                             searchModel={searchModel}
                                             onEditEntity={onEditEntity}
+                                            onHienTangCoQuan={onHienTangCoQuan}
+                                            onEditHLAEntity={onEditHLAEntity}
+                                            onEditVGBEntity={onEditVGBEntity}
                                             onChangGuiThe={onChangGuiThe}
                                             setitemId={setitemId}
                                             onUpDonDK={onUpDonDK}

@@ -101,6 +101,7 @@ export const LoadTinTuc = (dispatch, objSearch) => {
     })
         .then((response) => response.json())
         .then((json) => {
+            console.log(json);
             CheckLogin(dispatch, json);
             dispatch({
                 type: TypeActions.LOAD_TINTUC,

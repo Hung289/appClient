@@ -15,16 +15,8 @@ import {
     ROLE_EDIT_CLOSE,
     ROLE_SEARCH_SAVE
 } from '@app/store/ActionType/RoleTypeAction';
-import {
-    Button,
-    Card,
-    Col,
-    Dropdown,
-    ListGroup,
-    ListGroupItem,
-    Modal
-} from 'react-bootstrap';
-import {Field, Form, Formik, useFormik, useFormikContex} from 'formik';
+import {Button, Col, Dropdown, ListGroup, ListGroupItem} from 'react-bootstrap';
+import {Field, Formik, useFormik, useFormikContex} from 'formik';
 import {Link, useHistory} from 'react-router-dom';
 import React, {useEffect, useRef, useState} from 'react';
 
@@ -36,6 +28,9 @@ import axios from 'axios';
 import {confirmAlert} from 'react-confirm-alert'; // Import
 import {connect} from 'react-redux';
 import {toast} from 'react-toastify';
+import {Card, Modal, Form, Input, Checkbox} from 'antd';
+import moment from 'moment';
+import * as antIcon from '@ant-design/icons';
 import {ContextMenu, MenuItem, ContextMenuTrigger} from 'react-contextmenu';
 
 const AddOperation = React.memo((props) => {
@@ -44,187 +39,143 @@ const AddOperation = React.memo((props) => {
     const formRef = useRef();
     const submitCreate = () => {
         if (formRef.current) {
-            formRef.current.handleSubmit();
+            formRef.current.submit();
         }
     };
 
     useEffect(() => {
         return () => {};
     }, []);
-    // const SignupSchema = Yup.object().shape({
-    //     Name: Yup.string()
-    //         .trim()
-    //         .min(2, 'Vui lòng nhập ít nhất 2 ký tự')
-    //         .max(255, 'Vui lòng nhập không quá 255 ký tự')
-    //         .required('Vui lòng nhập thông tin này')
-    //         .test(
-    //             'len',
-    //             'Thông tin này chỉ được sử dụng chữ cái và số',
-    //             (val) => {
-    //                 const str = removeAscent(val);
-    //                 return /^[a-zA-Z0-9 ]*$/.test(str);
-    //             }
-    //         ),
-    //     Code: Yup.string()
-    //         .trim()
-    //         .min(2, 'Vui lòng nhập ít nhất 2 ký tự')
-    //         .required('Vui lòng nhập thông tin này')
-    //         .test(
-    //             'len',
-    //             'Thông tin này chỉ được sử dụng chữ cái và số',
-    //             (val) => /^[a-zA-Z0-9 ]*$/.test(val)
-    //         )
-    // });
-    const MyCheckbox = ({field, form, label, ...rest}) => {
-        const {name, value: formikValue} = field;
-        const {setFieldValue} = form;
-
-        const handleChange = (event) => {
-            const values = formikValue || [];
-            const index = values.indexOf(rest.value);
-            if (index === -1) {
-                values.push(rest.value);
-            } else {
-                values.splice(index, 1);
-            }
-            setFieldValue(name, values);
-        };
-
-        return (
-            <label>
-                <input
-                    type="checkbox"
-                    onChange={handleChange}
-                    checked={formikValue.indexOf(rest.value) !== -1}
-                    {...rest}
-                />{' '}
-                <span> {label}</span>
-            </label>
-        );
-    };
     return (
         <>
             <Modal
-                show={ShowAddRole}
-                size="lg"
-                onHide={() => setShowAddRole(false)}
+                title="Thiết lập quyền cho vai trò"
+                visible={ShowAddRole}
+                onOk={submitCreate}
+                onCancel={() => setShowAddRole(false)}
+                width={1000}
+                zIndex={1040}
+                okText="Hoàn thành"
+                cancelText="Đóng"
+                // eslint-disable-next-line react/jsx-boolean-value
+                destroyOnClose={true}
             >
-                <Modal.Header closeButton>
-                    <Modal.Title>Thiết lập quyền cho vai trò</Modal.Title>
-                </Modal.Header>
-                <Modal.Body>
-                    <Formik
-                        innerRef={formRef}
-                        initialValues={{
-                            RoleId: Userid,
-                            operations: lstRoleId
-                        }}
-                        // validationSchema={SignupSchema}
-                        onSubmit={(values) => {
-                            const ObjSave = {
-                                ...values
-                            };
+                <Form
+                    ref={formRef}
+                    initialValues={{
+                        RoleId: Userid,
+                        operations: lstRoleId
+                    }}
+                    // validationSchema={SignupSchema}
+                    onFinish={(values) => {
+                        const ObjSave = {
+                            ...values
+                        };
+                        roleService.SaveOperationData(ObjSave).then((x) => {
+                            if (x.Status) {
+                                setShowAddRole(false);
+                                toast.success('Cập nhật quyền thành công');
+                            } else {
+                                toast.error(x.Message);
+                            }
+                        });
+                    }}
+                >
+                    <Form.Item name="RoleId" hidden>
+                        <Input name="RoleId" />
+                    </Form.Item>
 
-                            roleService.SaveOperationData(ObjSave).then((x) => {
-                                if (x.Status) {
-                                    setShowAddRole(false);
-                                    toast.success('Cập nhật quyền thành công');
-                                } else {
-                                    toast.error(x.Message);
-                                }
-                            });
-                        }}
-                    >
-                        {({errors, touched}) => (
-                            <Form>
-                                <Field type="hidden" name="Id" key="Id" />
-                                <div className="form-group">
-                                    <label htmlFor="title">
-                                        Thiết lập quyền
-                                    </label>
-                                    <div
-                                        role="group"
-                                        aria-labelledby="checkbox-group"
-                                    >
-                                        <div className="row">
-                                            {lstRole.map((item) => {
-                                                return (
-                                                    <div className="col-sm-4">
-                                                        <div id="accordion">
-                                                            <div className="card">
-                                                                <div
-                                                                    className="card-header"
-                                                                    id={`headingOne${item.Id}`}
+                    <Form.Item name="operations" defaultValue={lstRoleId}>
+                        <Checkbox.Group>
+                            <div className="form-group">
+                                <label htmlFor="title">Thiết lập quyền</label>
+                                <div
+                                    role="group"
+                                    aria-labelledby="checkbox-group"
+                                >
+                                    <div className="row">
+                                        {lstRole.map((item, index) => {
+                                            return (
+                                                <div
+                                                    className="col-sm-4"
+                                                    key={index}
+                                                >
+                                                    <div
+                                                        id="accordion"
+                                                        style={{
+                                                            marginBottom: '20px'
+                                                        }}
+                                                    >
+                                                        <Card
+                                                            hoverable
+                                                            title={
+                                                                // eslint-disable-next-line react/jsx-wrap-multilines
+                                                                <Button
+                                                                    className="btn btn-primary btn-sm"
+                                                                    data-toggle="collapse"
+                                                                    data-target={`#Clps${item.Id}`}
+                                                                    aria-expanded="true"
+                                                                    aria-controls="collapseOne"
                                                                 >
-                                                                    <h5 className="mb-0">
-                                                                        <Button
-                                                                            className="btn btn-primary btn-sm"
-                                                                            data-toggle="collapse"
-                                                                            data-target={`#Clps${item.Id}`}
-                                                                            aria-expanded="true"
-                                                                            aria-controls="collapseOne"
-                                                                        >
-                                                                            {
-                                                                                item.NameModule
-                                                                            }
-                                                                        </Button>
-                                                                    </h5>
-                                                                </div>
-
-                                                                <div
-                                                                    id={`Clps${item.Id}`}
-                                                                    className="collapse show"
-                                                                    aria-labelledby={`headingOne${item.Id}`}
-                                                                    // data-parent="#accordion"
-                                                                >
-                                                                    <div className="card-body">
-                                                                        {item.LstOperation.map(
-                                                                            (
-                                                                                opr
-                                                                            ) => {
-                                                                                return (
-                                                                                    <div>
-                                                                                        <Field
-                                                                                            component={
-                                                                                                MyCheckbox
-                                                                                            }
-                                                                                            name="operations"
-                                                                                            value={
-                                                                                                opr.Id
-                                                                                            }
-                                                                                            label={
-                                                                                                opr.Name
-                                                                                            }
-                                                                                        />
-                                                                                    </div>
-                                                                                );
-                                                                            }
-                                                                        )}
-                                                                    </div>
-                                                                </div>
+                                                                    {
+                                                                        item.NameModule
+                                                                    }
+                                                                </Button>
+                                                            }
+                                                            style={{
+                                                                width: '100%'
+                                                            }}
+                                                            bodyStyle={{
+                                                                padding:
+                                                                    '5px 10px'
+                                                            }}
+                                                            headStyle={{
+                                                                padding:
+                                                                    '5px 10px'
+                                                            }}
+                                                        >
+                                                            <div
+                                                                id={`Clps${item.Id}`}
+                                                                className="collapse show"
+                                                                aria-labelledby={`headingOne${item.Id}`}
+                                                                // data-parent="#accordion"
+                                                            >
+                                                                {item.LstOperation.map(
+                                                                    (
+                                                                        opr,
+                                                                        ind
+                                                                    ) => {
+                                                                        return (
+                                                                            <div
+                                                                                key={
+                                                                                    ind
+                                                                                }
+                                                                            >
+                                                                                <Checkbox
+                                                                                    value={
+                                                                                        opr.Id
+                                                                                    }
+                                                                                >
+                                                                                    {
+                                                                                        opr.Name
+                                                                                    }
+                                                                                </Checkbox>
+                                                                            </div>
+                                                                        );
+                                                                    }
+                                                                )}
                                                             </div>
-                                                        </div>
+                                                        </Card>
                                                     </div>
-                                                );
-                                            })}
-                                        </div>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 </div>
-                            </Form>
-                        )}
-                    </Formik>
-                </Modal.Body>
-                <Modal.Footer>
-                    <Button
-                        variant="secondary"
-                        onClick={() => setShowAddRole(false)}
-                    >
-                        Đóng
-                    </Button>
-                    <Button variant="primary" onClick={submitCreate}>
-                        Hoàn thành
-                    </Button>
-                </Modal.Footer>
+                            </div>
+                        </Checkbox.Group>
+                    </Form.Item>
+                </Form>
             </Modal>
         </>
     );

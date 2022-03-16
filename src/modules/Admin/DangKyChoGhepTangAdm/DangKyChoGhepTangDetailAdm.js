@@ -67,218 +67,807 @@ const DangKyChoGhepTangDetailAdm = (props) => {
         Select,
         notification,
         Descriptions,
-        Table
+        Table,
+        Tag
     } = antd;
     const {TabPane} = Tabs;
     const {Option} = Select;
     const {Column, ColumnGroup} = Table;
     const {showDetailModal, entityObj, setshowDetailModal} = props;
 
-    const [DataKQ, setDataKQ] = useState({});
-    const [DataKQHLA, setDataKQHLA] = useState({});
-    const [DataKQVGB, setDataKQVGB] = useState({});
-    const [DataKQVGC, setDataKQVGC] = useState({});
+    function RenderTabKQXN() {
+        const [DataKQ, setDataKQ] = useState({});
+        const [DataKQVGB, setDataKQVGB] = useState({});
+        const [DataKQVGC, setDataKQVGC] = useState({});
+        const [showCreateKQVGB, setshowCreateKQVGB] = useState();
 
-    const [showCreateKQVGB, setshowCreateKQVGB] = useState();
+        const [entityObjKQVGB, setEntityObjKQVGB] = useState({});
+        const [showCreateKQVGC, setshowCreateKQVGC] = useState();
 
-    const [entityObjKQVGB, setEntityObjKQVGB] = useState({});
-    const [showCreateKQVGC, setshowCreateKQVGC] = useState();
+        const [entityObjKQVGC, setEntityObjKQVGC] = useState({});
 
-    const [entityObjKQVGC, setEntityObjKQVGC] = useState({});
+        const [showCreateKQ, setshowCreateKQ] = useState();
 
-    const [showCreateKQHLA, setshowCreateKQHLA] = useState();
+        const [entityObjKQ, setEntityObjKQ] = useState({});
 
-    const [entityObjKQHLA, setEntityObjKQHLA] = useState({});
-
-    const [showCreateKQ, setshowCreateKQ] = useState();
-
-    const [entityObjKQ, setEntityObjKQ] = useState({});
-    const onCreateVGCEntity = () => {
-        setDataKQVGC({IdPhieu: entityObj.Id});
-        setshowCreateKQVGC(true);
-    };
-    const onEditVGCEntity = async (idKq) => {
-        KQXetNghiemVGCService.OpenEditModalSV(idKq).then((a) => {
-            setDataKQVGC(a.Data);
+        const onCreateVGCEntity = () => {
+            setDataKQVGC({IdPhieu: entityObj.Id});
             setshowCreateKQVGC(true);
-        });
-    };
-    const onCreateVGBEntity = () => {
-        setDataKQVGB({IdPhieu: entityObj.Id});
-        setshowCreateKQVGB(true);
-    };
-    const onEditVGBEntity = async (idKq) => {
-        KQXetNghiemVGBService.OpenEditModalSV(idKq).then((a) => {
-            setDataKQVGB(a.Data);
-            setshowCreateKQVGB(true);
-        });
-    };
-    const onCreateEntity = () => {
-        setDataKQ({IdPhieu: entityObj.Id});
-        setshowCreateKQ(true);
-    };
-    const onEditEntity = async (idKq) => {
-        KQXetNghiemPRAService.OpenEditModalSV(idKq).then((a) => {
-            setDataKQ(a.Data);
-            setshowCreateKQ(true);
-        });
-    };
-    const onCreateHLAEntity = () => {
-        setDataKQHLA({IdPhieu: entityObj.Id});
-        setshowCreateKQHLA(true);
-    };
-    const onEditHLAEntity = async (idKq) => {
-        KQXetNghiemHLAService.OpenEditModalSV(idKq).then((a) => {
-            setDataKQHLA(a.Data);
-            setshowCreateKQHLA(true);
-        });
-    };
-
-    const LoadData = () => {
-        setisload(true);
-        // dangKyChoGhepTangService.OpenDetail(id).then((rs) => {
-        //     if (rs.Status) {
-        //         setEntityObj(rs.Data);
-        //     } else {
-        //         toast.error(rs.MessageError);
-        //         if (rs.ErrorCode === 401) {
-        //             props.history.push('/login');
-        //         }
-        //     }
-        // });
-        KQXetNghiemPRAService.GetKQXetNghiem(entityObj.Id).then((rs) => {
-            if (rs.Status) {
-                setEntityObjKQ(rs.Data);
-            } else {
-                toast.error(rs.MessageError);
-                if (rs.ErrorCode === 401) {
-                    props.history.push('/login');
-                }
-            }
-        });
-        KQXetNghiemHLAService.GetKQXetNghiem(entityObj.Id).then((rs) => {
-            if (rs.Status) {
-                setEntityObjKQHLA(rs.Data);
-            } else {
-                toast.error(rs.MessageError);
-                if (rs.ErrorCode === 401) {
-                    props.history.push('/login');
-                }
-            }
-        });
-        KQXetNghiemVGBService.GetKQXetNghiem(entityObj.Id).then((rs) => {
-            if (rs.Status) {
-                setEntityObjKQVGB(rs.Data);
-            } else {
-                toast.error(rs.MessageError);
-                if (rs.ErrorCode === 401) {
-                    props.history.push('/login');
-                }
-            }
-        });
-        KQXetNghiemVGCService.GetKQXetNghiem(entityObj.Id).then((rs) => {
-            if (rs.Status) {
-                setEntityObjKQVGC(rs.Data);
-            } else {
-                toast.error(rs.MessageError);
-                if (rs.ErrorCode === 401) {
-                    props.history.push('/login');
-                }
-            }
-        });
-        setisload(false);
-    };
-
-    useEffect(() => {
-        let isUnmount = false;
-
-        LoadData();
-
-        return () => {
-            isUnmount = true;
         };
-    }, []);
-    const DeletePRAAction = (idKQ) => {
-        confirmAlert({
-            title: 'Xác nhận xóa?',
-            message: 'Bạn chắc chắn muốn xóa bỏ kết quả PRA này.',
-            buttons: [
-                {
-                    label: 'Xác nhận',
-                    onClick: () => {
-                        KQXetNghiemPRAService.DeleteEntity(idKQ).then((x) => {
-                            LoadData();
-                        });
-                    }
-                },
-                {
-                    label: 'Đóng',
-                    onClick: () => {}
-                }
-            ]
-        });
-    };
-    const DeleteVGBAction = (idKQ) => {
-        confirmAlert({
-            title: 'Xác nhận xóa?',
-            message: 'Bạn chắc chắn muốn xóa bỏ kết quả viêm gan B này.',
-            buttons: [
-                {
-                    label: 'Xác nhận',
-                    onClick: () => {
-                        KQXetNghiemVGBService.DeleteEntity(idKQ).then((x) => {
-                            LoadData();
-                        });
-                    }
-                },
-                {
-                    label: 'Đóng',
-                    onClick: () => {}
-                }
-            ]
-        });
-    };
-    const DeleteVGCAction = (idKQ) => {
-        confirmAlert({
-            title: 'Xác nhận xóa?',
-            message: 'Bạn chắc chắn muốn xóa bỏ kết quả viêm gan C này.',
-            buttons: [
-                {
-                    label: 'Xác nhận',
-                    onClick: () => {
-                        KQXetNghiemVGCService.DeleteEntity(idKQ).then((x) => {
-                            LoadData();
-                        });
-                    }
-                },
-                {
-                    label: 'Đóng',
-                    onClick: () => {}
-                }
-            ]
-        });
-    };
+        const onEditVGCEntity = async (idKq) => {
+            KQXetNghiemVGCService.OpenEditModalSV(idKq).then((a) => {
+                setDataKQVGC(a.Data);
+                setshowCreateKQVGC(true);
+            });
+        };
+        const onCreateVGBEntity = () => {
+            setDataKQVGB({IdPhieu: entityObj.Id});
+            setshowCreateKQVGB(true);
+        };
+        const onEditVGBEntity = async (idKq) => {
+            KQXetNghiemVGBService.OpenEditModalSV(idKq).then((a) => {
+                setDataKQVGB(a.Data);
+                setshowCreateKQVGB(true);
+            });
+        };
+        const onCreateEntity = () => {
+            setDataKQ({IdPhieu: entityObj.Id});
+            setshowCreateKQ(true);
+        };
+        const onEditEntity = async (idKq) => {
+            KQXetNghiemPRAService.OpenEditModalSV(idKq).then((a) => {
+                setDataKQ(a.Data);
+                setshowCreateKQ(true);
+            });
+        };
 
-    const DeleteHLAAction = (idKQ) => {
-        confirmAlert({
-            title: 'Xác nhận xóa?',
-            message: 'Bạn chắc chắn muốn xóa bỏ kết quả HLA này.',
-            buttons: [
-                {
-                    label: 'Xác nhận',
-                    onClick: () => {
-                        KQXetNghiemHLAService.DeleteEntity(idKQ).then((x) => {
-                            LoadData();
-                        });
+        const LoadData = () => {
+            setisload(true);
+            // dangKyChoGhepTangService.OpenDetail(id).then((rs) => {
+            //     if (rs.Status) {
+            //         setEntityObj(rs.Data);
+            //     } else {
+            //         toast.error(rs.MessageError);
+            //         if (rs.ErrorCode === 401) {
+            //             props.history.push('/login');
+            //         }
+            //     }
+            // });
+            KQXetNghiemPRAService.GetKQXetNghiem(entityObj.Id).then((rs) => {
+                if (rs.Status) {
+                    setEntityObjKQ(rs.Data);
+                } else {
+                    toast.error(rs.MessageError);
+                    if (rs.ErrorCode === 401) {
+                        props.history.push('/login');
                     }
-                },
-                {
-                    label: 'Đóng',
-                    onClick: () => {}
                 }
-            ]
-        });
-    };
+            });
+            KQXetNghiemVGBService.GetKQXetNghiem(entityObj.Id).then((rs) => {
+                if (rs.Status) {
+                    setEntityObjKQVGB(rs.Data);
+                } else {
+                    toast.error(rs.MessageError);
+                    if (rs.ErrorCode === 401) {
+                        props.history.push('/login');
+                    }
+                }
+            });
+            KQXetNghiemVGCService.GetKQXetNghiem(entityObj.Id).then((rs) => {
+                if (rs.Status) {
+                    setEntityObjKQVGC(rs.Data);
+                } else {
+                    toast.error(rs.MessageError);
+                    if (rs.ErrorCode === 401) {
+                        props.history.push('/login');
+                    }
+                }
+            });
+            setisload(false);
+        };
+
+        useEffect(() => {
+            let isUnmount = false;
+
+            LoadData();
+
+            return () => {
+                isUnmount = true;
+            };
+        }, []);
+
+        const DeletePRAAction = (idKQ) => {
+            confirmAlert({
+                title: 'Xác nhận xóa?',
+                message: 'Bạn chắc chắn muốn xóa bỏ kết quả PRA này.',
+                buttons: [
+                    {
+                        label: 'Xác nhận',
+                        onClick: () => {
+                            KQXetNghiemPRAService.DeleteEntity(idKQ).then(
+                                (x) => {
+                                    LoadData();
+                                }
+                            );
+                        }
+                    },
+                    {
+                        label: 'Đóng',
+                        onClick: () => {}
+                    }
+                ]
+            });
+        };
+        const DeleteVGBAction = (idKQ) => {
+            confirmAlert({
+                title: 'Xác nhận xóa?',
+                message: 'Bạn chắc chắn muốn xóa bỏ kết quả viêm gan B này.',
+                buttons: [
+                    {
+                        label: 'Xác nhận',
+                        onClick: () => {
+                            KQXetNghiemVGBService.DeleteEntity(idKQ).then(
+                                (x) => {
+                                    LoadData();
+                                }
+                            );
+                        }
+                    },
+                    {
+                        label: 'Đóng',
+                        onClick: () => {}
+                    }
+                ]
+            });
+        };
+        const DeleteVGCAction = (idKQ) => {
+            confirmAlert({
+                title: 'Xác nhận xóa?',
+                message: 'Bạn chắc chắn muốn xóa bỏ kết quả viêm gan C này.',
+                buttons: [
+                    {
+                        label: 'Xác nhận',
+                        onClick: () => {
+                            KQXetNghiemVGCService.DeleteEntity(idKQ).then(
+                                (x) => {
+                                    LoadData();
+                                }
+                            );
+                        }
+                    },
+                    {
+                        label: 'Đóng',
+                        onClick: () => {}
+                    }
+                ]
+            });
+        };
+        return (
+            <>
+                <div>
+                    <div className="row">
+                        <div className="col-md-12">
+                            <div className="card">
+                                <div className="card-header p-2">
+                                    <KQXetNghiemVGBAdm
+                                        showCreateKQVGB={showCreateKQVGB}
+                                        DataKQVGB={DataKQVGB}
+                                        setshowCreateKQVGB={setshowCreateKQVGB}
+                                        setisload={setisload}
+                                        LoadData={LoadData}
+                                    />
+
+                                    <Button
+                                        variant=""
+                                        className="btn btn-primary"
+                                        size="sm"
+                                        onClick={() => {
+                                            setshowCreateKQVGB(true);
+                                            onCreateVGBEntity();
+                                        }}
+                                    >
+                                        <i
+                                            className="fa fa-plus"
+                                            aria-hidden="true"
+                                        />
+                                        Tạo mới kết quả viêm gan B
+                                    </Button>
+                                </div>
+                                <div className="card-body nopadding">
+                                    <div className="table-responsive">
+                                        <table className="table table-hinetNew">
+                                            <thead>
+                                                <tr>
+                                                    <th
+                                                        colSpan={12}
+                                                        className="center red"
+                                                    >
+                                                        Kết quả xét nghiệm viêm
+                                                        gan B
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <thead>
+                                                <tr>
+                                                    <th>STT</th>
+                                                    <th
+                                                        scope="col"
+                                                        className="widthColTableMedium"
+                                                    >
+                                                        Ngày thực hiện
+                                                    </th>
+                                                    <th scope="col">
+                                                        Viêm gan B
+                                                    </th>
+                                                    <th scope="col">
+                                                        Định lượng HBV-DNA
+                                                        (copies/ml)
+                                                    </th>
+                                                    <th scope="col">
+                                                        Bị viêm gan
+                                                    </th>
+                                                    <th scope="col">
+                                                        Điều trị
+                                                    </th>
+                                                    <th scope="col">
+                                                        Thuốc điều trị
+                                                    </th>
+                                                    <th scope="col">
+                                                        Ngày bắt đầu điều trị
+                                                    </th>
+                                                    <th scope="col">
+                                                        Ngày kết thúc điều trị
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {entityObjKQVGB &&
+                                                entityObjKQVGB.length > 0 ? (
+                                                    entityObjKQVGB.map(
+                                                        (itm, key) => {
+                                                            const indx =
+                                                                key + 1;
+                                                            return (
+                                                                <tr>
+                                                                    <td>
+                                                                        {indx}
+                                                                    </td>
+                                                                    <td>
+                                                                        <div className="tableBoxMain">
+                                                                            <div className="tableBoxMain-label">
+                                                                                {CommonUtility.ShowDateVN(
+                                                                                    itm.NgayXetNghiemVGB
+                                                                                )}
+                                                                            </div>
+                                                                            <div className="tableBoxMain-btnAction">
+                                                                                <Dropdown>
+                                                                                    <Dropdown.Toggle
+                                                                                        size="sm"
+                                                                                        variant=""
+                                                                                        className="dropdowTableBtn"
+                                                                                    >
+                                                                                        <i
+                                                                                            className="fa fa-ellipsis-h"
+                                                                                            aria-hidden="true"
+                                                                                        />
+                                                                                    </Dropdown.Toggle>
+                                                                                    <Dropdown.Menu>
+                                                                                        <Dropdown.Item
+                                                                                            onClick={() =>
+                                                                                                onEditVGBEntity(
+                                                                                                    itm.Id
+                                                                                                )
+                                                                                            }
+                                                                                        >
+                                                                                            <span className="boxIcon">
+                                                                                                <i className="fas fa-edit" />
+                                                                                            </span>
+                                                                                            <span>
+                                                                                                Sửa
+                                                                                            </span>
+                                                                                        </Dropdown.Item>
+                                                                                        <Dropdown.Item
+                                                                                            onClick={() =>
+                                                                                                DeleteVGBAction(
+                                                                                                    itm.Id
+                                                                                                )
+                                                                                            }
+                                                                                        >
+                                                                                            <span className="boxIcon ">
+                                                                                                <i className="fas fa-times" />
+                                                                                            </span>
+                                                                                            <span>
+                                                                                                Xóa
+                                                                                            </span>
+                                                                                        </Dropdown.Item>
+                                                                                    </Dropdown.Menu>
+                                                                                </Dropdown>
+                                                                            </div>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td>
+                                                                        {itm.CoBiVGB ===
+                                                                        true
+                                                                            ? 'Dương tính'
+                                                                            : 'Âm tính'}
+                                                                    </td>
+                                                                    <td>
+                                                                        {
+                                                                            itm.KetQuaCopiesVGB
+                                                                        }
+                                                                    </td>
+                                                                    <td>
+                                                                        {
+                                                                            itm.BiBaoGioVGB
+                                                                        }
+                                                                    </td>
+                                                                    <td>
+                                                                        {itm.CoDieuTriVGB ===
+                                                                        true
+                                                                            ? 'Có'
+                                                                            : 'Không'}
+                                                                    </td>
+                                                                    <td>
+                                                                        {
+                                                                            itm.ThuocDieuTriVGB
+                                                                        }
+                                                                    </td>
+                                                                    <td>
+                                                                        {CommonUtility.ShowDateVN(
+                                                                            itm.NgayBatDauDieuTriVGB
+                                                                        )}
+                                                                    </td>
+                                                                    <td>
+                                                                        {CommonUtility.ShowDateVN(
+                                                                            itm.NgayKetThucDieuTriVGB
+                                                                        )}
+                                                                    </td>
+                                                                </tr>
+                                                            );
+                                                        }
+                                                    )
+                                                ) : (
+                                                    <tr>
+                                                        <td
+                                                            colSpan={12}
+                                                            className="center"
+                                                        >
+                                                            Không có dữ liệu
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="row">
+                        <hr />
+                        <hr />
+                        <hr />
+                    </div>
+                    <div className="row">
+                        <div className="col-md-12">
+                            <div className="card">
+                                <div className="card-header p-2">
+                                    <KQXetNghiemVGCAdm
+                                        showCreateKQVGC={showCreateKQVGC}
+                                        DataKQVGC={DataKQVGC}
+                                        setshowCreateKQVGC={setshowCreateKQVGC}
+                                        setisload={setisload}
+                                        LoadData={LoadData}
+                                    />
+
+                                    <Button
+                                        variant=""
+                                        className="btn btn-primary"
+                                        size="sm"
+                                        onClick={() => {
+                                            setshowCreateKQVGC(true);
+                                            onCreateVGCEntity();
+                                        }}
+                                    >
+                                        <i
+                                            className="fa fa-plus"
+                                            aria-hidden="true"
+                                        />
+                                        Tạo mới kết quả viêm gan C
+                                    </Button>
+                                </div>
+                                <div className="card-body nopadding">
+                                    <div className="table-responsive">
+                                        <table className="table table-hinetNew">
+                                            <thead>
+                                                <tr>
+                                                    <th
+                                                        colSpan={12}
+                                                        className="center red"
+                                                    >
+                                                        Kết quả xét nghiệm viêm
+                                                        gan C
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <thead>
+                                                <tr>
+                                                    <th>STT</th>
+                                                    <th
+                                                        scope="col"
+                                                        className="widthColTableMedium"
+                                                    >
+                                                        Ngày thực hiện
+                                                    </th>
+                                                    <th scope="col">
+                                                        Viêm gan C
+                                                    </th>
+                                                    <th scope="col">
+                                                        Định lượng HBV-DNA
+                                                        (copies/ml)
+                                                    </th>
+                                                    <th scope="col">
+                                                        Bị viêm gan
+                                                    </th>
+                                                    <th scope="col">
+                                                        Điều trị
+                                                    </th>
+                                                    <th scope="col">
+                                                        Thuốc điều trị
+                                                    </th>
+                                                    <th scope="col">
+                                                        Ngày bắt đầu điều trị
+                                                    </th>
+                                                    <th scope="col">
+                                                        Ngày kết thúc điều trị
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {entityObjKQVGC &&
+                                                entityObjKQVGC.length > 0 ? (
+                                                    entityObjKQVGC.map(
+                                                        (itm, key) => {
+                                                            const indx =
+                                                                key + 1;
+                                                            return (
+                                                                <tr>
+                                                                    <td>
+                                                                        {indx}
+                                                                    </td>
+                                                                    <td>
+                                                                        <div className="tableBoxMain">
+                                                                            <div className="tableBoxMain-label">
+                                                                                {CommonUtility.ShowDateVN(
+                                                                                    itm.NgayXetNghiemVGC
+                                                                                )}
+                                                                            </div>
+                                                                            <div className="tableBoxMain-btnAction">
+                                                                                <Dropdown>
+                                                                                    <Dropdown.Toggle
+                                                                                        size="sm"
+                                                                                        variant=""
+                                                                                        className="dropdowTableBtn"
+                                                                                    >
+                                                                                        <i
+                                                                                            className="fa fa-ellipsis-h"
+                                                                                            aria-hidden="true"
+                                                                                        />
+                                                                                    </Dropdown.Toggle>
+                                                                                    <Dropdown.Menu>
+                                                                                        <Dropdown.Item
+                                                                                            onClick={() =>
+                                                                                                onEditVGCEntity(
+                                                                                                    itm.Id
+                                                                                                )
+                                                                                            }
+                                                                                        >
+                                                                                            <span className="boxIcon">
+                                                                                                <i className="fas fa-edit" />
+                                                                                            </span>
+                                                                                            <span>
+                                                                                                Sửa
+                                                                                            </span>
+                                                                                        </Dropdown.Item>
+                                                                                        <Dropdown.Item
+                                                                                            onClick={() =>
+                                                                                                DeleteVGCAction(
+                                                                                                    itm.Id
+                                                                                                )
+                                                                                            }
+                                                                                        >
+                                                                                            <span className="boxIcon ">
+                                                                                                <i className="fas fa-times" />
+                                                                                            </span>
+                                                                                            <span>
+                                                                                                Xóa
+                                                                                            </span>
+                                                                                        </Dropdown.Item>
+                                                                                    </Dropdown.Menu>
+                                                                                </Dropdown>
+                                                                            </div>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td>
+                                                                        {itm.CoBiVGC ===
+                                                                        true
+                                                                            ? 'Dương tính'
+                                                                            : 'Âm tính'}
+                                                                    </td>
+                                                                    <td>
+                                                                        {
+                                                                            itm.KetQuaCopiesVGC
+                                                                        }
+                                                                    </td>
+                                                                    <td>
+                                                                        {
+                                                                            itm.BiBaoGioVGC
+                                                                        }
+                                                                    </td>
+                                                                    <td>
+                                                                        {itm.CoDieuTriVGC ===
+                                                                        true
+                                                                            ? 'Có'
+                                                                            : 'Không'}
+                                                                    </td>
+                                                                    <td>
+                                                                        {
+                                                                            itm.ThuocDieuTriVGC
+                                                                        }
+                                                                    </td>
+                                                                    <td>
+                                                                        {CommonUtility.ShowDateVN(
+                                                                            itm.NgayBatDauDieuTriVGC
+                                                                        )}
+                                                                    </td>
+                                                                    <td>
+                                                                        {CommonUtility.ShowDateVN(
+                                                                            itm.NgayKetThucDieuTriVGC
+                                                                        )}
+                                                                    </td>
+                                                                </tr>
+                                                            );
+                                                        }
+                                                    )
+                                                ) : (
+                                                    <tr>
+                                                        <td
+                                                            colSpan={12}
+                                                            className="center"
+                                                        >
+                                                            Không có dữ liệu
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="row">
+                        <hr />
+                        <hr />
+                        <hr />
+                    </div>
+                    <div className="row">
+                        <div className="col-md-12">
+                            <div className="card">
+                                <div className="card-header p-2">
+                                    <KQXetNghiemPRAAdm
+                                        showCreateKQ={showCreateKQ}
+                                        DataKQ={DataKQ}
+                                        setshowCreateKQ={setshowCreateKQ}
+                                        setisload={setisload}
+                                        LoadData={LoadData}
+                                    />
+
+                                    <Button
+                                        variant=""
+                                        className="btn btn-primary"
+                                        size="sm"
+                                        onClick={() => {
+                                            setshowCreateKQ(true);
+                                            onCreateEntity();
+                                        }}
+                                    >
+                                        <i
+                                            className="fa fa-plus"
+                                            aria-hidden="true"
+                                        />
+                                        Tạo mới kết quả PRA
+                                    </Button>
+                                </div>
+                                <div className="card-body nopadding">
+                                    <div className="table-responsive">
+                                        <table className="table table-hinetNew">
+                                            <thead>
+                                                <tr>
+                                                    <th
+                                                        colSpan={12}
+                                                        className="center red"
+                                                    >
+                                                        Kết quả xét nghiệm PRA
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <thead>
+                                                <tr>
+                                                    <th>STT</th>
+                                                    <th
+                                                        scope="col"
+                                                        className="widthColTableMedium"
+                                                    >
+                                                        Ngày thực hiện
+                                                    </th>
+                                                    <th scope="col">
+                                                        Tỷ lệ PRA
+                                                    </th>
+                                                    <th scope="col">A</th>
+                                                    <th scope="col">B</th>
+                                                    <th scope="col">DR</th>
+                                                    <th scope="col">DQ</th>
+                                                    <th scope="col">DP</th>
+                                                    <th scope="col">
+                                                        Lọc huyết tương
+                                                    </th>
+                                                    <th scope="col">
+                                                        Thuốc UCMD
+                                                    </th>
+                                                    <th scope="col">
+                                                        Theo dõi
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {entityObjKQ &&
+                                                entityObjKQ.length > 0 ? (
+                                                    entityObjKQ.map(
+                                                        (itm, key) => {
+                                                            const indx =
+                                                                key + 1;
+                                                            return (
+                                                                <tr>
+                                                                    <td>
+                                                                        {indx}
+                                                                    </td>
+                                                                    <td>
+                                                                        <div className="tableBoxMain">
+                                                                            <div className="tableBoxMain-label">
+                                                                                {CommonUtility.ShowDateVN(
+                                                                                    itm.PRANgayThucHien
+                                                                                )}
+                                                                            </div>
+                                                                            <div className="tableBoxMain-btnAction">
+                                                                                <Dropdown>
+                                                                                    <Dropdown.Toggle
+                                                                                        size="sm"
+                                                                                        variant=""
+                                                                                        className="dropdowTableBtn"
+                                                                                    >
+                                                                                        <i
+                                                                                            className="fa fa-ellipsis-h"
+                                                                                            aria-hidden="true"
+                                                                                        />
+                                                                                    </Dropdown.Toggle>
+                                                                                    <Dropdown.Menu>
+                                                                                        <Dropdown.Item
+                                                                                            onClick={() =>
+                                                                                                onEditEntity(
+                                                                                                    itm.Id
+                                                                                                )
+                                                                                            }
+                                                                                        >
+                                                                                            <span className="boxIcon">
+                                                                                                <i className="fas fa-edit" />
+                                                                                            </span>
+                                                                                            <span>
+                                                                                                Sửa
+                                                                                            </span>
+                                                                                        </Dropdown.Item>
+                                                                                        <Dropdown.Item
+                                                                                            onClick={() =>
+                                                                                                DeletePRAAction(
+                                                                                                    itm.Id
+                                                                                                )
+                                                                                            }
+                                                                                        >
+                                                                                            <span className="boxIcon ">
+                                                                                                <i className="fas fa-times" />
+                                                                                            </span>
+                                                                                            <span>
+                                                                                                Xóa
+                                                                                            </span>
+                                                                                        </Dropdown.Item>
+                                                                                    </Dropdown.Menu>
+                                                                                </Dropdown>
+                                                                            </div>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td>
+                                                                        <>
+                                                                            {
+                                                                                itm.PRATyLePRALop1
+                                                                            }
+                                                                            {
+                                                                                '% '
+                                                                            }
+                                                                            -{' '}
+                                                                            {
+                                                                                itm.PRATyLePRALop2
+                                                                            }
+                                                                            {
+                                                                                '% '
+                                                                            }
+                                                                        </>
+                                                                    </td>
+                                                                    <td>
+                                                                        {
+                                                                            itm.PRAA
+                                                                        }
+                                                                    </td>
+                                                                    <td>
+                                                                        {
+                                                                            itm.PRAB
+                                                                        }
+                                                                    </td>
+                                                                    <td>
+                                                                        {
+                                                                            itm.PRADR
+                                                                        }
+                                                                    </td>
+                                                                    <td>
+                                                                        {
+                                                                            itm.PRADQ
+                                                                        }
+                                                                    </td>
+                                                                    <td>
+                                                                        {
+                                                                            itm.PRADP
+                                                                        }
+                                                                    </td>
+                                                                    <td>
+                                                                        {
+                                                                            itm.PRALocHuyetTuong
+                                                                        }
+                                                                    </td>
+                                                                    <td>
+                                                                        {
+                                                                            itm.PRAThuocUCMD
+                                                                        }
+                                                                    </td>
+                                                                    <td>
+                                                                        {
+                                                                            itm.PRATheoDoi
+                                                                        }
+                                                                    </td>
+                                                                </tr>
+                                                            );
+                                                        }
+                                                    )
+                                                ) : (
+                                                    <tr>
+                                                        <td
+                                                            colSpan={12}
+                                                            className="center"
+                                                        >
+                                                            Không có dữ liệu
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </>
+        );
+    }
+
     const RenderViewFile = (path) => {
         const type = CommonUtility.GetTypeFile(path);
         if (type === 1) {
@@ -3125,10 +3714,10 @@ const DangKyChoGhepTangDetailAdm = (props) => {
                                 )}
                             </Descriptions.Item>
                             <Descriptions.Item label="Ảnh CMND mặt trước">
-                                {entityObj.ImgCMNDMatTruoc !== null ? (
+                                {entityObj.ImgCMNDBNMatTruoc !== null ? (
                                     <>
                                         <img
-                                            src={`${Constant.PathServer}${entityObj.ImgCMNDMatTruoc}`}
+                                            src={`${Constant.PathServer}${entityObj.ImgCMNDBNMatTruoc}`}
                                             alt=""
                                             onError={NotFoundCMNDImage}
                                             className="imgCMND"
@@ -3139,10 +3728,10 @@ const DangKyChoGhepTangDetailAdm = (props) => {
                                 )}
                             </Descriptions.Item>
                             <Descriptions.Item label="Ảnh CMND mặt sau">
-                                {entityObj.ImgCMNDMatSau !== null ? (
+                                {entityObj.ImgCMNDBNMatSau !== null ? (
                                     <>
                                         <img
-                                            src={`${Constant.PathServer}${entityObj.ImgCMNDMatSau}`}
+                                            src={`${Constant.PathServer}${entityObj.ImgCMNDBNMatSau}`}
                                             alt=""
                                             onError={NotFoundCMNDImage}
                                             className="imgCMND"
@@ -3305,6 +3894,7 @@ const DangKyChoGhepTangDetailAdm = (props) => {
                                         <td>
                                             <input
                                                 type="checkbox"
+                                                disabled
                                                 checked={
                                                     entityObj.KhongCoNguoiNhan
                                                 }
@@ -3317,6 +3907,7 @@ const DangKyChoGhepTangDetailAdm = (props) => {
                                         <td>
                                             <input
                                                 type="checkbox"
+                                                disabled
                                                 checked={
                                                     entityObj.NguoiChoBiBenh
                                                 }
@@ -3326,6 +3917,7 @@ const DangKyChoGhepTangDetailAdm = (props) => {
                                         <td>
                                             <input
                                                 type="checkbox"
+                                                disabled
                                                 checked={
                                                     entityObj.NguoiChoKhongHoaHopMau
                                                 }
@@ -3472,6 +4064,7 @@ const DangKyChoGhepTangDetailAdm = (props) => {
                                         <td>
                                             <input
                                                 type="checkbox"
+                                                disabled
                                                 checked={
                                                     entityObj.KhongBiViemGan
                                                 }
@@ -3481,6 +4074,7 @@ const DangKyChoGhepTangDetailAdm = (props) => {
                                         <td>
                                             <input
                                                 type="checkbox"
+                                                disabled
                                                 checked={
                                                     entityObj.ViemGanSieuViA
                                                 }
@@ -3490,6 +4084,7 @@ const DangKyChoGhepTangDetailAdm = (props) => {
                                         <td>
                                             <input
                                                 type="checkbox"
+                                                disabled
                                                 checked={
                                                     entityObj.ViemGanSieuViB
                                                 }
@@ -3499,6 +4094,7 @@ const DangKyChoGhepTangDetailAdm = (props) => {
                                         <td>
                                             <input
                                                 type="checkbox"
+                                                disabled
                                                 checked={
                                                     entityObj.ViemGanSieuViC
                                                 }
@@ -3805,854 +4401,50 @@ const DangKyChoGhepTangDetailAdm = (props) => {
                         </Descriptions>
                     </TabPane>
                     <TabPane tab="Kết quả xét nghiệm" key="3">
-                        <div>
-                            <div className="row">
-                                <div className="col-md-12">
-                                    <div className="card">
-                                        <div className="card-header p-2">
-                                            <KQXetNghiemVGBAdm
-                                                showCreateKQVGB={
-                                                    showCreateKQVGB
-                                                }
-                                                DataKQVGB={DataKQVGB}
-                                                setshowCreateKQVGB={
-                                                    setshowCreateKQVGB
-                                                }
-                                                setisload={setisload}
-                                                LoadData={LoadData}
-                                            />
-
-                                            <Button
-                                                variant=""
-                                                className="btn btn-primary"
-                                                size="sm"
-                                                onClick={() => {
-                                                    setshowCreateKQVGB(true);
-                                                    onCreateVGBEntity();
-                                                }}
-                                            >
-                                                <i
-                                                    className="fa fa-plus"
-                                                    aria-hidden="true"
-                                                />
-                                                Tạo mới kết quả viêm gan B
-                                            </Button>
-                                        </div>
-                                        <div className="card-body nopadding">
-                                            <div className="table-responsive">
-                                                <table className="table table-hinetNew">
-                                                    <thead>
-                                                        <tr>
-                                                            <th
-                                                                colSpan={12}
-                                                                className="center red"
-                                                            >
-                                                                Kết quả xét
-                                                                nghiệm viêm gan
-                                                                B
-                                                            </th>
-                                                        </tr>
-                                                    </thead>
-                                                    <thead>
-                                                        <tr>
-                                                            <th>STT</th>
-                                                            <th
-                                                                scope="col"
-                                                                className="widthColTableMedium"
-                                                            >
-                                                                Ngày thực hiện
-                                                            </th>
-                                                            <th scope="col">
-                                                                Viêm gan B
-                                                            </th>
-                                                            <th scope="col">
-                                                                Định lượng
-                                                                HBV-DNA
-                                                                (copies/ml)
-                                                            </th>
-                                                            <th scope="col">
-                                                                Bị viêm gan
-                                                            </th>
-                                                            <th scope="col">
-                                                                Điều trị
-                                                            </th>
-                                                            <th scope="col">
-                                                                Thuốc điều trị
-                                                            </th>
-                                                            <th scope="col">
-                                                                Ngày bắt đầu
-                                                                điều trị
-                                                            </th>
-                                                            <th scope="col">
-                                                                Ngày kết thúc
-                                                                điều trị
-                                                            </th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {entityObjKQVGB &&
-                                                        entityObjKQVGB.length >
-                                                            0 ? (
-                                                            entityObjKQVGB.map(
-                                                                (itm, key) => {
-                                                                    const indx =
-                                                                        key + 1;
-                                                                    return (
-                                                                        <tr>
-                                                                            <td>
-                                                                                {
-                                                                                    indx
-                                                                                }
-                                                                            </td>
-                                                                            <td>
-                                                                                <div className="tableBoxMain">
-                                                                                    <div className="tableBoxMain-label">
-                                                                                        {CommonUtility.ShowDateVN(
-                                                                                            itm.NgayXetNghiemVGB
-                                                                                        )}
-                                                                                    </div>
-                                                                                    <div className="tableBoxMain-btnAction">
-                                                                                        <Dropdown>
-                                                                                            <Dropdown.Toggle
-                                                                                                size="sm"
-                                                                                                variant=""
-                                                                                                className="dropdowTableBtn"
-                                                                                            >
-                                                                                                <i
-                                                                                                    className="fa fa-ellipsis-h"
-                                                                                                    aria-hidden="true"
-                                                                                                />
-                                                                                            </Dropdown.Toggle>
-                                                                                            <Dropdown.Menu>
-                                                                                                <Dropdown.Item
-                                                                                                    onClick={() =>
-                                                                                                        onEditVGBEntity(
-                                                                                                            itm.Id
-                                                                                                        )
-                                                                                                    }
-                                                                                                >
-                                                                                                    <span className="boxIcon">
-                                                                                                        <i className="fas fa-edit" />
-                                                                                                    </span>
-                                                                                                    <span>
-                                                                                                        Sửa
-                                                                                                    </span>
-                                                                                                </Dropdown.Item>
-                                                                                                <Dropdown.Item
-                                                                                                    onClick={() =>
-                                                                                                        DeleteVGBAction(
-                                                                                                            itm.Id
-                                                                                                        )
-                                                                                                    }
-                                                                                                >
-                                                                                                    <span className="boxIcon ">
-                                                                                                        <i className="fas fa-times" />
-                                                                                                    </span>
-                                                                                                    <span>
-                                                                                                        Xóa
-                                                                                                    </span>
-                                                                                                </Dropdown.Item>
-                                                                                            </Dropdown.Menu>
-                                                                                        </Dropdown>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </td>
-                                                                            <td>
-                                                                                {itm.CoBiVGB ===
-                                                                                true
-                                                                                    ? 'Dương tính'
-                                                                                    : 'Âm tính'}
-                                                                            </td>
-                                                                            <td>
-                                                                                {
-                                                                                    itm.KetQuaCopiesVGB
-                                                                                }
-                                                                            </td>
-                                                                            <td>
-                                                                                {
-                                                                                    itm.BiBaoGioVGB
-                                                                                }
-                                                                            </td>
-                                                                            <td>
-                                                                                {itm.CoDieuTriVGB ===
-                                                                                true
-                                                                                    ? 'Có'
-                                                                                    : 'Không'}
-                                                                            </td>
-                                                                            <td>
-                                                                                {
-                                                                                    itm.ThuocDieuTriVGB
-                                                                                }
-                                                                            </td>
-                                                                            <td>
-                                                                                {CommonUtility.ShowDateVN(
-                                                                                    itm.NgayBatDauDieuTriVGB
-                                                                                )}
-                                                                            </td>
-                                                                            <td>
-                                                                                {CommonUtility.ShowDateVN(
-                                                                                    itm.NgayKetThucDieuTriVGB
-                                                                                )}
-                                                                            </td>
-                                                                        </tr>
-                                                                    );
-                                                                }
-                                                            )
-                                                        ) : (
-                                                            <tr>
-                                                                <td
-                                                                    colSpan={12}
-                                                                    className="center"
-                                                                >
-                                                                    Không có dữ
-                                                                    liệu
-                                                                </td>
-                                                            </tr>
-                                                        )}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="row">
-                                <hr />
-                                <hr />
-                                <hr />
-                            </div>
-                            <div className="row">
-                                <div className="col-md-12">
-                                    <div className="card">
-                                        <div className="card-header p-2">
-                                            <KQXetNghiemVGCAdm
-                                                showCreateKQVGC={
-                                                    showCreateKQVGC
-                                                }
-                                                DataKQVGC={DataKQVGC}
-                                                setshowCreateKQVGC={
-                                                    setshowCreateKQVGC
-                                                }
-                                                setisload={setisload}
-                                                LoadData={LoadData}
-                                            />
-
-                                            <Button
-                                                variant=""
-                                                className="btn btn-primary"
-                                                size="sm"
-                                                onClick={() => {
-                                                    setshowCreateKQVGC(true);
-                                                    onCreateVGCEntity();
-                                                }}
-                                            >
-                                                <i
-                                                    className="fa fa-plus"
-                                                    aria-hidden="true"
-                                                />
-                                                Tạo mới kết quả viêm gan C
-                                            </Button>
-                                        </div>
-                                        <div className="card-body nopadding">
-                                            <div className="table-responsive">
-                                                <table className="table table-hinetNew">
-                                                    <thead>
-                                                        <tr>
-                                                            <th
-                                                                colSpan={12}
-                                                                className="center red"
-                                                            >
-                                                                Kết quả xét
-                                                                nghiệm viêm gan
-                                                                C
-                                                            </th>
-                                                        </tr>
-                                                    </thead>
-                                                    <thead>
-                                                        <tr>
-                                                            <th>STT</th>
-                                                            <th
-                                                                scope="col"
-                                                                className="widthColTableMedium"
-                                                            >
-                                                                Ngày thực hiện
-                                                            </th>
-                                                            <th scope="col">
-                                                                Viêm gan C
-                                                            </th>
-                                                            <th scope="col">
-                                                                Định lượng
-                                                                HBV-DNA
-                                                                (copies/ml)
-                                                            </th>
-                                                            <th scope="col">
-                                                                Bị viêm gan
-                                                            </th>
-                                                            <th scope="col">
-                                                                Điều trị
-                                                            </th>
-                                                            <th scope="col">
-                                                                Thuốc điều trị
-                                                            </th>
-                                                            <th scope="col">
-                                                                Ngày bắt đầu
-                                                                điều trị
-                                                            </th>
-                                                            <th scope="col">
-                                                                Ngày kết thúc
-                                                                điều trị
-                                                            </th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {entityObjKQVGC &&
-                                                        entityObjKQVGC.length >
-                                                            0 ? (
-                                                            entityObjKQVGC.map(
-                                                                (itm, key) => {
-                                                                    const indx =
-                                                                        key + 1;
-                                                                    return (
-                                                                        <tr>
-                                                                            <td>
-                                                                                {
-                                                                                    indx
-                                                                                }
-                                                                            </td>
-                                                                            <td>
-                                                                                <div className="tableBoxMain">
-                                                                                    <div className="tableBoxMain-label">
-                                                                                        {CommonUtility.ShowDateVN(
-                                                                                            itm.NgayXetNghiemVGC
-                                                                                        )}
-                                                                                    </div>
-                                                                                    <div className="tableBoxMain-btnAction">
-                                                                                        <Dropdown>
-                                                                                            <Dropdown.Toggle
-                                                                                                size="sm"
-                                                                                                variant=""
-                                                                                                className="dropdowTableBtn"
-                                                                                            >
-                                                                                                <i
-                                                                                                    className="fa fa-ellipsis-h"
-                                                                                                    aria-hidden="true"
-                                                                                                />
-                                                                                            </Dropdown.Toggle>
-                                                                                            <Dropdown.Menu>
-                                                                                                <Dropdown.Item
-                                                                                                    onClick={() =>
-                                                                                                        onEditVGCEntity(
-                                                                                                            itm.Id
-                                                                                                        )
-                                                                                                    }
-                                                                                                >
-                                                                                                    <span className="boxIcon">
-                                                                                                        <i className="fas fa-edit" />
-                                                                                                    </span>
-                                                                                                    <span>
-                                                                                                        Sửa
-                                                                                                    </span>
-                                                                                                </Dropdown.Item>
-                                                                                                <Dropdown.Item
-                                                                                                    onClick={() =>
-                                                                                                        DeleteVGCAction(
-                                                                                                            itm.Id
-                                                                                                        )
-                                                                                                    }
-                                                                                                >
-                                                                                                    <span className="boxIcon ">
-                                                                                                        <i className="fas fa-times" />
-                                                                                                    </span>
-                                                                                                    <span>
-                                                                                                        Xóa
-                                                                                                    </span>
-                                                                                                </Dropdown.Item>
-                                                                                            </Dropdown.Menu>
-                                                                                        </Dropdown>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </td>
-                                                                            <td>
-                                                                                {itm.CoBiVGC ===
-                                                                                true
-                                                                                    ? 'Dương tính'
-                                                                                    : 'Âm tính'}
-                                                                            </td>
-                                                                            <td>
-                                                                                {
-                                                                                    itm.KetQuaCopiesVGC
-                                                                                }
-                                                                            </td>
-                                                                            <td>
-                                                                                {
-                                                                                    itm.BiBaoGioVGC
-                                                                                }
-                                                                            </td>
-                                                                            <td>
-                                                                                {itm.CoDieuTriVGC ===
-                                                                                true
-                                                                                    ? 'Có'
-                                                                                    : 'Không'}
-                                                                            </td>
-                                                                            <td>
-                                                                                {
-                                                                                    itm.ThuocDieuTriVGC
-                                                                                }
-                                                                            </td>
-                                                                            <td>
-                                                                                {CommonUtility.ShowDateVN(
-                                                                                    itm.NgayBatDauDieuTriVGC
-                                                                                )}
-                                                                            </td>
-                                                                            <td>
-                                                                                {CommonUtility.ShowDateVN(
-                                                                                    itm.NgayKetThucDieuTriVGC
-                                                                                )}
-                                                                            </td>
-                                                                        </tr>
-                                                                    );
-                                                                }
-                                                            )
-                                                        ) : (
-                                                            <tr>
-                                                                <td
-                                                                    colSpan={12}
-                                                                    className="center"
-                                                                >
-                                                                    Không có dữ
-                                                                    liệu
-                                                                </td>
-                                                            </tr>
-                                                        )}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="row">
-                                <hr />
-                                <hr />
-                                <hr />
-                            </div>
-                            <div className="row">
-                                <div className="col-md-12">
-                                    <div className="card">
-                                        <div className="card-header p-2">
-                                            <KQXetNghiemPRAAdm
-                                                showCreateKQ={showCreateKQ}
-                                                DataKQ={DataKQ}
-                                                setshowCreateKQ={
-                                                    setshowCreateKQ
-                                                }
-                                                setisload={setisload}
-                                                LoadData={LoadData}
-                                            />
-
-                                            <Button
-                                                variant=""
-                                                className="btn btn-primary"
-                                                size="sm"
-                                                onClick={() => {
-                                                    setshowCreateKQ(true);
-                                                    onCreateEntity();
-                                                }}
-                                            >
-                                                <i
-                                                    className="fa fa-plus"
-                                                    aria-hidden="true"
-                                                />
-                                                Tạo mới kết quả PRA
-                                            </Button>
-                                        </div>
-                                        <div className="card-body nopadding">
-                                            <div className="table-responsive">
-                                                <table className="table table-hinetNew">
-                                                    <thead>
-                                                        <tr>
-                                                            <th
-                                                                colSpan={12}
-                                                                className="center red"
-                                                            >
-                                                                Kết quả xét
-                                                                nghiệm PRA
-                                                            </th>
-                                                        </tr>
-                                                    </thead>
-                                                    <thead>
-                                                        <tr>
-                                                            <th>STT</th>
-                                                            <th
-                                                                scope="col"
-                                                                className="widthColTableMedium"
-                                                            >
-                                                                Ngày thực hiện
-                                                            </th>
-                                                            <th scope="col">
-                                                                Tỷ lệ PRA
-                                                            </th>
-                                                            <th scope="col">
-                                                                A
-                                                            </th>
-                                                            <th scope="col">
-                                                                B
-                                                            </th>
-                                                            <th scope="col">
-                                                                DR
-                                                            </th>
-                                                            <th scope="col">
-                                                                DQ
-                                                            </th>
-                                                            <th scope="col">
-                                                                DP
-                                                            </th>
-                                                            <th scope="col">
-                                                                Lọc huyết tương
-                                                            </th>
-                                                            <th scope="col">
-                                                                Thuốc UCMD
-                                                            </th>
-                                                            <th scope="col">
-                                                                Theo dõi
-                                                            </th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {entityObjKQ &&
-                                                        entityObjKQ.length >
-                                                            0 ? (
-                                                            entityObjKQ.map(
-                                                                (itm, key) => {
-                                                                    const indx =
-                                                                        key + 1;
-                                                                    return (
-                                                                        <tr>
-                                                                            <td>
-                                                                                {
-                                                                                    indx
-                                                                                }
-                                                                            </td>
-                                                                            <td>
-                                                                                <div className="tableBoxMain">
-                                                                                    <div className="tableBoxMain-label">
-                                                                                        {CommonUtility.ShowDateVN(
-                                                                                            itm.PRANgayThucHien
-                                                                                        )}
-                                                                                    </div>
-                                                                                    <div className="tableBoxMain-btnAction">
-                                                                                        <Dropdown>
-                                                                                            <Dropdown.Toggle
-                                                                                                size="sm"
-                                                                                                variant=""
-                                                                                                className="dropdowTableBtn"
-                                                                                            >
-                                                                                                <i
-                                                                                                    className="fa fa-ellipsis-h"
-                                                                                                    aria-hidden="true"
-                                                                                                />
-                                                                                            </Dropdown.Toggle>
-                                                                                            <Dropdown.Menu>
-                                                                                                <Dropdown.Item
-                                                                                                    onClick={() =>
-                                                                                                        onEditEntity(
-                                                                                                            itm.Id
-                                                                                                        )
-                                                                                                    }
-                                                                                                >
-                                                                                                    <span className="boxIcon">
-                                                                                                        <i className="fas fa-edit" />
-                                                                                                    </span>
-                                                                                                    <span>
-                                                                                                        Sửa
-                                                                                                    </span>
-                                                                                                </Dropdown.Item>
-                                                                                                <Dropdown.Item
-                                                                                                    onClick={() =>
-                                                                                                        DeletePRAAction(
-                                                                                                            itm.Id
-                                                                                                        )
-                                                                                                    }
-                                                                                                >
-                                                                                                    <span className="boxIcon ">
-                                                                                                        <i className="fas fa-times" />
-                                                                                                    </span>
-                                                                                                    <span>
-                                                                                                        Xóa
-                                                                                                    </span>
-                                                                                                </Dropdown.Item>
-                                                                                            </Dropdown.Menu>
-                                                                                        </Dropdown>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </td>
-                                                                            <td>
-                                                                                <>
-                                                                                    {
-                                                                                        itm.PRATyLePRALop1
-                                                                                    }
-                                                                                    {
-                                                                                        '% '
-                                                                                    }
-
-                                                                                    -{' '}
-                                                                                    {
-                                                                                        itm.PRATyLePRALop2
-                                                                                    }
-                                                                                    {
-                                                                                        '% '
-                                                                                    }
-                                                                                </>
-                                                                            </td>
-                                                                            <td>
-                                                                                {
-                                                                                    itm.PRAA
-                                                                                }
-                                                                            </td>
-                                                                            <td>
-                                                                                {
-                                                                                    itm.PRAB
-                                                                                }
-                                                                            </td>
-                                                                            <td>
-                                                                                {
-                                                                                    itm.PRADR
-                                                                                }
-                                                                            </td>
-                                                                            <td>
-                                                                                {
-                                                                                    itm.PRADQ
-                                                                                }
-                                                                            </td>
-                                                                            <td>
-                                                                                {
-                                                                                    itm.PRADP
-                                                                                }
-                                                                            </td>
-                                                                            <td>
-                                                                                {
-                                                                                    itm.PRALocHuyetTuong
-                                                                                }
-                                                                            </td>
-                                                                            <td>
-                                                                                {
-                                                                                    itm.PRAThuocUCMD
-                                                                                }
-                                                                            </td>
-                                                                            <td>
-                                                                                {
-                                                                                    itm.PRATheoDoi
-                                                                                }
-                                                                            </td>
-                                                                        </tr>
-                                                                    );
-                                                                }
-                                                            )
-                                                        ) : (
-                                                            <tr>
-                                                                <td
-                                                                    colSpan={12}
-                                                                    className="center"
-                                                                >
-                                                                    Không có dữ
-                                                                    liệu
-                                                                </td>
-                                                            </tr>
-                                                        )}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="row">
-                                <hr />
-                                <hr />
-                                <hr />
-                            </div>
-                            <div className="row">
-                                <div className="col-md-12">
-                                    <div className="card">
-                                        <div className="card-header p-2">
-                                            <KQXetNghiemHLAAdm
-                                                showCreateKQHLA={
-                                                    showCreateKQHLA
-                                                }
-                                                DataKQHLA={DataKQHLA}
-                                                setshowCreateKQHLA={
-                                                    setshowCreateKQHLA
-                                                }
-                                                setisload={setisload}
-                                                LoadData={LoadData}
-                                            />
-
-                                            <Button
-                                                variant=""
-                                                className="btn btn-primary"
-                                                size="sm"
-                                                onClick={() => {
-                                                    setshowCreateKQHLA(true);
-                                                    onCreateHLAEntity();
-                                                }}
-                                            >
-                                                <i
-                                                    className="fa fa-plus"
-                                                    aria-hidden="true"
-                                                />
-                                                Tạo mới kết quả HLA
-                                            </Button>
-                                        </div>
-                                        <div className="card-body nopadding">
-                                            <div className="table-responsive">
-                                                <table className="table table-hinetNew">
-                                                    <thead>
-                                                        <tr>
-                                                            <th
-                                                                colSpan={12}
-                                                                className="center red"
-                                                            >
-                                                                Kết quả xét
-                                                                nghiệm HLA
-                                                            </th>
-                                                        </tr>
-                                                    </thead>
-                                                    <thead>
-                                                        <tr>
-                                                            <th>STT</th>
-                                                            <th scope="col">
-                                                                A
-                                                            </th>
-                                                            <th scope="col">
-                                                                {' '}
-                                                            </th>
-                                                            <th scope="col">
-                                                                B
-                                                            </th>
-                                                            <th scope="col">
-                                                                DRB1
-                                                            </th>
-                                                            <th scope="col">
-                                                                DQA1
-                                                            </th>
-                                                            <th scope="col">
-                                                                DQB1
-                                                            </th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {entityObjKQHLA &&
-                                                        entityObjKQHLA.length >
-                                                            0 ? (
-                                                            entityObjKQHLA.map(
-                                                                (itim, key) => {
-                                                                    const indxof =
-                                                                        key + 1;
-                                                                    return (
-                                                                        <tr>
-                                                                            <td>
-                                                                                {
-                                                                                    indxof
-                                                                                }
-                                                                            </td>
-                                                                            <td>
-                                                                                {
-                                                                                    itim.HLAA
-                                                                                }
-                                                                            </td>
-                                                                            <td>
-                                                                                <div className="tableBoxMain">
-                                                                                    <div className="tableBoxMain-btnAction">
-                                                                                        <Dropdown>
-                                                                                            <Dropdown.Toggle
-                                                                                                size="sm"
-                                                                                                variant=""
-                                                                                                className="dropdowTableBtn"
-                                                                                            >
-                                                                                                <i
-                                                                                                    className="fa fa-ellipsis-h"
-                                                                                                    aria-hidden="true"
-                                                                                                />
-                                                                                            </Dropdown.Toggle>
-                                                                                            <Dropdown.Menu>
-                                                                                                <Dropdown.Item
-                                                                                                    onClick={() =>
-                                                                                                        onEditHLAEntity(
-                                                                                                            itim.Id
-                                                                                                        )
-                                                                                                    }
-                                                                                                >
-                                                                                                    <span className="boxIcon">
-                                                                                                        <i className="fas fa-edit" />
-                                                                                                    </span>
-                                                                                                    <span>
-                                                                                                        Sửa
-                                                                                                    </span>
-                                                                                                </Dropdown.Item>
-                                                                                                <Dropdown.Item
-                                                                                                    onClick={() =>
-                                                                                                        DeleteHLAAction(
-                                                                                                            itim.Id
-                                                                                                        )
-                                                                                                    }
-                                                                                                >
-                                                                                                    <span className="boxIcon">
-                                                                                                        <i className="fas fa-times" />
-                                                                                                    </span>
-                                                                                                    <span>
-                                                                                                        Xóa
-                                                                                                    </span>
-                                                                                                </Dropdown.Item>
-                                                                                            </Dropdown.Menu>
-                                                                                        </Dropdown>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </td>
-                                                                            <td>
-                                                                                {
-                                                                                    itim.HLAB
-                                                                                }
-                                                                            </td>
-                                                                            <td>
-                                                                                {
-                                                                                    itim.HLADRB1
-                                                                                }
-                                                                            </td>
-                                                                            <td>
-                                                                                {
-                                                                                    itim.HLADQA1
-                                                                                }
-                                                                            </td>
-                                                                            <td>
-                                                                                {
-                                                                                    itim.HLADQB1
-                                                                                }
-                                                                            </td>
-                                                                        </tr>
-                                                                    );
-                                                                }
-                                                            )
-                                                        ) : (
-                                                            <tr>
-                                                                <td
-                                                                    colSpan={8}
-                                                                    className="center"
-                                                                >
-                                                                    Không có dữ
-                                                                    liệu
-                                                                </td>
-                                                            </tr>
-                                                        )}
-                                                    </tbody>
-                                                </table>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                        <>
+                            <RenderTabKQXN />
+                        </>
                     </TabPane>
-                    <TabPane tab="Quan hệ gia đình" key="4">
+                    <TabPane tab="Kết quả xét nghiệm HLA" key="4">
+                        <Descriptions
+                            title="Kết quả xét nghiệm HLA"
+                            bordered
+                            column={1}
+                            size="middle"
+                        >
+                            <Descriptions.Item label="HLA - A">
+                                {entityObj.LstHLAA != null &&
+                                    entityObj.LstHLAA.map((x) => (
+                                        <Tag>{x}</Tag>
+                                    ))}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="HLA - B">
+                                {entityObj.LstHLAB != null &&
+                                    entityObj.LstHLAB.map((x) => (
+                                        <Tag>{x}</Tag>
+                                    ))}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="HLA - DRB1">
+                                {entityObj.LstHLADRB1 != null &&
+                                    entityObj.LstHLADRB1.map((x) => (
+                                        <Tag>{x}</Tag>
+                                    ))}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="HLA - DQA1">
+                                {entityObj.LstHLADQA1 != null &&
+                                    entityObj.LstHLADQA1.map((x) => (
+                                        <Tag>{x}</Tag>
+                                    ))}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="HLA - DQB1">
+                                {entityObj.LstHLADQB1 != null &&
+                                    entityObj.LstHLADQB1.map((x) => (
+                                        <Tag>{x}</Tag>
+                                    ))}
+                            </Descriptions.Item>
+                        </Descriptions>
+                    </TabPane>
+                    <TabPane tab="Quan hệ gia đình" key="5">
                         <table className="table table-striped">
                             <thead>
                                 <tr>
@@ -4685,7 +4477,7 @@ const DangKyChoGhepTangDetailAdm = (props) => {
                             </tbody>
                         </table>
                     </TabPane>
-                    <TabPane tab="TB khám và làm xét nghiệm" key="5">
+                    <TabPane tab="TB khám và làm xét nghiệm" key="6">
                         <table className="table table-bordered">
                             <thead>
                                 <tr>
@@ -4731,10 +4523,10 @@ const DangKyChoGhepTangDetailAdm = (props) => {
                             </tbody>
                         </table>
                     </TabPane>
-                    <TabPane tab="Đăng ký bản gốc" key="6">
+                    <TabPane tab="Đăng ký bản gốc" key="7">
                         <RenderViewFile path={entityObj.DonDKBanCung} />
                     </TabPane>
-                    <TabPane tab="Lịch sử xử lý" key="7">
+                    <TabPane tab="Lịch sử xử lý" key="8">
                         <table className="table table-bordered">
                             <thead>
                                 <tr>
@@ -4992,6 +4784,7 @@ const DangKyChoGhepTangDetailAdm = (props) => {
                                         <td>
                                             <input
                                                 type="checkbox"
+                                                disabled
                                                 checked={
                                                     entityObj.KhongCoNguoiNhan
                                                 }
@@ -5004,6 +4797,7 @@ const DangKyChoGhepTangDetailAdm = (props) => {
                                         <td>
                                             <input
                                                 type="checkbox"
+                                                disabled
                                                 checked={
                                                     entityObj.NguoiChoBiBenh
                                                 }
@@ -5013,6 +4807,7 @@ const DangKyChoGhepTangDetailAdm = (props) => {
                                         <td>
                                             <input
                                                 type="checkbox"
+                                                disabled
                                                 checked={
                                                     entityObj.NguoiChoKhongHoaHopMau
                                                 }
@@ -5085,6 +4880,7 @@ const DangKyChoGhepTangDetailAdm = (props) => {
                                         <td>
                                             <input
                                                 type="checkbox"
+                                                disabled
                                                 checked={
                                                     entityObj.KhongBiViemGan
                                                 }
@@ -5094,6 +4890,7 @@ const DangKyChoGhepTangDetailAdm = (props) => {
                                         <td>
                                             <input
                                                 type="checkbox"
+                                                disabled
                                                 checked={
                                                     entityObj.ViemGanSieuViA
                                                 }
@@ -5103,6 +4900,7 @@ const DangKyChoGhepTangDetailAdm = (props) => {
                                         <td>
                                             <input
                                                 type="checkbox"
+                                                disabled
                                                 checked={
                                                     entityObj.ViemGanSieuViB
                                                 }
@@ -5112,6 +4910,7 @@ const DangKyChoGhepTangDetailAdm = (props) => {
                                         <td>
                                             <input
                                                 type="checkbox"
+                                                disabled
                                                 checked={
                                                     entityObj.ViemGanSieuViC
                                                 }

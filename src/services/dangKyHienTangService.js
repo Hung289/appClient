@@ -8,7 +8,6 @@ import {CheckLogin} from '@modules/Common/CommonUtility';
 import * as Constant from '@app/Constant';
 // eslint-disable-next-line import/prefer-default-export
 export const CreateNewEntity = async (obj) => {
-    console.log(obj);
     const data = await fetch(
         `${Constant.PathServer}/api/DangKyHien/CreateAdmin`,
         {
@@ -71,6 +70,34 @@ export const GetDetailDto = async (id) => {
             if (json.Status) {
                 return json.Data;
             }
+            return null;
+        });
+    return data;
+};
+
+export const InitDanhMuc = async () => {
+    const data = await fetch(
+        `${Constant.PathServer}/api/DangKyHien/InitDanhMuc`,
+        {
+            method: 'GET', // *GET, POST, PUT, DELETE, etc.
+            mode: 'cors', // no-cors, *cors, same-origin
+            cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+            credentials: 'same-origin', // include, *same-origin, omit
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${localStorage.getItem('token')}`
+                // 'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            redirect: 'follow', // manual, *follow, error
+            referrerPolicy: 'no-referrer'
+        }
+    )
+        .then((response) => response.json())
+        .then((json) => {
+            if (json.Status) {
+                return json.Data;
+            }
+            toast.error('Không lấy được dữ liệu danh mục');
             return null;
         });
     return data;
@@ -187,6 +214,65 @@ export const EditNewEntity = async (obj) => {
         .then((json) => {
             if (json.Status) {
                 toast.success('Cập nhật đăng ký hiến tạng thành công');
+            } else {
+                toast.error(json.MessageError);
+            }
+            return json;
+        });
+    return data;
+};
+
+export const EditNewHLAEntity = async (obj) => {
+    const data = await fetch(
+        `${Constant.PathServer}/api/DangKyHien/UpdateHLA`,
+        {
+            method: 'POST', // *GET, POST, PUT, DELETE, etc.
+            mode: 'cors', // no-cors, *cors, same-origin
+            cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+            credentials: 'same-origin', // include, *same-origin, omit
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${localStorage.getItem('token')}`
+                // 'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            redirect: 'follow', // manual, *follow, error
+            referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+            body: JSON.stringify(obj)
+        }
+    )
+        .then((response) => response.json())
+        .then((json) => {
+            if (json.Status) {
+                toast.success('Cập nhật thông tin HLA thành công');
+            } else {
+                toast.error(json.MessageError);
+            }
+            return json;
+        });
+    return data;
+};
+export const EditNewVGBEntity = async (obj) => {
+    const data = await fetch(
+        `${Constant.PathServer}/api/KQXetNghiemHienVGB/Edit`,
+        {
+            method: 'POST', // *GET, POST, PUT, DELETE, etc.
+            mode: 'cors', // no-cors, *cors, same-origin
+            cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+            credentials: 'same-origin', // include, *same-origin, omit
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${localStorage.getItem('token')}`
+                // 'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            redirect: 'follow', // manual, *follow, error
+            referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+            body: JSON.stringify(obj)
+        }
+    )
+        .then((response) => response.json())
+        .then((json) => {
+            if (json.Status) {
+                toast.success('Cập nhật thông tin viêm gan B thành công');
             } else {
                 toast.error(json.MessageError);
             }

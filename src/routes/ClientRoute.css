@@ -65,7 +65,7 @@
 }
 
 :root {
-    --main-color: #2fa54f;
+    --main-color: #008dd0;
 }
 
 @font-face {
@@ -746,8 +746,8 @@ hr {
     font-size: 22px;
     padding: 3px 5px;
     margin-bottom: 15px;
-    border-left: 2px solid #018b26;
-    color: #018b26;
+    border-left: 2px solid #008dd0;
+    color: #008dd0;
     text-transform: uppercase;
 }
 .BoxTinMoi .boxTinBaiItem {
@@ -762,7 +762,7 @@ hr {
 .BoxTinMoi .boxTinBaiItem .titleTinBai {
     font-family: Quicksand-Bold;
     font-size: 16px;
-    color: #018b26;
+    color: #008dd0;
     margin: 5px 0 3px 0;
     text-align: justify;
 }
@@ -806,10 +806,18 @@ hr {
 }
 .card-body {
     display: block;
+    padding: 0.25rem;
 }
 .card-title {
     font-size: 22px;
     font-weight: 600;
+}
+.card-title16 {
+    font-size: 16px;
+    font-weight: 600;
+}
+.table-striped tbody tr{
+    height: 60px;
 }
 .NoiDungCauHoiFilter {
     width: 80%;
@@ -823,13 +831,13 @@ hr {
 }
 
 .modal-90w {
-    width: 90%;
+    width: 60%;
     max-width: none !important;
 }
 .headerClientPage {
     font-weight: bold;
     text-transform: uppercase;
-    color: #018b26;
+    color: #008dd0;
 }
 .boxNoteHeader {
     border: 2px dotted red;

@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-expressions */
 import React, {useState, useEffect, useRef} from 'react';
 import {confirmAlert} from 'react-confirm-alert'; // Import
 import 'react-confirm-alert/src/react-confirm-alert.css'; // Import css
@@ -55,6 +56,10 @@ import {
     RenderTenXaphuong
 } from '@modules/Common/LoadDiachi';
 import ReactLoading from 'react-loading';
+import * as KQXetNghiemVGBService from '@app/services/KQXetNghiemHienVGBService';
+import * as KQXetNghiemVGCService from '@app/services/KQXetNghiemHienVGCService';
+import KQXetNghiemVGBAdm from './KQXetNghiemHienVGBAdm';
+import KQXetNghiemVGCAdm from './KQXetNghiemHienVGCAdm';
 
 import AdminSecsionHead from '../AdminSecsionHead';
 import DangKyHienEditAdm from './DangKyHienEditAdm';
@@ -74,7 +79,8 @@ const {
     Select,
     notification,
     Descriptions,
-    Table
+    Table,
+    Tag
 } = antd;
 const DangKyHienDetailAdm = (props) => {
     const formCreateEntity = useRef(null);
@@ -89,6 +95,587 @@ const DangKyHienDetailAdm = (props) => {
     const {TabPane} = Tabs;
     const {Option} = Select;
     const {Column, ColumnGroup} = Table;
+
+    function RenderTabKQXN() {
+        const [DataKQVGB, setDataKQVGB] = useState({});
+        const [DataKQVGC, setDataKQVGC] = useState({});
+
+        const [showCreateKQVGB, setshowCreateKQVGB] = useState();
+        const [entityObjKQVGB, setEntityObjKQVGB] = useState([]);
+        const [showCreateKQVGC, setshowCreateKQVGC] = useState();
+        const [entityObjKQVGC, setEntityObjKQVGC] = useState([]);
+        const onCreateVGCEntity = () => {
+            setDataKQVGC({IdPhieu: entityObj.Id});
+            setshowCreateKQVGC(true);
+        };
+        const onEditVGCEntity = async (idKq) => {
+            KQXetNghiemVGCService.OpenEditModalSV(idKq).then((a) => {
+                setDataKQVGC(a.Data);
+                setshowCreateKQVGC(true);
+            });
+        };
+        const onCreateVGBEntity = () => {
+            setDataKQVGB({IdPhieu: entityObj.Id});
+            setshowCreateKQVGB(true);
+        };
+        const onEditVGBEntity = async (idKq) => {
+            KQXetNghiemVGBService.OpenEditModalSV(idKq).then((a) => {
+                setDataKQVGB(a.Data);
+                setshowCreateKQVGB(true);
+            });
+        };
+        const LoadData = () => {
+            KQXetNghiemVGBService.GetKQXetNghiem(entityObj.Id).then((rs) => {
+                if (rs.Status) {
+                    setEntityObjKQVGB(rs.Data);
+                } else {
+                    toast.error(rs.MessageError);
+                    if (rs.ErrorCode === 401) {
+                        props.history.push('/login');
+                    }
+                }
+            });
+            KQXetNghiemVGCService.GetKQXetNghiem(entityObj.Id).then((rs) => {
+                if (rs.Status) {
+                    setEntityObjKQVGC(rs.Data);
+                } else {
+                    toast.error(rs.MessageError);
+                    if (rs.ErrorCode === 401) {
+                        props.history.push('/login');
+                    }
+                }
+            });
+        };
+        useEffect(() => {
+            let isUnmount = false;
+
+            LoadData();
+
+            return () => {
+                isUnmount = true;
+            };
+        }, []);
+
+        const DeleteVGBAction = (idKQ) => {
+            confirmAlert({
+                title: 'Xác nhận xóa?',
+                message: 'Bạn chắc chắn muốn xóa bỏ kết quả viêm gan B này.',
+                buttons: [
+                    {
+                        label: 'Xác nhận',
+                        onClick: () => {
+                            KQXetNghiemVGBService.DeleteEntity(idKQ).then(
+                                (x) => {
+                                    LoadData();
+                                }
+                            );
+                        }
+                    },
+                    {
+                        label: 'Đóng',
+                        onClick: () => {}
+                    }
+                ]
+            });
+        };
+        const DeleteVGCAction = (idKQ) => {
+            confirmAlert({
+                title: 'Xác nhận xóa?',
+                message: 'Bạn chắc chắn muốn xóa bỏ kết quả viêm gan C này.',
+                buttons: [
+                    {
+                        label: 'Xác nhận',
+                        onClick: () => {
+                            KQXetNghiemVGCService.DeleteEntity(idKQ).then(
+                                (x) => {
+                                    LoadData();
+                                }
+                            );
+                        }
+                    },
+                    {
+                        label: 'Đóng',
+                        onClick: () => {}
+                    }
+                ]
+            });
+        };
+
+        const columns = [
+            {
+                title: 'STT',
+                key: 'STT',
+                render: (text, record, index) => <div>dsd</div>
+            },
+            {
+                title: 'Ngày thực hiện',
+                key: 'NgayThucHien',
+                render: (text, record, index) => (
+                    <div>
+                        {CommonUtility.ShowDateVN(record.NgayXetNghiemVGB)}
+                    </div>
+                )
+            },
+            {
+                title: 'Viên gan B',
+                key: 'ViemGanB',
+                render: (text, record, index) => {
+                    record.CoBiVGB === true ? 'Dương tính' : 'Âm tính';
+                }
+            },
+            {
+                title: 'Đinh lượng HBV-DNA(copies/ml)',
+                key: 'DInhLuong',
+                render: (text, record, index) => {
+                    record.KetQuaCopiesVGB;
+                }
+            },
+            {
+                title: 'Bị viêm gan',
+                key: 'BiViemGan',
+                render: (text, record, index) => <div>{record.BiBaoGioVGB}</div>
+            },
+            {
+                title: 'Điều Trị',
+                key: 'DieuTri',
+                render: (text, record, index) => (
+                    <div>{record.CoDieuTriVGB === true ? 'Có' : 'Không'}</div>
+                )
+            },
+            {
+                title: 'Thuốc điều trị',
+                key: 'ThuocDieuTri',
+                render: (text, record, index) => (
+                    <div>{record.ThuocDieuTriVGB}</div>
+                )
+            },
+            {
+                title: 'Ngày bắt đầu điều trị',
+                key: 'NgayBatDau',
+                render: (text, record, index) => (
+                    <div>
+                        {' '}
+                        {CommonUtility.ShowDateVN(record.NgayBatDauDieuTriVGB)}
+                    </div>
+                )
+            },
+            {
+                title: 'Ngày kết thúc điều trị',
+                key: 'NgayKetThuc',
+                render: (text, record, index) => (
+                    <div>
+                        {CommonUtility.ShowDateVN(record.NgayKetThucDieuTriVGB)}
+                    </div>
+                )
+            }
+        ];
+        return (
+            <>
+                <Table
+                    rowKey="Id"
+                    columns={columns}
+                    bordered
+                    title={() => 'Kết quả xét nghiệm viêm gan B'}
+                    dataSource={entityObjKQVGB}
+                />
+                {/* <div>
+                    <div className="row">
+                        <div className="col-md-12">
+                            <div className="card">
+                                <div className="card-header p-2">
+                                    <KQXetNghiemVGBAdm
+                                        showCreateKQVGB={showCreateKQVGB}
+                                        DataKQVGB={DataKQVGB}
+                                        setshowCreateKQVGB={setshowCreateKQVGB}
+                                        // setisload={setisload}
+                                        LoadData={LoadData}
+                                    />
+
+                                    <Button
+                                        variant=""
+                                        className="btn btn-primary"
+                                        size="sm"
+                                        onClick={() => {
+                                            setshowCreateKQVGB(true);
+                                            onCreateVGBEntity();
+                                        }}
+                                    >
+                                        <i
+                                            className="fa fa-plus"
+                                            aria-hidden="true"
+                                        />
+                                        Tạo mới kết quả viêm gan B
+                                    </Button>
+                                </div>
+                                <div className="card-body nopadding">
+                                    <div className="table-responsive">
+                                        <table className="table table-hinetNew">
+                                            <thead>
+                                                <tr>
+                                                    <th
+                                                        colSpan={12}
+                                                        className="center red"
+                                                    >
+                                                        Kết quả xét nghiệm viêm
+                                                        gan B
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <thead>
+                                                <tr>
+                                                    <th>STT</th>
+                                                    <th
+                                                        scope="col"
+                                                        className="widthColTableMedium"
+                                                    >
+                                                        Ngày thực hiện
+                                                    </th>
+                                                    <th scope="col">
+                                                        Viêm gan B
+                                                    </th>
+                                                    <th scope="col">
+                                                        Định lượng HBV-DNA
+                                                        (copies/ml)
+                                                    </th>
+                                                    <th scope="col">
+                                                        Bị viêm gan
+                                                    </th>
+                                                    <th scope="col">
+                                                        Điều trị
+                                                    </th>
+                                                    <th scope="col">
+                                                        Thuốc điều trị
+                                                    </th>
+                                                    <th scope="col">
+                                                        Ngày bắt đầu điều trị
+                                                    </th>
+                                                    <th scope="col">
+                                                        Ngày kết thúc điều trị
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {entityObjKQVGB &&
+                                                entityObjKQVGB.length > 0 ? (
+                                                    entityObjKQVGB.map(
+                                                        (itm, key) => {
+                                                            const indx =
+                                                                key + 1;
+                                                            return (
+                                                                <tr>
+                                                                    <td>
+                                                                        {indx}
+                                                                    </td>
+                                                                    <td>
+                                                                        <div className="tableBoxMain">
+                                                                            <div className="tableBoxMain-label">
+                                                                                {CommonUtility.ShowDateVN(
+                                                                                    itm.NgayXetNghiemVGB
+                                                                                )}
+                                                                            </div>
+                                                                            <div className="tableBoxMain-btnAction">
+                                                                                <Dropdown>
+                                                                                    <Dropdown.Toggle
+                                                                                        size="sm"
+                                                                                        variant=""
+                                                                                        className="dropdowTableBtn"
+                                                                                    >
+                                                                                        <i
+                                                                                            className="fa fa-ellipsis-h"
+                                                                                            aria-hidden="true"
+                                                                                        />
+                                                                                    </Dropdown.Toggle>
+                                                                                    <Dropdown.Menu>
+                                                                                        <Dropdown.Item
+                                                                                            onClick={() =>
+                                                                                                onEditVGBEntity(
+                                                                                                    itm.Id
+                                                                                                )
+                                                                                            }
+                                                                                        >
+                                                                                            <span className="boxIcon">
+                                                                                                <i className="fas fa-edit" />
+                                                                                            </span>
+                                                                                            <span>
+                                                                                                Sửa
+                                                                                            </span>
+                                                                                        </Dropdown.Item>
+                                                                                        <Dropdown.Item
+                                                                                            onClick={() =>
+                                                                                                DeleteVGBAction(
+                                                                                                    itm.Id
+                                                                                                )
+                                                                                            }
+                                                                                        >
+                                                                                            <span className="boxIcon ">
+                                                                                                <i className="fas fa-times" />
+                                                                                            </span>
+                                                                                            <span>
+                                                                                                Xóa
+                                                                                            </span>
+                                                                                        </Dropdown.Item>
+                                                                                    </Dropdown.Menu>
+                                                                                </Dropdown>
+                                                                            </div>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td>
+                                                                        {itm.CoBiVGB ===
+                                                                        true
+                                                                            ? 'Dương tính'
+                                                                            : 'Âm tính'}
+                                                                    </td>
+                                                                    <td>
+                                                                        {
+                                                                            itm.KetQuaCopiesVGB
+                                                                        }
+                                                                    </td>
+                                                                    <td>
+                                                                        {
+                                                                            itm.BiBaoGioVGB
+                                                                        }
+                                                                    </td>
+                                                                    <td>
+                                                                        {itm.CoDieuTriVGB ===
+                                                                        true
+                                                                            ? 'Có'
+                                                                            : 'Không'}
+                                                                    </td>
+                                                                    <td>
+                                                                        {
+                                                                            itm.ThuocDieuTriVGB
+                                                                        }
+                                                                    </td>
+                                                                    <td>
+                                                                        {CommonUtility.ShowDateVN(
+                                                                            itm.NgayBatDauDieuTriVGB
+                                                                        )}
+                                                                    </td>
+                                                                    <td>
+                                                                        {CommonUtility.ShowDateVN(
+                                                                            itm.NgayKetThucDieuTriVGB
+                                                                        )}
+                                                                    </td>
+                                                                </tr>
+                                                            );
+                                                        }
+                                                    )
+                                                ) : (
+                                                    <tr>
+                                                        <td
+                                                            colSpan={12}
+                                                            className="center"
+                                                        >
+                                                            Không có dữ liệu
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div> */}
+                <div className="row">
+                    <hr />
+                    <hr />
+                    <hr />
+                </div>
+                <div className="row">
+                    <div className="col-md-12">
+                        <div className="card">
+                            <div className="card-header p-2">
+                                <KQXetNghiemVGCAdm
+                                    showCreateKQVGC={showCreateKQVGC}
+                                    DataKQVGC={DataKQVGC}
+                                    setshowCreateKQVGC={setshowCreateKQVGC}
+                                    // setisload={setisload}
+                                    LoadData={LoadData}
+                                />
+
+                                <Button
+                                    variant=""
+                                    className="btn btn-primary"
+                                    size="sm"
+                                    onClick={() => {
+                                        setshowCreateKQVGC(true);
+                                        onCreateVGCEntity();
+                                    }}
+                                >
+                                    <i
+                                        className="fa fa-plus"
+                                        aria-hidden="true"
+                                    />
+                                    Tạo mới kết quả viêm gan C
+                                </Button>
+                            </div>
+                            <div className="card-body nopadding">
+                                <div className="table-responsive">
+                                    <table className="table table-hinetNew">
+                                        <thead>
+                                            <tr>
+                                                <th
+                                                    colSpan={12}
+                                                    className="center red"
+                                                >
+                                                    Kết quả xét nghiệm viêm gan
+                                                    C
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <thead>
+                                            <tr>
+                                                <th>STT</th>
+                                                <th
+                                                    scope="col"
+                                                    className="widthColTableMedium"
+                                                >
+                                                    Ngày thực hiện
+                                                </th>
+                                                <th scope="col">Viêm gan C</th>
+                                                <th scope="col">
+                                                    Định lượng HBV-DNA
+                                                    (copies/ml)
+                                                </th>
+                                                <th scope="col">Bị viêm gan</th>
+                                                <th scope="col">Điều trị</th>
+                                                <th scope="col">
+                                                    Thuốc điều trị
+                                                </th>
+                                                <th scope="col">
+                                                    Ngày bắt đầu điều trị
+                                                </th>
+                                                <th scope="col">
+                                                    Ngày kết thúc điều trị
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {entityObjKQVGC &&
+                                            entityObjKQVGC.length > 0 ? (
+                                                entityObjKQVGC.map(
+                                                    (itm, key) => {
+                                                        const indx = key + 1;
+                                                        return (
+                                                            <tr>
+                                                                <td>{indx}</td>
+                                                                <td>
+                                                                    <div className="tableBoxMain">
+                                                                        <div className="tableBoxMain-label">
+                                                                            {CommonUtility.ShowDateVN(
+                                                                                itm.NgayXetNghiemVGC
+                                                                            )}
+                                                                        </div>
+                                                                        <div className="tableBoxMain-btnAction">
+                                                                            <Dropdown>
+                                                                                <Dropdown.Toggle
+                                                                                    size="sm"
+                                                                                    variant=""
+                                                                                    className="dropdowTableBtn"
+                                                                                >
+                                                                                    <i
+                                                                                        className="fa fa-ellipsis-h"
+                                                                                        aria-hidden="true"
+                                                                                    />
+                                                                                </Dropdown.Toggle>
+                                                                                <Dropdown.Menu>
+                                                                                    <Dropdown.Item
+                                                                                        onClick={() =>
+                                                                                            onEditVGCEntity(
+                                                                                                itm.Id
+                                                                                            )
+                                                                                        }
+                                                                                    >
+                                                                                        <span className="boxIcon">
+                                                                                            <i className="fas fa-edit" />
+                                                                                        </span>
+                                                                                        <span>
+                                                                                            Sửa
+                                                                                        </span>
+                                                                                    </Dropdown.Item>
+                                                                                    <Dropdown.Item
+                                                                                        onClick={() =>
+                                                                                            DeleteVGCAction(
+                                                                                                itm.Id
+                                                                                            )
+                                                                                        }
+                                                                                    >
+                                                                                        <span className="boxIcon ">
+                                                                                            <i className="fas fa-times" />
+                                                                                        </span>
+                                                                                        <span>
+                                                                                            Xóa
+                                                                                        </span>
+                                                                                    </Dropdown.Item>
+                                                                                </Dropdown.Menu>
+                                                                            </Dropdown>
+                                                                        </div>
+                                                                    </div>
+                                                                </td>
+                                                                <td>
+                                                                    {itm.CoBiVGC ===
+                                                                    true
+                                                                        ? 'Dương tính'
+                                                                        : 'Âm tính'}
+                                                                </td>
+                                                                <td>
+                                                                    {
+                                                                        itm.KetQuaCopiesVGC
+                                                                    }
+                                                                </td>
+                                                                <td>
+                                                                    {
+                                                                        itm.BiBaoGioVGC
+                                                                    }
+                                                                </td>
+                                                                <td>
+                                                                    {itm.CoDieuTriVGC ===
+                                                                    true
+                                                                        ? 'Có'
+                                                                        : 'Không'}
+                                                                </td>
+                                                                <td>
+                                                                    {
+                                                                        itm.ThuocDieuTriVGC
+                                                                    }
+                                                                </td>
+                                                                <td>
+                                                                    {CommonUtility.ShowDateVN(
+                                                                        itm.NgayBatDauDieuTriVGC
+                                                                    )}
+                                                                </td>
+                                                                <td>
+                                                                    {CommonUtility.ShowDateVN(
+                                                                        itm.NgayKetThucDieuTriVGC
+                                                                    )}
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    }
+                                                )
+                                            ) : (
+                                                <tr>
+                                                    <td
+                                                        colSpan={12}
+                                                        className="center"
+                                                    >
+                                                        Không có dữ liệu
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {/* </div> */}
+            </>
+        );
+    }
+
     const RenderViewFile = (path) => {
         const type = CommonUtility.GetTypeFile(path);
         if (type === 1) {
@@ -168,6 +755,19 @@ const DangKyHienDetailAdm = (props) => {
                             </Descriptions.Item>
                             <Descriptions.Item label="Giới tính">
                                 {entityObj.GioiTinhTxt}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="Chiều cao">
+                                {entityObj.ChieuCao &&
+                                    `${entityObj.ChieuCao} Cm`}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="Cân nặng">
+                                {entityObj.CanNang && `${entityObj.CanNang} Kg`}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="Nhóm máu ABO">
+                                {entityObj.NhomMau}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="Nhóm máu RH">
+                                {entityObj.NhomMau1}
                             </Descriptions.Item>
                             <Descriptions.Item label="Ngày sinh">
                                 {CommonUtility.ShowDateVN(entityObj.NgaySinh)}
@@ -382,7 +982,51 @@ const DangKyHienDetailAdm = (props) => {
                             </Descriptions.Item>
                         </Descriptions>
                     </TabPane>
-                    <TabPane tab="Đăng ký bản gốc" key="2">
+                    <TabPane tab="Kết quả xét nghiệm HLA" key="2">
+                        <Descriptions
+                            title="Kết quả xét nghiệm HLA"
+                            bordered
+                            column={1}
+                            size="middle"
+                        >
+                            <Descriptions.Item label="HLA - A">
+                                {entityObj.LstHLAA != null &&
+                                    entityObj.LstHLAA.map((x) => (
+                                        <Tag>{x}</Tag>
+                                    ))}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="HLA - B">
+                                {entityObj.LstHLAB != null &&
+                                    entityObj.LstHLAB.map((x) => (
+                                        <Tag>{x}</Tag>
+                                    ))}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="HLA - DRB1">
+                                {entityObj.LstHLADRB1 != null &&
+                                    entityObj.LstHLADRB1.map((x) => (
+                                        <Tag>{x}</Tag>
+                                    ))}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="HLA - DQA1">
+                                {entityObj.LstHLADQA1 != null &&
+                                    entityObj.LstHLADQA1.map((x) => (
+                                        <Tag>{x}</Tag>
+                                    ))}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="HLA - DQB1">
+                                {entityObj.LstHLADQB1 != null &&
+                                    entityObj.LstHLADQB1.map((x) => (
+                                        <Tag>{x}</Tag>
+                                    ))}
+                            </Descriptions.Item>
+                        </Descriptions>
+                    </TabPane>
+                    <TabPane tab="Kết quả xét nghiệm" key="3">
+                        <>
+                            <RenderTabKQXN />
+                        </>
+                    </TabPane>
+                    <TabPane tab="Đăng ký bản gốc" key="4">
                         <RenderViewFile path={entityObj.DonDKBanCung} />
                         {/* <Descriptions
                             title="Đơn đăng ký bản gốc"
@@ -395,7 +1039,7 @@ const DangKyHienDetailAdm = (props) => {
                             </Descriptions.Item>
                         </Descriptions> */}
                     </TabPane>
-                    <TabPane tab="Lịch sử xử lý" key="3">
+                    <TabPane tab="Lịch sử xử lý" key="5">
                         <table className="table table-bordered">
                             <thead>
                                 <tr>
@@ -439,508 +1083,7 @@ const DangKyHienDetailAdm = (props) => {
             </Drawer>
         </>
     );
-    // function DetailModal() {
-    //     const [key, setKey] = useState('thongtincoban');
-    //     return (
-    //         <>
-    //             <Modal
-    //                 show={showDetailModal}
-    //                 dialogClassName="modal-90w"
-    //                 onHide={() => setshowDetailModal(false)}
-    //             >
-    //                 <Modal.Header closeButton>
-    //                     <Modal.Title>Chi tiết đăng ký hiến tạng</Modal.Title>
-    //                 </Modal.Header>
-    //                 <Modal.Body>
-    //                     <Tabs
-    //                         id="controlled-tab-example"
-    //                         activeKey={key}
-    //                         onSelect={(k) => setKey(k)}
-    //                         className="mb-3"
-    //                     >
-    //                         <Tab
-    //                             eventKey="thongtincoban"
-    //                             title="Thông tin cơ bản"
-    //                         >
-    //                             <ListGroup className="list-group-flush">
-    //                                 <ListGroupItem>
-    //                                     <dl className="row">
-    //                                         <dt className="col-sm-2">Ảnh</dt>
-    //                                         <dd className="col-sm-4">
-    //                                             {entityObj.Avatar !== '' ? (
-    //                                                 <>
-    //                                                     <img
-    //                                                         src={`${Constant.PathServer}${entityObj.Avatar}`}
-    //                                                         alt=""
-    //                                                         onError={
-    //                                                             NotFoundUserImage
-    //                                                         }
-    //                                                         className="imgHinhAnhAccount img-thumbnail"
-    //                                                     />
-    //                                                 </>
-    //                                             ) : (
-    //                                                 <></>
-    //                                             )}
-    //                                         </dd>
-    //                                     </dl>
-    //                                 </ListGroupItem>
-    //                                 <ListGroupItem>
-    //                                     <dl className="row">
-    //                                         <dt className="col-sm-1">
-    //                                             Họ và tên
-    //                                         </dt>
-    //                                         <dd className="col-sm-2">
-    //                                             {entityObj.HoTen}
-    //                                         </dd>
-    //                                         <dt className="col-sm-1">
-    //                                             Mã số bệnh nhân
-    //                                         </dt>
-    //                                         <dd className="col-sm-2">
-    //                                             {entityObj.MaSo}
-    //                                         </dd>
-    //                                         <dt className="col-sm-1">
-    //                                             Giới tính
-    //                                         </dt>
-    //                                         <dd className="col-sm-1">
-    //                                             {entityObj.GioiTinhTxt}
-    //                                         </dd>
-    //                                         <dt className="col-sm-1">
-    //                                             Ngày sinh
-    //                                         </dt>
-    //                                         <dd className="col-sm-1">
-    //                                             {CommonUtility.ShowDateVN(
-    //                                                 entityObj.NgaySinh
-    //                                             )}
-    //                                         </dd>
-    //                                     </dl>
-    //                                 </ListGroupItem>
-    //                                 <ListGroupItem>
-    //                                     <dl className="row">
-    //                                         <dt className="col-sm-1">
-    //                                             Năm sinh
-    //                                         </dt>
-    //                                         <dd className="col-sm-2">
-    //                                             {entityObj.NamSinh}
-    //                                         </dd>
-    //                                         <dt className="col-sm-1">
-    //                                             Ngày đăng ký
-    //                                         </dt>
-    //                                         <dd className="col-sm-2">
-    //                                             {CommonUtility.ShowDateVN(
-    //                                                 entityObj.NgayDK
-    //                                             )}
-    //                                         </dd>
-    //                                         <dt className="col-sm-1">
-    //                                             Năm đăng ký
-    //                                         </dt>
-    //                                         <dd className="col-sm-2">
-    //                                             {entityObj.NamDK}
-    //                                         </dd>
-    //                                         <dt className="col-sm-1">
-    //                                             Ghi chú
-    //                                         </dt>
-    //                                         <dd className="col-sm-2">
-    //                                             {entityObj.GhiChu}
-    //                                         </dd>
-    //                                     </dl>
-    //                                 </ListGroupItem>
-    //                                 <ListGroupItem>
-    //                                     <dl className="row">
-    //                                         <dt className="col-sm-1">
-    //                                             {' '}
-    //                                             Điện thoại
-    //                                         </dt>
-    //                                         <dd className="col-sm-2">
-    //                                             {entityObj.SoDienThoai}
-    //                                         </dd>
-    //                                         <dt className="col-sm-1">
-    //                                             {' '}
-    //                                             Điện thoại Khác
-    //                                         </dt>
-    //                                         <dd className="col-sm-2">
-    //                                             {entityObj.SoDienThoai1}
-    //                                         </dd>
-    //                                         <dt className="col-sm-1"> Email</dt>
-    //                                         <dd className="col-sm-2">
-    //                                             {entityObj.Email}
-    //                                         </dd>
-    //                                     </dl>
-    //                                 </ListGroupItem>
-    //                                 <ListGroupItem>
-    //                                     <dl className="row">
-    //                                         <dt className="col-sm-1">
-    //                                             Địa chỉ thường trú
-    //                                         </dt>
-    //                                         <dd className="col-sm-2">
-    //                                             {entityObj.DiaChi}
-    //                                         </dd>
-    //                                         <dt className="col-sm-1">
-    //                                             Xã/ Phường:
-    //                                         </dt>
-    //                                         <dd className="col-sm-2">
-    //                                             {entityObj.TenXa}
-    //                                         </dd>
-    //                                         <dt className="col-sm-1">
-    //                                             Quận/ Huyện:
-    //                                         </dt>
-    //                                         <dd className="col-sm-2">
-    //                                             {entityObj.TenHuyen}
-    //                                         </dd>
-    //                                         <dt className="col-sm-1">
-    //                                             Tỉnh/T.Phố:
-    //                                         </dt>
-    //                                         <dd className="col-sm-2">
-    //                                             {entityObj.TenTinh}
-    //                                         </dd>
-    //                                     </dl>
-    //                                 </ListGroupItem>
-    //                                 <ListGroupItem>
-    //                                     <dl className="row">
-    //                                         <dt className="col-sm-1">
-    //                                             Địa chỉ nhận thẻ ĐK
-    //                                         </dt>
-    //                                         <dd className="col-sm-2">
-    //                                             {entityObj.DiaChiNhanTheDangKy}
-    //                                         </dd>
-    //                                         <dt className="col-sm-1">
-    //                                             Xã/ Phường:
-    //                                         </dt>
-    //                                         <dd className="col-sm-2">
-    //                                             {entityObj.TenXaNhanThe}
-    //                                         </dd>
-    //                                         <dt className="col-sm-1">
-    //                                             Quận/ Huyện:
-    //                                         </dt>
-    //                                         <dd className="col-sm-2">
-    //                                             {entityObj.TenHuyenNhanThe}
-    //                                         </dd>
-    //                                         <dt className="col-sm-1">
-    //                                             Tỉnh/T.Phố:
-    //                                         </dt>
-    //                                         <dd className="col-sm-2">
-    //                                             {entityObj.TenTinhNhanThe}
-    //                                         </dd>
-    //                                     </dl>
-    //                                 </ListGroupItem>
-    //                             </ListGroup>
-    //                             <ListGroup className="list-group-flush">
-    //                                 <ListGroupItem>
-    //                                     <dl className="row">
-    //                                         <dt className="col-sm-2">
-    //                                             Ảnh CMND mặt trước
-    //                                         </dt>
-    //                                         <dd className="col-sm-4">
-    //                                             {entityObj.ImgCMNDMatTruoc !==
-    //                                             null ? (
-    //                                                 <>
-    //                                                     <img
-    //                                                         src={`${Constant.PathServer}${entityObj.ImgCMNDMatTruoc}`}
-    //                                                         alt=""
-    //                                                         onError={
-    //                                                             NotFoundCMNDImage
-    //                                                         }
-    //                                                         className="imgCMND"
-    //                                                     />
-    //                                                 </>
-    //                                             ) : (
-    //                                                 <></>
-    //                                             )}
-    //                                         </dd>
-    //                                         <dt className="col-sm-2">
-    //                                             Ảnh CMND mặt sau
-    //                                         </dt>
-    //                                         <dd className="col-sm-4">
-    //                                             {entityObj.ImgCMNDMatSau !==
-    //                                             null ? (
-    //                                                 <>
-    //                                                     <img
-    //                                                         src={`${Constant.PathServer}${entityObj.ImgCMNDMatSau}`}
-    //                                                         alt=""
-    //                                                         onError={
-    //                                                             NotFoundCMNDImage
-    //                                                         }
-    //                                                         className="imgCMND"
-    //                                                     />
-    //                                                 </>
-    //                                             ) : (
-    //                                                 <></>
-    //                                             )}
-    //                                         </dd>
-    //                                     </dl>
-    //                                 </ListGroupItem>
-    //                                 <ListGroupItem>
-    //                                     <dl className="row">
-    //                                         <dt className="col-sm-2">
-    //                                             {' '}
-    //                                             Nghề nghiệp
-    //                                         </dt>
-    //                                         <dd className="col-sm-2">
-    //                                             {entityObj.NgheNghiep}
-    //                                         </dd>
-    //                                         <dt className="col-sm-2">
-    //                                             {' '}
-    //                                             Nghề nghiệp bổ sung
-    //                                         </dt>
-    //                                         <dd className="col-sm-2">
-    //                                             {entityObj.NgheNhiepBoSung}
-    //                                         </dd>
-    //                                         <dt className="col-sm-2">
-    //                                             Nơi công tác(nếu có)
-    //                                         </dt>
-    //                                         <dd className="col-sm-2">
-    //                                             {entityObj.NoiCongTac}
-    //                                         </dd>
-    //                                     </dl>
-    //                                 </ListGroupItem>
-    //                                 <ListGroupItem>
-    //                                     <dl className="row">
-    //                                         <dt className="col-sm-2">
-    //                                             CMND/CCCD/Hộ chiếu
-    //                                         </dt>
-    //                                         <dd className="col-sm-2">
-    //                                             {entityObj.SoCMND}
-    //                                         </dd>
 
-    //                                         <dt className="col-sm-2">
-    //                                             {' '}
-    //                                             Ngày cấp
-    //                                         </dt>
-    //                                         <dd className="col-sm-2">
-    //                                             {CommonUtility.ShowDateVN(
-    //                                                 entityObj.NgayCap
-    //                                             )}
-    //                                         </dd>
-    //                                         <dt className="col-sm-2">
-    //                                             {' '}
-    //                                             Nơi cấp
-    //                                         </dt>
-    //                                         <dd className="col-sm-2">
-    //                                             {entityObj.NoiCap}
-    //                                         </dd>
-    //                                     </dl>
-    //                                 </ListGroupItem>
-    //                                 <ListGroupItem>
-    //                                     <dl className="row">
-    //                                         <dt className="col-sm-2">
-    //                                             Bộ phận cơ thể tình nguyện sẽ
-    //                                             hiến sau khi chết
-    //                                         </dt>
-    //                                         <dd className="col-sm-10">
-    //                                             <table className="tablebophanhien">
-    //                                                 <tr>
-    //                                                     <td>
-    //                                                         <input
-    //                                                             type="checkbox"
-    //                                                             checked={
-    //                                                                 entityObj.Than
-    //                                                             }
-    //                                                         />
-    //                                                         Thận
-    //                                                     </td>
-    //                                                     <td>
-    //                                                         <input
-    //                                                             type="checkbox"
-    //                                                             checked={
-    //                                                                 entityObj.Gan
-    //                                                             }
-    //                                                         />
-    //                                                         Gan
-    //                                                     </td>
-    //                                                     <td>
-    //                                                         <input
-    //                                                             type="checkbox"
-    //                                                             checked={
-    //                                                                 entityObj.TuyTang
-    //                                                             }
-    //                                                         />
-    //                                                         Tụy tạng
-    //                                                     </td>
-
-    //                                                     <td>
-    //                                                         <input
-    //                                                             type="checkbox"
-    //                                                             checked={
-    //                                                                 entityObj.Tim
-    //                                                             }
-    //                                                         />
-    //                                                         Tim
-    //                                                     </td>
-    //                                                 </tr>
-    //                                                 <tr>
-    //                                                     <td>
-    //                                                         <input
-    //                                                             type="checkbox"
-    //                                                             checked={
-    //                                                                 entityObj.Phoi
-    //                                                             }
-    //                                                         />
-    //                                                         Phổi
-    //                                                     </td>
-    //                                                     <td>
-    //                                                         <input
-    //                                                             type="checkbox"
-    //                                                             checked={
-    //                                                                 entityObj.Ruot
-    //                                                             }
-    //                                                         />
-    //                                                         Ruột
-    //                                                     </td>
-
-    //                                                     <td>
-    //                                                         <input
-    //                                                             type="checkbox"
-    //                                                             checked={
-    //                                                                 entityObj.Da
-    //                                                             }
-    //                                                         />
-    //                                                         Da
-    //                                                     </td>
-    //                                                     <td>
-    //                                                         <input
-    //                                                             type="checkbox"
-    //                                                             checked={
-    //                                                                 entityObj.GiacMac
-    //                                                             }
-    //                                                         />
-    //                                                         Giác mạc
-    //                                                     </td>
-    //                                                 </tr>
-    //                                                 <tr>
-    //                                                     <td>
-    //                                                         <input
-    //                                                             type="checkbox"
-    //                                                             checked={
-    //                                                                 entityObj.Xuong
-    //                                                             }
-    //                                                         />
-    //                                                         Chi thể
-    //                                                     </td>
-    //                                                     <td>
-    //                                                         <input
-    //                                                             type="checkbox"
-    //                                                             checked={
-    //                                                                 entityObj.MachMau
-    //                                                             }
-    //                                                         />
-    //                                                         Mạch máu
-    //                                                     </td>
-
-    //                                                     <td>
-    //                                                         <input
-    //                                                             type="checkbox"
-    //                                                             checked={
-    //                                                                 entityObj.VanTim
-    //                                                             }
-    //                                                         />
-    //                                                         Van tim
-    //                                                     </td>
-
-    //                                                     <td>
-    //                                                         <input
-    //                                                             type="checkbox"
-    //                                                             checked={
-    //                                                                 entityObj.ChiThe
-    //                                                             }
-    //                                                         />
-    //                                                         Chi thể
-    //                                                     </td>
-    //                                                 </tr>
-    //                                             </table>
-    //                                         </dd>
-    //                                     </dl>
-    //                                 </ListGroupItem>
-    //                                 <ListGroupItem>
-    //                                     <dl className="row">
-    //                                         <dt className="col-sm-2">
-    //                                             Di nguyện về việc xử lý cơ thể
-    //                                             sau khi hiến mô tạng
-    //                                         </dt>
-    //                                         <dd className="col-sm-10">
-    //                                             {entityObj.DiNguyen}
-    //                                             {', '}
-    //                                             {entityObj.DiNguyenKhac}
-    //                                         </dd>
-    //                                     </dl>
-    //                                 </ListGroupItem>
-    //                             </ListGroup>
-    //                         </Tab>
-    //                         <Tab eventKey="FileDK" title="Đăng ký bản gốc">
-    //                             <ListGroup>
-    //                                 <ListGroupItem>
-    //                                     <dl className="row">
-    //                                         <dd className="col-sm-12">
-    //                                             <RenderViewFile
-    //                                                 path={
-    //                                                     entityObj.DonDKBanCung
-    //                                                 }
-    //                                             />{' '}
-    //                                         </dd>
-    //                                     </dl>
-    //                                 </ListGroupItem>
-    //                             </ListGroup>
-    //                         </Tab>
-    //                         <Tab eventKey="lichsuxuly" title="Lịch sử xử lý">
-    //                             <table className="table table-bordered">
-    //                                 <thead>
-    //                                     <tr>
-    //                                         <th>Thời gian</th>
-    //                                         <th>Người cập nhật</th>
-
-    //                                         <th>Tiêu đề</th>
-    //                                         <th>Nội dung</th>
-    //                                         <th>Ghi chú</th>
-    //                                     </tr>
-    //                                 </thead>
-    //                                 <tbody>
-    //                                     {entityObj.historyContentDtos ? (
-    //                                         entityObj.historyContentDtos.map(
-    //                                             (itm) => {
-    //                                                 return (
-    //                                                     <tr>
-    //                                                         <td>
-    //                                                             {CommonUtility.ShowDateTimeVN(
-    //                                                                 itm.CreatedDate
-    //                                                             )}
-    //                                                         </td>
-    //                                                         <td>
-    //                                                             {itm.CreatedBy}-{' '}
-    //                                                             {itm.CreatedID}
-    //                                                         </td>
-    //                                                         <td>{itm.Title}</td>
-    //                                                         <td>
-    //                                                             {itm.Content}
-    //                                                         </td>
-    //                                                         <td>
-    //                                                             {itm.Comment}
-    //                                                         </td>
-    //                                                     </tr>
-    //                                                 );
-    //                                             }
-    //                                         )
-    //                                     ) : (
-    //                                         <tr>
-    //                                             <td colSpan={5}>
-    //                                                 Không có dữ liệu
-    //                                             </td>
-    //                                         </tr>
-    //                                     )}
-    //                                 </tbody>
-    //                             </table>
-    //                         </Tab>
-    //                     </Tabs>
-    //                 </Modal.Body>
-    //                 <Modal.Footer>
-    //                     <Button
-    //                         variant="secondary"
-    //                         onClick={() => setshowDetailModal(false)}
-    //                     >
-    //                         Đóng
-    //                     </Button>
-    //                 </Modal.Footer>
-    //             </Modal>
-    //         </>
-    //     );
-    // }
     return (
         <>
             <DetailModal />

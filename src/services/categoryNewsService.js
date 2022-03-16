@@ -112,7 +112,10 @@ export const LoadEntity = (dispatch, objSearch) => {
 
 export const OpenDetailModalSV = (dispatch, id) => {
     fetch(`${Constant.PathServer}/api/CategoryNews/GetDtoById?id=${id}`)
-        .then((response) => response.json())
+        .then((response) => {
+            console.log(response);
+            return response.json();
+        })
         .then((json) => {
             if (json.Status) {
                 dispatch({
@@ -122,7 +125,8 @@ export const OpenDetailModalSV = (dispatch, id) => {
             } else {
                 toast.error(json.MessageError);
             }
-        });
+        })
+        .catch((error) => console.log(error));
 };
 
 export const DeleteEntity = (dispatch, id) => {

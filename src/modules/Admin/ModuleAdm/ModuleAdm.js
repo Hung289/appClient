@@ -15,16 +15,8 @@ import {
     MODULE_EDIT_CLOSE,
     MODULE_SEARCH_SAVE
 } from '@app/store/ActionType/ModuleTypeAction';
-import {
-    Button,
-    Card,
-    Col,
-    Dropdown,
-    ListGroup,
-    ListGroupItem,
-    Modal
-} from 'react-bootstrap';
-import {Field, Form, Formik, useFormik, useFormikContex} from 'formik';
+import {ListGroup, ListGroupItem} from 'react-bootstrap';
+import {Field, Formik, useFormik, useFormikContex} from 'formik';
 import {Link, useHistory} from 'react-router-dom';
 import React, {useEffect, useRef, useState} from 'react';
 
@@ -37,6 +29,32 @@ import {connect} from 'react-redux';
 import {toast} from 'react-toastify';
 import {ContextMenu, MenuItem, ContextMenuTrigger} from 'react-contextmenu';
 import {removeAscent} from '@modules/Common/CommonUtility';
+
+import {
+    Drawer,
+    Button,
+    Space,
+    Row,
+    Col,
+    Input,
+    Radio,
+    Select,
+    notification,
+    Descriptions,
+    Table,
+    Menu,
+    Avatar,
+    Pagination,
+    Dropdown,
+    Form,
+    Card,
+    DatePicker,
+    Modal,
+    Checkbox,
+    InputNumber
+} from 'antd';
+import moment from 'moment';
+import * as antIcon from '@ant-design/icons';
 import AdminSecsionHead from '../AdminSecsionHead';
 
 // import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
@@ -83,6 +101,7 @@ const ModuleAdm = (props) => {
             LoadEntityData(objSearch);
         }
     });
+    let dataSelected;
     const SignupSchema = Yup.object().shape({
         Name: Yup.string()
             .trim()
@@ -115,155 +134,166 @@ const ModuleAdm = (props) => {
         const handleShow = () => setShow(true);
         const submitCreate = () => {
             if (formRef.current) {
-                formRef.current.handleSubmit();
+                formRef.current.submit();
             }
         };
         return (
             <>
-                <Button
-                    variant=""
-                    className="btn-nobg"
-                    size="sm"
-                    onClick={handleShow}
-                >
-                    <i className="fa fa-plus" aria-hidden="true" />
-                    Tạo mới
+                <Button type="primary" onClick={handleShow}>
+                    <i className="fa fa-plus" aria-hidden="true" /> &nbsp; Tạo
+                    mới
                 </Button>
 
-                <Modal show={show} size="lg" onHide={handleClose}>
-                    <Modal.Header closeButton>
-                        <Modal.Title>Tạo mới chức năng</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        <Formik
-                            innerRef={formRef}
-                            initialValues={{
-                                Name: '',
-                                Order: '',
-                                IsShow: true,
-                                ClassCss: '',
-                                StyleCss: '',
-                                Code: '',
-                                AllowFilterScope: true
-                            }}
-                            validationSchema={SignupSchema}
-                            onSubmit={(values) => {
-                                const ObjSave = {
-                                    ...values
-                                };
+                <Modal
+                    title="Tạo mới chức năng"
+                    centered
+                    visible={show}
+                    onOk={() => submitCreate()}
+                    onCancel={() => handleClose()}
+                    width={1000}
+                    zIndex={1040}
+                    okText="Hoàn thành"
+                    cancelText="Đóng"
+                >
+                    <Form
+                        ref={formRef}
+                        labelCol={{span: 24}}
+                        wrapperCol={{span: 24}}
+                        layout="vertical"
+                        initialValues={{
+                            Name: '',
+                            Order: '',
+                            IsShow: true,
+                            ClassCss: '',
+                            StyleCss: '',
+                            Code: '',
+                            AllowFilterScope: true
+                        }}
+                        onFinish={(values) => {
+                            const ObjSave = {
+                                ...values
+                            };
 
-                                onCreateEntity(ObjSave);
-                            }}
-                        >
-                            {({errors, touched}) => (
-                                <Form ref={formCreateEntity}>
-                                    <div className="form-group">
-                                        <label htmlFor="title">
-                                            Tên chức năng
-                                            <span className="red">*</span>
-                                        </label>
-                                        <Field
-                                            name="Name"
-                                            key="Name"
-                                            className="form-control "
-                                        />
-                                        {errors.Name && touched.Name ? (
-                                            <>
-                                                <div className="invalid-feedback">
-                                                    {errors.Name}
-                                                </div>
-                                            </>
-                                        ) : null}
-                                    </div>
-                                    <div className="form-group">
-                                        <label htmlFor="title">
-                                            Mã chức năng
-                                            <span className="red">*</span>
-                                        </label>
-                                        <Field
-                                            name="Code"
-                                            key="Code"
-                                            className="form-control "
-                                        />
-                                        {errors.Code && touched.Code ? (
-                                            <>
-                                                <div className="invalid-feedback">
-                                                    {errors.Name}
-                                                </div>
-                                            </>
-                                        ) : null}
-                                    </div>
+                            onCreateEntity(ObjSave);
+                        }}
+                    >
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    label="Tên chức năng"
+                                    name="Name"
+                                    rules={[
+                                        {
+                                            min: 2,
+                                            message:
+                                                'Vui lòng nhập ít nhất 2 ký tự'
+                                        },
+                                        {
+                                            max: 255,
+                                            message:
+                                                'Vui lòng nhập không quá 255 ký tự'
+                                        },
+                                        {
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        },
+                                        () => ({
+                                            validator(_, val) {
+                                                const str = removeAscent(val);
+                                                if (
+                                                    /^[a-zA-Z0-9 ]*$/.test(str)
+                                                ) {
+                                                    return Promise.resolve();
+                                                }
 
-                                    <div className="form-group">
-                                        <label htmlFor="Order">
-                                            Thứ tự
-                                            <span className="red">*</span>
-                                        </label>
-                                        <Field
-                                            type="number"
-                                            name="Order"
-                                            key="Order"
-                                            className="form-control"
-                                            min={0}
-                                        />
-                                        {errors.Order && touched.Order ? (
-                                            <>
-                                                <div className="invalid-feedback">
-                                                    {errors.Order}
-                                                </div>
-                                            </>
-                                        ) : null}
-                                    </div>
-                                    <div className="mb-3 custom-control custom-checkbox">
-                                        <Field
-                                            type="checkbox"
-                                            name="IsShow"
-                                            key="IsShow"
-                                            id="IsShow"
-                                            className="custom-control-input"
-                                        />
+                                                // eslint-disable-next-line prefer-promise-reject-errors
+                                                return Promise.reject(
+                                                    'Tên chức năng chỉ được sử dụng chữ cái và số'
+                                                );
+                                            }
+                                        })
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input name="Name" />
+                                </Form.Item>
+                            </Col>
 
-                                        <label
-                                            className="custom-control-label"
-                                            htmlFor="isPhatHanh"
-                                        >
-                                            Hiển thị?
-                                        </label>
-                                        {errors.IsShow && touched.IsShow ? (
-                                            <div className="invalid-feedback">
-                                                {errors.IsShow}
-                                            </div>
-                                        ) : null}
-                                    </div>
-                                    <div className="form-group">
-                                        <label htmlFor="Order">
-                                            Font Awesome Class
-                                        </label>
-                                        <Field
-                                            name="ClassCss"
-                                            key="ClassCss"
-                                            className="form-control "
-                                        />
-                                        {errors.ClassCss && touched.ClassCss ? (
-                                            <>
-                                                <div className="invalid-feedback">
-                                                    {errors.ClassCss}
-                                                </div>
-                                            </>
-                                        ) : null}
-                                    </div>
-                                </Form>
-                            )}
-                        </Formik>
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button variant="secondary" onClick={handleClose}>
-                            Đóng
-                        </Button>
-                        <Button variant="primary" onClick={submitCreate}>
-                            Hoàn thành
-                        </Button>
-                    </Modal.Footer>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    label="Mã chức năng"
+                                    name="Code"
+                                    rules={[
+                                        {
+                                            min: 2,
+                                            message:
+                                                'Vui lòng nhập ít nhất 2 ký tự'
+                                        },
+                                        {
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input name="Code" />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item label="Thứ tự" name="Order">
+                                    <InputNumber
+                                        name="Order"
+                                        style={{width: '100%'}}
+                                        min={0}
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    label="Font Awesome Class"
+                                    name="ClassCss"
+                                >
+                                    <Input name="ClassCss" />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 24}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="IsShow"
+                                    valuePropName="checked"
+                                >
+                                    <Checkbox name="IsShow">Hiển thị?</Checkbox>
+                                </Form.Item>
+                            </Col>
+                        </Row>
+                    </Form>
                 </Modal>
             </>
         );
@@ -271,152 +301,142 @@ const ModuleAdm = (props) => {
     function EditModal() {
         const submitEdit = () => {
             if (formRef.current) {
-                formRef.current.handleSubmit();
+                formRef.current.submit();
             }
         };
         return (
             <>
                 <Modal
-                    show={showEditModal}
-                    size="lg"
-                    onHide={() => onCloseEntityEditModal()}
+                    title="Cập nhật chức năng"
+                    centered
+                    visible={showEditModal}
+                    onOk={() => submitEdit()}
+                    onCancel={() => onCloseEntityEditModal()}
+                    width={1000}
+                    zIndex={1040}
+                    okText="Hoàn thành"
+                    cancelText="Đóng"
                 >
-                    <Modal.Header closeButton>
-                        <Modal.Title>Cập nhật chức năng</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        <Formik
-                            innerRef={formRef}
-                            initialValues={{
-                                Id: entityObj.Id,
-                                Name: entityObj.Name,
-                                Order: entityObj.Order,
-                                IsShow: entityObj.IsShow,
-                                ClassCss: entityObj.ClassCss,
-                                StyleCss: entityObj.StyleCss,
-                                Code: entityObj.Code,
-                                AllowFilterScope: entityObj.AllowFilterScope
-                            }}
-                            validationSchema={SignupSchema}
-                            onSubmit={(values) => {
-                                const ObjSave = {
-                                    ...values
-                                };
-                                onSaveEditEntity(ObjSave);
-                            }}
-                        >
-                            {({errors, touched}) => (
-                                <Form ref={formCreateEntity}>
-                                    <Field type="hidden" name="Id" key="Id" />
-                                    <div className="form-group">
-                                        <label htmlFor="title">
-                                            Tên chức năng
-                                            <span className="red">*</span>
-                                        </label>
-                                        <Field
-                                            name="Name"
-                                            key="Name"
-                                            className="form-control "
-                                        />
-                                        {errors.Name && touched.Name ? (
-                                            <>
-                                                <div className="invalid-feedback">
-                                                    {errors.Name}
-                                                </div>
-                                            </>
-                                        ) : null}
-                                    </div>
-                                    <div className="form-group">
-                                        <label htmlFor="title">
-                                            Mã chức năng
-                                            <span className="red">*</span>
-                                        </label>
-                                        <Field
-                                            name="Code"
-                                            key="Code"
-                                            className="form-control "
-                                        />
-                                        {errors.Code && touched.Code ? (
-                                            <>
-                                                <div className="invalid-feedback">
-                                                    {errors.Name}
-                                                </div>
-                                            </>
-                                        ) : null}
-                                    </div>
+                    <Form
+                        ref={formRef}
+                        labelCol={{span: 24}}
+                        wrapperCol={{span: 24}}
+                        layout="vertical"
+                        initialValues={{
+                            Id: entityObj.Id,
+                            Name: entityObj.Name,
+                            Order: entityObj.Order,
+                            IsShow: entityObj.IsShow,
+                            ClassCss: entityObj.ClassCss,
+                            StyleCss: entityObj.StyleCss,
+                            Code: entityObj.Code,
+                            AllowFilterScope: entityObj.AllowFilterScope
+                        }}
+                        onFinish={(values) => {
+                            const ObjSave = {
+                                ...values
+                            };
+                            onSaveEditEntity(ObjSave);
+                        }}
+                    >
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item name="Id" hidden>
+                                    <Input name="Id" />
+                                </Form.Item>
+                                <Form.Item
+                                    label="Tên chức năng"
+                                    name="Name"
+                                    rules={[
+                                        {
+                                            min: 2,
+                                            message:
+                                                'Vui lòng nhập ít nhất 2 ký tự'
+                                        },
+                                        {
+                                            max: 255,
+                                            message:
+                                                'Vui lòng nhập không quá 255 ký tự'
+                                        },
+                                        {
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input name="Name" />
+                                </Form.Item>
+                            </Col>
 
-                                    <div className="form-group">
-                                        <label htmlFor="Order">
-                                            Thứ tự
-                                            <span className="red">*</span>
-                                        </label>
-                                        <Field
-                                            type="number"
-                                            name="Order"
-                                            key="Order"
-                                            className="form-control "
-                                        />
-                                        {errors.Order && touched.Order ? (
-                                            <>
-                                                <div className="invalid-feedback">
-                                                    {errors.Order}
-                                                </div>
-                                            </>
-                                        ) : null}
-                                    </div>
-                                    <div className="mb-3 custom-control custom-checkbox">
-                                        <Field
-                                            type="checkbox"
-                                            name="IsShow"
-                                            key="IsShow"
-                                            id="IsShow"
-                                            className="custom-control-input"
-                                        />
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    label="Mã chức năng"
+                                    name="Code"
+                                    rules={[
+                                        {
+                                            min: 2,
+                                            message:
+                                                'Vui lòng nhập ít nhất 2 ký tự'
+                                        },
+                                        {
+                                            max: 255,
+                                            message:
+                                                'Vui lòng nhập không quá 255 ký tự'
+                                        },
+                                        {
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input name="Code" />
+                                </Form.Item>
+                            </Col>
 
-                                        <label
-                                            className="custom-control-label"
-                                            htmlFor="isPhatHanh"
-                                        >
-                                            Hiển thị?
-                                        </label>
-                                        {errors.IsShow && touched.IsShow ? (
-                                            <div className="invalid-feedback">
-                                                {errors.IsShow}
-                                            </div>
-                                        ) : null}
-                                    </div>
-                                    <div className="form-group">
-                                        <label htmlFor="Order">
-                                            Font Awesome Class
-                                        </label>
-                                        <Field
-                                            name="ClassCss"
-                                            key="ClassCss"
-                                            className="form-control "
-                                        />
-                                        {errors.ClassCss && touched.ClassCss ? (
-                                            <>
-                                                <div className="invalid-feedback">
-                                                    {errors.ClassCss}
-                                                </div>
-                                            </>
-                                        ) : null}
-                                    </div>
-                                </Form>
-                            )}
-                        </Formik>
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button
-                            variant="secondary"
-                            onClick={() => onCloseEntityEditModal()}
-                        >
-                            Đóng
-                        </Button>
-                        <Button variant="primary" onClick={submitEdit}>
-                            Hoàn thành
-                        </Button>
-                    </Modal.Footer>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item label="Thứ tự" name="Order">
+                                    <InputNumber
+                                        name="Order"
+                                        style={{width: '100%'}}
+                                        min={0}
+                                    />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    label="Font Awesome Class"
+                                    name="ClassCss"
+                                >
+                                    <Input name="ClassCss" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+                    </Form>
                 </Modal>
             </>
         );
@@ -425,74 +445,45 @@ const ModuleAdm = (props) => {
     function DetailModal() {
         return (
             <>
-                <Modal
-                    show={showDetailModal}
-                    size="lg"
-                    onHide={() => onCloseEntityModal()}
+                <Drawer
+                    placement="right"
+                    size="large"
+                    visible={showDetailModal}
+                    onClose={() => onCloseEntityModal()}
+                    extra={
+                        // eslint-disable-next-line react/jsx-wrap-multilines
+                        <Space>
+                            <Button
+                                type="danger"
+                                onClick={() => onCloseEntityModal()}
+                            >
+                                Đóng
+                            </Button>
+                        </Space>
+                    }
                 >
-                    <Modal.Header closeButton>
-                        <Modal.Title>Chi tiết chức năng</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        <ListGroup className="list-group-flush">
-                            <ListGroupItem>
-                                <dl className="row">
-                                    <dt className="col-sm-2">Tên chức năng</dt>
-                                    <dd className="col-sm-10">
-                                        {entityObj.Name}
-                                    </dd>
-                                </dl>
-                            </ListGroupItem>
-
-                            <ListGroupItem>
-                                <dl className="row">
-                                    <dt className="col-sm-2">Mã chức năng</dt>
-                                    <dd className="col-sm-10">
-                                        {entityObj.Code}
-                                    </dd>
-                                </dl>
-                            </ListGroupItem>
-
-                            <ListGroupItem>
-                                <dl className="row">
-                                    <dt className="col-sm-2">
-                                        Font Awesome Class
-                                    </dt>
-                                    <dd className="col-sm-10">
-                                        {entityObj.ClassCss}
-                                    </dd>
-                                </dl>
-                            </ListGroupItem>
-
-                            <ListGroupItem>
-                                <dl className="row">
-                                    <dt className="col-sm-2">Thứ tự</dt>
-                                    <dd className="col-sm-10">
-                                        {entityObj.Order}
-                                    </dd>
-                                </dl>
-                            </ListGroupItem>
-                            <ListGroupItem>
-                                <dl className="row">
-                                    <dt className="col-sm-2">Hiển thị</dt>
-                                    <dd className="col-sm-10">
-                                        {entityObj.IsShow
-                                            ? 'Hiển thị'
-                                            : 'Không hiển thị'}
-                                    </dd>
-                                </dl>
-                            </ListGroupItem>
-                        </ListGroup>
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button
-                            variant="secondary"
-                            onClick={() => onCloseEntityModal()}
-                        >
-                            Đóng
-                        </Button>
-                    </Modal.Footer>
-                </Modal>
+                    <Descriptions
+                        title="Chi tiết chức năng"
+                        bordered
+                        column={2}
+                    >
+                        <Descriptions.Item label="Tên chức năng">
+                            {entityObj.Name}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Mã chức năng">
+                            {entityObj.Code}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Font Awesome Class">
+                            {entityObj.ClassCss}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Thứ tự">
+                            {entityObj.Order}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Hiển thị">
+                            {entityObj.IsShow ? 'Hiển thị' : 'Không hiển thị'}
+                        </Descriptions.Item>
+                    </Descriptions>
+                </Drawer>
             </>
         );
     }
@@ -524,8 +515,8 @@ const ModuleAdm = (props) => {
                     label: 'Xác nhận',
                     onClick: () => {
                         const dsId = GetDsCheckedTableHinet('dsTable');
-                        if (dsId != null && dsId.length > 0) {
-                            onDeleteMultiEntity(dsId);
+                        if (dataSelected != null && dataSelected.length > 0) {
+                            onDeleteMultiEntity(dataSelected);
                         } else {
                             toast.error('Vui lòng chọn ít nhất một bản ghi');
                         }
@@ -549,86 +540,87 @@ const ModuleAdm = (props) => {
                 <div className="container-fluid mrb-10px">
                     <div className="row">
                         <div className="col-md-12">
-                            <Card>
-                                <Card.Header>
-                                    <strong>Tìm kiếm</strong>
-                                </Card.Header>
-                                <Card.Body>
-                                    <Formik
-                                        initialValues={{
-                                            QueryName: searchModel.QueryName,
-                                            QueryCode: searchModel.QueryCode
-                                        }}
-                                        validationSchema={SearchSchema}
-                                        onSubmit={(values) => {
-                                            onSubmitSearchSave(values);
-                                        }}
-                                    >
-                                        {({errors, touched}) => (
-                                            <Form>
-                                                <div>
-                                                    <div className="form-row">
-                                                        <div className="form-group col-md-4">
-                                                            <label htmlFor="QueryName">
-                                                                Tên chức năng
-                                                            </label>
-                                                            <Field
-                                                                name="QueryName"
-                                                                key="QueryName"
-                                                                className="form-control "
-                                                            />
-                                                            {errors.QueryName &&
-                                                            touched.QueryName ? (
-                                                                <>
-                                                                    <div className="invalid-feedback">
-                                                                        {
-                                                                            errors.QueryName
-                                                                        }
-                                                                    </div>
-                                                                </>
-                                                            ) : null}
-                                                        </div>
-                                                        <div className="form-group col-md-4">
-                                                            <label htmlFor="QueryCode">
-                                                                Mã chức năng
-                                                            </label>
-                                                            <Field
-                                                                name="QueryCode"
-                                                                key="QueryCode"
-                                                                className="form-control"
-                                                            />
-                                                            {errors.QueryCode &&
-                                                            touched.QueryCode ? (
-                                                                <>
-                                                                    <div className="invalid-feedback">
-                                                                        {
-                                                                            errors.QueryCode
-                                                                        }
-                                                                    </div>
-                                                                </>
-                                                            ) : null}
-                                                        </div>
-                                                    </div>
+                            <Card title="Tìm kiếm">
+                                <Form
+                                    labelCol={{span: 24}}
+                                    wrapperCol={{span: 24}}
+                                    layout="vertical"
+                                    initialValues={{
+                                        QueryName: searchModel.QueryName,
+                                        QueryCode: searchModel.QueryCode
+                                    }}
+                                    onFinish={(values) =>
+                                        onSubmitSearchSave(values)
+                                    }
+                                >
+                                    <Row gutter={[10, 5]}>
+                                        <Col
+                                            lg={{span: 12}}
+                                            md={{span: 12}}
+                                            sm={{span: 12}}
+                                            xs={{span: 24}}
+                                        >
+                                            <Form.Item
+                                                name="QueryName"
+                                                label="Tên chức năng"
+                                                rules={[
+                                                    {
+                                                        min: 2,
+                                                        message:
+                                                            'Vui lòng nhập ít nhất 2 kí tự'
+                                                    }
+                                                ]}
+                                                validateTrigger={[
+                                                    'onBlur',
+                                                    'onChange'
+                                                ]}
+                                            >
+                                                <Input name="QueryName" />
+                                            </Form.Item>
+                                        </Col>
 
-                                                    <div className="form-row">
-                                                        <Button
-                                                            variant="success"
-                                                            size="md"
-                                                            type="submit"
-                                                            className="button-action"
-                                                        >
-                                                            <i
-                                                                className="fa fa-search"
-                                                                aria-hidden="true"
-                                                            />{' '}
-                                                            Tìm kiếm
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            </Form>
-                                        )}
-                                    </Formik>
-                                </Card.Body>
+                                        <Col
+                                            lg={{span: 12}}
+                                            md={{span: 12}}
+                                            sm={{span: 12}}
+                                            xs={{span: 24}}
+                                        >
+                                            <Form.Item
+                                                name="QueryCode"
+                                                label="Mã chức năng"
+                                                rules={[
+                                                    {
+                                                        min: 2,
+                                                        message:
+                                                            'Vui lòng nhập ít nhất 2 kí tự'
+                                                    }
+                                                ]}
+                                                validateTrigger={[
+                                                    'onBlur',
+                                                    'onChange'
+                                                ]}
+                                            >
+                                                <Input name="QueryCode" />
+                                            </Form.Item>
+                                        </Col>
+                                    </Row>
+
+                                    <Row>
+                                        <Col
+                                            lg={{span: 24}}
+                                            md={{span: 24}}
+                                            sm={{span: 24}}
+                                            xs={{span: 24}}
+                                        >
+                                            <Button
+                                                type="primary"
+                                                htmlType="submit"
+                                            >
+                                                Tìm kiếm
+                                            </Button>
+                                        </Col>
+                                    </Row>
+                                </Form>
                             </Card>
                         </div>
                     </div>
@@ -636,285 +628,154 @@ const ModuleAdm = (props) => {
             </section>
         );
     };
-    const NextPage = (pageInd) => {
+    const NextPage = (page, pageSize) => {
         const searchMd = {
             ...searchModel,
-            PageIndex: pageInd
+            PageIndex: page,
+            PageSize: pageSize
         };
         onSubmitSearchSave(searchMd);
     };
-
-    const RenderPage = () => {
-        const totalPage =
-            lstEntity !== undefined && lstEntity.TotalPage !== undefined
-                ? lstEntity.TotalPage
-                : 1;
-        const curPage =
-            lstEntity !== undefined && lstEntity.CurrentPage !== undefined
-                ? lstEntity.CurrentPage
-                : 1;
-        const reder = [];
-        // eslint-disable-next-line no-plusplus
-        for (let i = 0; i < totalPage; i++) {
-            let acClass = '';
-            if (i + 1 === curPage) {
-                acClass = 'active';
-            }
-            reder.push(
-                <li key={i} className={`page-item ${acClass}`}>
-                    <Button
-                        className="page-link"
-                        onClick={() => NextPage(i + 1)}
-                    >
-                        {i + 1}
-                    </Button>
-                </li>
-            );
+    const rowSelection = {
+        onChange: (selectedRowKeys, selectedRows) => {
+            dataSelected = selectedRowKeys;
         }
-        return reder;
     };
-
     const RenderDsTable = () => {
         let lstItem = [];
         let pageSiz = 20;
         let pageInd = 1;
-        if (lstEntity !== undefined && lstEntity.ListItem !== undefined) {
+        let Count = 0;
+        if (
+            lstEntity !== undefined &&
+            lstEntity != null &&
+            lstEntity.ListItem !== undefined
+        ) {
             lstItem = lstEntity.ListItem;
             pageInd = lstEntity.CurrentPage;
+            Count = lstEntity.Count;
         }
         if (searchModel !== undefined) {
             pageSiz = searchModel.PageSize;
         }
-
+        const getMenu = (record) => (
+            <>
+                <Menu>
+                    <Menu.Item
+                        key={`sua_${record.Id}`}
+                        icon={<antIcon.EditOutlined />}
+                        onClick={() => onEditEntity(record.Id)}
+                    >
+                        Sửa
+                    </Menu.Item>
+                    <Menu.Item
+                        key={`xoa_${record.Id}`}
+                        icon={<antIcon.DeleteOutlined />}
+                        onClick={() => DeleteAction(record.Id)}
+                    >
+                        Xóa
+                    </Menu.Item>
+                    <Menu.Item>
+                        <Link
+                            className="MauDen"
+                            to={`/admin/Operation/${record.Id}`}
+                        >
+                            <span className="boxIcon">
+                                <i className="fas fa-info-circle" />
+                            </span>
+                            <span>Quản lý thao tác</span>
+                        </Link>
+                    </Menu.Item>
+                </Menu>
+            </>
+        );
+        const columns = [
+            {
+                title: 'STT',
+                key: 'STT',
+                render: (text, record, index) => (
+                    <div>{(pageInd - 1) * pageSiz + index + 1}</div>
+                )
+            },
+            {
+                title: 'Hành động',
+                key: 'HanhDong',
+                render: (text, record) => {
+                    return (
+                        <Dropdown.Button
+                            onClick={() => onOpenDetailModal(record.Id)}
+                            overlay={() => getMenu(record)}
+                        >
+                            Chi tiết
+                        </Dropdown.Button>
+                    );
+                }
+            },
+            {
+                title: 'Mã chức năng',
+                key: 'MaChucNang',
+                render: (text, record, index) => (
+                    <>
+                        {' '}
+                        <div>{record.Code}</div>
+                    </>
+                )
+            },
+            {
+                title: 'Tên chức năng',
+                key: 'TenChucNang',
+                render: (text, record, index) => (
+                    <>
+                        {' '}
+                        <div>{record.Name}</div>
+                    </>
+                )
+            },
+            {
+                title: 'Hiển thị',
+                key: 'HienThi',
+                render: (text, record, index) => (
+                    <>
+                        {' '}
+                        <div>
+                            {record.IsShow ? 'Hiển thị' : 'Không hiển thị'}
+                        </div>
+                    </>
+                )
+            },
+            {
+                title: 'Thứ tự',
+                key: 'ThuTu',
+                render: (text, record, index) => (
+                    <>
+                        {' '}
+                        <div>{record.Order}</div>
+                    </>
+                )
+            }
+        ];
         return (
             <>
                 <EditModal />
                 <DetailModal />
-                <div className="table-responsive">
-                    <table className="table table-hinetNew" id="dsTable">
-                        <thead>
-                            <tr>
-                                <th scope="col">
-                                    <input
-                                        type="checkbox"
-                                        className="checkAll"
-                                        onClick={(e) =>
-                                            CheckAllItem(e, 'dsTable')
-                                        }
-                                    />
-                                </th>
-                                <th scope="col">#</th>
-                                <th scope="col">Mã chức năng</th>
-                                <th scope="col" className="widthColTableMedium">
-                                    Tên chức năng
-                                </th>
-                                <th scope="col">FAClass</th>
-                                <th scope="col">Hiển thị</th>
-                                <th scope="col">Thứ tự</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {lstItem.length > 0 ? (
-                                lstItem.map((item, key) => {
-                                    const rIndex =
-                                        (pageInd - 1) * pageSiz + key + 1;
-                                    return (
-                                        <tr
-                                            key={key}
-                                            onClick={(e) =>
-                                                CheckRowsHinetTable(e)
-                                            }
-                                        >
-                                            <td>
-                                                <input
-                                                    className="checkTd"
-                                                    type="checkbox"
-                                                    data-id={item.Id}
-                                                    onClick={(e) =>
-                                                        CheckRowsHinetTable(e)
-                                                    }
-                                                />
-                                            </td>
-                                            <td>{rIndex}</td>
-
-                                            <td>
-                                                <div className="tableBoxMain">
-                                                    <div className="tableBoxMain-label">
-                                                        {item.Code}
-                                                    </div>
-                                                    <div className="tableBoxMain-btnAction">
-                                                        <Dropdown>
-                                                            <Dropdown.Toggle
-                                                                size="sm"
-                                                                variant=""
-                                                                className="dropdowTableBtn"
-                                                            >
-                                                                <i
-                                                                    className="fa fa-ellipsis-h"
-                                                                    aria-hidden="true"
-                                                                />
-                                                            </Dropdown.Toggle>
-
-                                                            <Dropdown.Menu>
-                                                                <Dropdown.Item
-                                                                    onClick={() =>
-                                                                        onEditEntity(
-                                                                            item.Id
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    <span className="boxIcon">
-                                                                        <i className="fas fa-edit" />
-                                                                    </span>
-                                                                    <span>
-                                                                        Sửa
-                                                                    </span>
-                                                                </Dropdown.Item>
-                                                                <Dropdown.Item
-                                                                    onClick={() =>
-                                                                        DeleteAction(
-                                                                            item.Id
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    <span className="boxIcon">
-                                                                        <i className="fas fa-times" />
-                                                                    </span>
-                                                                    <span>
-                                                                        Xóa
-                                                                    </span>
-                                                                </Dropdown.Item>
-                                                                <Dropdown.Item
-                                                                    onClick={() =>
-                                                                        onOpenDetailModal(
-                                                                            item.Id
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    <span className="boxIcon">
-                                                                        <i className="fas fa-info-circle" />
-                                                                    </span>
-                                                                    <span>
-                                                                        Xem chi
-                                                                        tiết
-                                                                    </span>
-                                                                </Dropdown.Item>
-                                                                <Dropdown.Item>
-                                                                    <Link
-                                                                        className="MauDen"
-                                                                        to={`/admin/Operation/${item.Id}`}
-                                                                    >
-                                                                        <span className="boxIcon">
-                                                                            <i className="fas fa-info-circle" />
-                                                                        </span>
-                                                                        <span>
-                                                                            Quản
-                                                                            lý
-                                                                            thao
-                                                                            tác
-                                                                        </span>
-                                                                    </Link>
-                                                                </Dropdown.Item>
-                                                            </Dropdown.Menu>
-                                                        </Dropdown>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>{item.Name}</td>
-                                            <td>
-                                                {item.ClassCss && (
-                                                    <i
-                                                        className={
-                                                            item.ClassCss
-                                                        }
-                                                    />
-                                                )}
-                                            </td>
-                                            <td>
-                                                {item.IsShow
-                                                    ? 'Hiển thị'
-                                                    : 'Không hiển thị'}
-                                            </td>
-                                            <td>{item.Order}</td>
-                                        </tr>
-                                    );
-                                })
-                            ) : (
-                                <NotDataToShow colNum={7} />
-                            )}
-                        </tbody>
-                        <thead>
-                            <tr>
-                                <th scope="col">
-                                    <input
-                                        type="checkbox"
-                                        className="checkAll"
-                                        onClick={(e) =>
-                                            CheckAllItem(e, 'dsTable')
-                                        }
-                                    />
-                                </th>
-                                <th scope="col">#</th>
-                                <th scope="col">Mã chức năng</th>
-                                <th scope="col" className="widthColTableMedium">
-                                    Tên chức năng
-                                </th>
-                                <th scope="col">FAClass</th>
-                                <th scope="col">Hiển thị</th>
-                                <th scope="col">Thứ tự</th>
-                            </tr>
-                        </thead>
-                    </table>
-                </div>
-                <div>
-                    <div className="row">
-                        <div className="col-sm-6">
-                            Tổng số {lstEntity.Count} bản ghi- trên{' '}
-                            {lstEntity.TotalPage} trang
-                        </div>
-
-                        <div className="col-sm-6 right">
-                            <nav
-                                aria-label="Page navigation "
-                                className="tblHinet-pagin"
-                            >
-                                <ul className="pagination pagination-sm">
-                                    <li className="page-item">
-                                        <Button
-                                            className="page-link"
-                                            onClick={() => NextPage(1)}
-                                            aria-label="Previous"
-                                        >
-                                            <span aria-hidden="true">
-                                                &laquo;
-                                            </span>
-                                            <span className="sr-only">
-                                                Previous
-                                            </span>
-                                        </Button>
-                                    </li>
-                                    <RenderPage />
-                                    <li className="page-item">
-                                        <Button
-                                            className="page-link"
-                                            onClick={() =>
-                                                NextPage(lstEntity.TotalPage)
-                                            }
-                                            aria-label="Next"
-                                        >
-                                            <span aria-hidden="true">
-                                                &raquo;
-                                            </span>
-                                            <span className="sr-only">
-                                                Next
-                                            </span>
-                                        </Button>
-                                    </li>
-                                </ul>
-                            </nav>
-                        </div>
-                    </div>
-                </div>
+                <Table
+                    id="dsTable"
+                    rowKey="Id"
+                    rowSelection={rowSelection}
+                    columns={columns}
+                    dataSource={lstItem}
+                    pagination={{
+                        total: Count,
+                        showSizeChanger: true,
+                        showQuickJumper: true,
+                        pageSize: pageSiz,
+                        current: pageInd,
+                        showTotal: (total) => `Tổng cộng ${total} bản ghi`,
+                        onChange: (page, pageSize) => {
+                            NextPage(page, pageSize);
+                        }
+                    }}
+                />
             </>
         );
     };
@@ -929,43 +790,43 @@ const ModuleAdm = (props) => {
                         <div className="col-md-12">
                             <div className="card">
                                 <div className="p-2 card-header">
-                                    <CreateModal />
-                                    <Button
-                                        size="sm"
-                                        variant=""
-                                        className="btn-nobg"
-                                        onClick={() => ToggleSearchPanel()}
-                                    >
-                                        {showPanelSearch ? (
-                                            <>
-                                                <i
-                                                    className="fa fa-times"
-                                                    aria-hidden="true"
-                                                />{' '}
-                                                Đóng tìm kiếm
-                                            </>
-                                        ) : (
-                                            <>
-                                                <i
-                                                    className="fa fa-search"
-                                                    aria-hidden="true"
-                                                />{' '}
-                                                Tìm kiếm
-                                            </>
-                                        )}
-                                    </Button>
-                                    <Button
-                                        size="sm"
-                                        variant=""
-                                        className="btn-nobg"
-                                        onClick={() => DeleteMulTiBtnAction()}
-                                    >
-                                        <i
-                                            className="fa fa-trash"
-                                            aria-hidden="true"
-                                        />{' '}
-                                        Xóa
-                                    </Button>
+                                    <Space>
+                                        <CreateModal />
+                                        <Button
+                                            type="primary"
+                                            onClick={() => ToggleSearchPanel()}
+                                        >
+                                            {showPanelSearch ? (
+                                                <>
+                                                    <i
+                                                        className="fa fa-times"
+                                                        aria-hidden="true"
+                                                    />{' '}
+                                                    &nbsp; Đóng tìm kiếm
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <i
+                                                        className="fa fa-search"
+                                                        aria-hidden="true"
+                                                    />{' '}
+                                                    &nbsp; Tìm kiếm
+                                                </>
+                                            )}
+                                        </Button>
+                                        <Button
+                                            type="danger"
+                                            onClick={() =>
+                                                DeleteMulTiBtnAction()
+                                            }
+                                        >
+                                            <i
+                                                className="fa fa-trash"
+                                                aria-hidden="true"
+                                            />{' '}
+                                            &nbsp; Xóa
+                                        </Button>
+                                    </Space>
                                 </div>
                                 <div className="card-body nopadding">
                                     <div className="tab-content">

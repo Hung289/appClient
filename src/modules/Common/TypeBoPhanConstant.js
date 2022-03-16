@@ -1,4 +1,7 @@
 /* eslint-disable import/prefer-default-export */
+import React from 'react';
+import {Select} from 'antd';
+
 export const tim = 'tim';
 export const gan = 'gan';
 export const than = 'than';
@@ -57,4 +60,20 @@ export const GetStyle = (statusCode) => {
         default:
             return '';
     }
+};
+
+export const RenderDropdown = (selected) => {
+    return (
+        <>
+            <Select.Option value={than}>Thận</Select.Option>
+            <Select.Option value={tim}>Tim</Select.Option>
+            <Select.Option value={gan}>Gan</Select.Option>
+            <Select.Option value={phoi}>Phổi</Select.Option>
+            <Select.Option value={giacmac}>Giác mạc</Select.Option>
+            <Select.Option value={da}>Da</Select.Option>
+            <Select.Option value={tuy}>Tụy</Select.Option>
+            <Select.Option value={chithe}>Chi thể</Select.Option>
+            <Select.Option value={ruot}>Ruột</Select.Option>
+        </>
+    );
 };

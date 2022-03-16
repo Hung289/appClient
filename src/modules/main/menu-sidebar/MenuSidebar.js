@@ -20,8 +20,6 @@ const MenuSidebar = ({user}) => {
     const {t} = useTranslation();
     const isAdmin = user.userName === 'admin';
 
-    console.log(user.listActionMenu);
-
     const RenderMenuLeft = () => {
         let rturnmdm = <></>;
         if (user != null && user.listActionMenu != null) {

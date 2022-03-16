@@ -1,3 +1,6 @@
+/* eslint-disable dot-notation */
+/* eslint-disable prefer-promise-reject-errors */
+/* eslint-disable jsx-a11y/label-has-associated-control */
 import React, {useState, useEffect, useRef} from 'react';
 import {confirmAlert} from 'react-confirm-alert'; // Import
 import 'react-confirm-alert/src/react-confirm-alert.css'; // Import css
@@ -6,11 +9,8 @@ import {
     NotFoundUserImage,
     NotFoundCMNDImage
 } from '@modules/Common/NotFoundUser';
-import {
-    RenderDropdownTinh,
-    RenderDropdownQuanhuyen,
-    RenderDropdownXaphuong
-} from '@modules/Common/LoadDiachi';
+import * as LoadDiachi from '@modules/Common/LoadDiachi';
+
 import * as DuLieuDanhMuc from '@app/services/duLieuDanhMucService';
 import $ from 'jquery';
 
@@ -23,19 +23,25 @@ import axios from 'axios';
 import {NotFoundImage} from '@modules/Common/NotFound';
 import TimePicker from 'react-time-picker';
 import {
-    Modal,
-    Button,
+    Form,
+    Input,
+    DatePicker,
+    Space,
+    Radio,
+    Select,
+    Row,
     Col,
-    Dropdown,
-    ListGroup,
-    ListGroupItem,
-    Card,
-    Collapse,
-    Tabs,
-    Tab
-} from 'react-bootstrap';
+    layout,
+    Layout,
+    Upload,
+    Button,
+    Checkbox,
+    Modal,
+    InputNumber
+} from 'antd';
+import moment from 'moment';
 import {Link, useHistory} from 'react-router-dom';
-import {Formik, useFormik, Form, Field, useFormikContex} from 'formik';
+
 import {toast} from 'react-toastify';
 import * as dangKyChoGhepTangService from '@app/services/dangKyChoGhepTangService';
 import {
@@ -43,7 +49,6 @@ import {
     GetDsCheckedTableHinet,
     CheckAllItem
 } from '@modules/Common/TableCommon';
-import * as Yup from 'yup';
 import {connect} from 'react-redux';
 import * as CommonUtility from '@modules/Common/CommonUtility';
 import {
@@ -78,7 +83,8 @@ const DangKyChoGhepTangEditAdm = (props) => {
     const [NgheNghiep, setNgheNghiep] = useState([]);
     const [NhomMau, setNhomMau] = useState([]);
     const [NhomMauRh, setNhomMauRh] = useState([]);
-
+    const [Tinh, setTinh] = useState([]);
+    const [TinhTT, setTinhTT] = useState([]);
     const [QHGD, setQHGD] = useState([]);
 
     const dataGiaDinhEdit = useRef([]);
@@ -91,9 +97,9 @@ const DangKyChoGhepTangEditAdm = (props) => {
         OnLoadingAction,
         onReloadPage
     } = props;
+
     const onSaveEditEntity = (tintuc) => {
         OnLoadingAction(true);
-        console.log('a');
         dangKyChoGhepTangService.EditNewEntity(tintuc).then((data) => {
             OnLoadingAction(false);
             if (data.Status) {
@@ -121,6 +127,12 @@ const DangKyChoGhepTangEditAdm = (props) => {
         DuLieuDanhMuc.GetDMbyCodeNhom('quanhegiadinh').then((rs) => {
             if (rs.Status) {
                 setQHGD(rs.Data);
+            }
+        });
+        LoadDiachi.DaTaTinh().then((rs) => {
+            if (rs.Status) {
+                setTinh(rs.Data);
+                setTinhTT(rs.Data);
             }
         });
     }, []);
@@ -161,612 +173,24 @@ const DangKyChoGhepTangEditAdm = (props) => {
             );
         });
     };
-    const SignupSchema = Yup.object().shape({
-        hoTenBN: Yup.string()
-            .trim()
-            .test(
-                'lxxen',
-                'Họ tên không được sử dụng ký tự đặc biệt và số',
-                (val) => {
-                    const str = removeAscent(val);
-                    return /^[a-zA-Z ]*$/.test(str);
-                }
-            )
-            .required('Vui lòng nhập thông tin này')
-            .typeError('Vui lòng nhập thông tin này')
-            .min(2, 'Vui lòng nhập ít nhất 2 ký tự không phải khoảng trắng')
-            .max(255, 'Vui lòng nhập không quá 255 ký tự')
-            .required('Vui lòng nhập thông tin này'),
-        ngheNghiep: Yup.string()
-            .trim()
-            .typeError('Vui lòng nhập thông tin này')
-            .required('Vui lòng nhập thông tin này'),
-        baoHiemYTe: Yup.string()
-            .trim()
-            .test(
-                'len',
-                'Số bảo hiểm y tế chỉ được sử dụng chữ cái và số',
-                (val) => /^[a-zA-Z0-9 ]*$/.test(val)
-            )
-            .typeError('Vui lòng nhập thông tin này'),
-        nhomMau: Yup.string().nullable(),
-        nhomMau1: Yup.string().trim().nullable(),
-        CMNDBN: Yup.string()
-            .trim()
-            .required('Vui lòng nhập thông tin này')
-            .typeError('Vui lòng nhập thông tin này')
-            .min(9, 'CMND phải có ít nhất 9 số')
-            .max(12, 'CMND không được quá 12 số')
-            .test('len', 'CMND chỉ được sử dụng chữ số', (val) =>
-                /^[0-9 ]*$/.test(val)
-            ),
-        ngaySinh: Yup.string()
-            .required('Vui lòng nhập thông tin này')
-            .typeError('Vui lòng nhập thông tin này')
-            .test(
-                'len',
-                'Ngày sinh vượt quá ngày hiện tại',
-                (val) => new Date() > new Date(val)
-            )
-            .test(
-                'len',
-                'Ngày sinh phải sau ngày 1 tháng 1 năm 1920',
-                (val) => new Date('1920-1-1') < new Date(val)
-            ),
-        ngayThangPhauThuat: Yup.string()
-            .nullable()
-            .test('len', 'Ngày tháng vượt quá ngày hiện tại', (val) => {
-                return (
-                    new Date() > new Date(val) ||
-                    val === '' ||
-                    val === undefined
-                );
-            })
-            .test(
-                'len',
-                'Ngày tháng phải sau ngày 1 tháng 1 năm 1920',
-                (val) =>
-                    new Date('1920-1-1') < new Date(val) ||
-                    val === '' ||
-                    val === undefined
-            ),
-        trinhDoVanHoa: Yup.string()
-            .required('Vui lòng nhập thông tin này')
-            .typeError('Vui lòng nhập thông tin này'),
-        dienThoai: Yup.string()
-            .trim()
-            .min(10, 'Vui lòng nhập ít nhất 10 ký tự')
-            .max(12, 'Vui lòng nhập không quá 12 ký tự')
-            .required('Vui lòng nhập thông tin này')
-            .typeError('Vui lòng nhập thông tin này')
-            .test('xxx', 'Số điện thoại chỉ được sử dụng chữ số', (val) =>
-                /^[0-9+.]*$/.test(val)
-            ),
-        dienThoai1: Yup.string()
-            .trim()
-            .min(10, 'Vui lòng nhập ít nhất 10 ký tự')
-            .max(12, 'Vui lòng nhập không quá 12 ký tự')
-            .typeError('Vui lòng nhập thông tin này')
-            .nullable()
-            .test(
-                'xxx',
-                'Số điện thoại chỉ sử dụng chữ số',
-                (val) => /^[0-9+.]*$/.test(val) || val === undefined
-            ),
-        // .test('xxx', 'Số điện thoại phải bắt đầu bằng số 0', (val) => {
-        //     if (val !== undefined) {
-        //         return val.charAt(0) === '0';
-        //     }
-        //     return true;
-        // }),
-        diaChiThuongChu: Yup.string()
-            .trim()
-            .typeError('Vui lòng nhập thông tin này')
-            .required('Vui lòng nhập thông tin này'),
-        diaChiTamChu: Yup.string().trim().nullable(),
-        NgayCapCMNDBN: Yup.string()
-            .required('Vui lòng nhập thông tin này')
-            .typeError('Vui lòng nhập thông tin này')
-            .test(
-                'len',
-                'Ngày cấp vượt quá ngày hiện tại',
-                (val) => new Date() > new Date(val)
-            )
-            .test(
-                'len',
-                'Ngày cấp phải sau ngày 1 tháng 1 năm 1920',
-                (val) => new Date('1920-1-1') < new Date(val)
-            ),
-        NoiCapCMNDBN: Yup.string()
-            .trim()
-            .typeError('Vui lòng nhập thông tin này')
-            .required('Vui lòng nhập thông tin này'),
-        ngayPhatHienSuyThan: Yup.string().nullable(),
-        nguyenNhanSuyThan: Yup.string().nullable(),
-        // dia chi thuong tru
-        tinh: Yup.string()
-            .required('Vui lòng nhập thông tin này')
-            .typeError('Vui lòng nhập thông tin này'),
-        xaphuong: Yup.string()
-            .required('Vui lòng nhập thông tin này')
-            .typeError('Vui lòng nhập thông tin này'),
-        quanhuyen: Yup.string()
-            .required('Vui lòng nhập thông tin này')
-            .typeError('Vui lòng nhập thông tin này'),
-        // dia chi tam tru
-        tinhtt: Yup.string().nullable(),
-        xaphuongtt: Yup.string().nullable(),
-        quanhuyentt: Yup.string().nullable(),
-        lonNhatSinhNam: Yup.number()
-            .positive('Số phải lớn hơn 0')
-            .min(1900, 'Vui lòng nhập số lớn hơn 1900')
-            .nullable()
-            .typeError('Năm sinh phải là số lớn hơn 1900')
-            .integer('Năm sinh phải là số nguyên'),
-        laConThuMay: Yup.string()
-            .typeError('Vui lòng nhập thông tin này')
-            .required('Vui lòng nhập thông tin này'),
-        coMayCon: Yup.number()
-            .positive('Số phải lớn hơn 0')
-            .min(0, 'Vui lòng nhập số lớn hơn hoặc bằng 0')
-            .nullable()
-            .typeError('Hãy nhập một số lớn hơn hoặc bằng 0'),
-        soConTrai: Yup.number()
-            .positive('Số phải lớn hơn 0')
-            .min(0, 'Vui lòng nhập số lớn hơn hoặc bằng 0')
-            .nullable()
-            .min(0, 'Vui lòng nhập số lớn hơn hoặc bằng 0')
-            .typeError('Hãy nhập một số lớn hơn hoặc bằng 0'),
-        soConGai: Yup.number()
-            .positive('Số phải lớn hơn 0')
-            .min(0, 'Vui lòng nhập số lớn hơn hoặc bằng 0')
-            .nullable()
-            .typeError('Hãy nhập một số lớn hơn hoặc bằng 0'),
-        nhoNhatSinhNam: Yup.number()
-            .positive('Số phải lớn hơn 0')
-            .min(1900, 'Vui lòng nhập số lớn hơn 1900')
-            .nullable()
-            .typeError('Năm sinh phải là số lớn hơn 1900')
-            .integer('Năm sinh phải là số nguyên'),
-        baoNhieuDonViMau: Yup.number()
-            .positive('Vui lòng nhập số lớn hơn 0')
-            .typeError('Vui lòng nhập thông tin này')
-            .min(0, 'Đơn vị máu phải lớn hơn 0'),
-        thang: Yup.number()
-            .positive('Số phải lớn hơn 0')
-            .min(1, 'Tháng phải lớn hơn 0')
-            .max(12, 'Tháng phải nhỏ hơn hoặc bằng 12')
-            .nullable()
-            .typeError('Hãy nhập một số từ 1 đến 12')
-            .integer('Tháng phải là số nguyên'),
-        nam: Yup.number()
-            .positive('Số phải lớn hơn 0')
-            .min(1900, 'Năm phải lớn hơn 1900')
-            .nullable()
-            .typeError('Năm phải là số lớn hơn 1900')
-            .integer('Năm phải là số nguyên'),
-        chieuCao: Yup.number()
-            .positive('Số phải lớn hơn 0')
-            .min(0, 'Chiều cao phải lớn hơn 0')
-            .typeError('Vui lòng nhập số'),
-        canNang: Yup.number()
-            .positive('Số phải lớn hơn 0')
-            .min(0, 'Cân nặng phải lớn hơn 0')
-            .typeError('Vui lòng nhập số'),
-        soLanTuan: Yup.number()
-            .positive('Số phải lớn hơn hoặc bằng 0')
-            .min(0, 'Số lần phải lớn hơn hoặc bằng 0')
-            .typeError('Vui lòng nhập số'),
-        dieuTrenNgay: Yup.number()
-            .positive('Số phải lớn hơn hoặc bằng 0')
-            .typeError('Vui lòng nhập thông tin này')
-            .min(0, 'Số điếu phải lớn hơn hoặc bằng 0'),
-        thuNhapVoChongBenhNhan: Yup.number()
-            .positive('Số phải lớn hơn 0')
-            .nullable(),
-        thuNhapKhac: Yup.number().positive('Số phải lớn hơn 0').nullable(),
-        ctntHoacKhamThamPhan: Yup.string().nullable(),
-        ngayCTNTHoacKhamThamPhanBenhLy: Yup.string().nullable(),
-        soLanCTNTTuan: Yup.number()
-            .positive('Số phải lớn hơn 0')
-            .typeError('Vui lòng nhập số'),
-        soGioTrenLan: Yup.string().nullable(),
-        chuKyThamPhan: Yup.string().nullable(),
-        thuocDangSuDungNgay: Yup.string().nullable(),
-        thuocTaoMau: Yup.string().nullable(),
-        bacSiDieuTri: Yup.string().nullable(),
-        dienThoaiBacSi: Yup.string()
-            .trim()
-            .min(10, 'Vui lòng nhập ít nhất 10 ký tự')
-            .max(12, 'Vui lòng nhập không quá 12 ký tự')
-            .nullable()
-            .test(
-                'len',
-                'Số điện thoại chỉ được sử dụng chữ số',
-                (val) =>
-                    /^[0-9.+]*$/.test(val) || val === undefined || val === null
-            ),
-        // .test('xxx', 'Số điện thoại phải bắt đầu bằng số 0', (val) => {
-        //     if (val !== undefined) {
-        //         return val.charAt(0) === '0';
-        //     }
-        //     return true;
-        // }),
-        chuKyThamPhanTaiBV: Yup.string().nullable(),
-        hoTenVoChong: Yup.string()
-            .test(
-                'lxxen',
-                'Họ tên không được sử dụng ký tự đặc biệt và số',
-                (val) => {
-                    const str = removeAscent(val);
-                    return /^[a-zA-Z ]*$/.test(str);
-                }
-            )
-            .typeError('Vui lòng nhập thông tin này')
-            .min(2, 'Vui lòng nhập ít nhất 2 ký tự không phải khoảng trắng')
-            .max(255, 'Vui lòng nhập không quá 255 ký tự')
-            .nullable(),
-        dienThoaiVoChong: Yup.string()
-            .nullable()
-            .test(
-                'lxxen',
-                'Số điện thoại chỉ được sử dụng chữ số',
-                (val) =>
-                    /^[0-9+.]*$/.test(val) || val === undefined || val === null
-            )
-            .typeError('Vui lòng nhập thông tin này')
-            .min(10, 'Vui lòng nhập ít nhất 10 ký tự')
-            .max(12, 'Vui lòng nhập không quá 12 ký tự'),
-        // .test('xxx', 'Số điện thoại phải bắt đầu bằng số 0', (val) => {
-        //     if (val !== undefined) {
-        //         return val.charAt(0) === '0';
-        //     }
-        //     return true;
-        // }),
-        thuNhapBenhNhan: Yup.number()
-            .positive('Số phải lớn hơn 0')
-            .required('Vui lòng nhập thông tin này')
-            .min(0)
-            .typeError('Hãy nhập một số lớn hơn 0'),
-        tienChuanBiChoViecGhepThan: Yup.number()
-            .positive('Số phải lớn hơn 0')
-            .required('Vui lòng nhập thông tin này')
-            .min(0)
-            .typeError('Hãy nhập một số lớn hơn 0'),
-        email: Yup.string()
-            .required('Vui lòng nhập thông tin')
-            .test('isEmail', 'Email không hợp lệ', (val) => {
-                const isEmail = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-                return (
-                    isEmail.test(val) ||
-                    val === '' ||
-                    val === undefined ||
-                    val === null
-                );
-            }),
-        maso: Yup.number()
-            .nullable()
-            .min(0, 'Vui lòng nhập số lớn hơn 0')
-            .typeError('Vui lòng nhập số'),
-        truocHoacSauLocMau: Yup.number().nullable(),
-        ngaydkhien: Yup.string()
-            .nullable()
-            .typeError('Vui lòng nhập thông tin này')
-            .test(
-                'ngày đăng ký nhỏ nhất',
-                'Ngày đăng ký phải lớn hơn 1/1/1900',
-                (value) =>
-                    new Date(value) > new Date('1/1/1900') ||
-                    value === undefined
-            )
-            .test(
-                'ngày đăng ký lớn nhất',
-                'Ngày đăng ký không được vượt quá ngày hiện tại',
-                (value) => new Date(value) <= new Date() || value === undefined
-            ),
-        chisobmi: Yup.number().nullable(),
-        nambatdaudieutri: Yup.number()
-            .nullable()
-            .min(1900, 'Năm phải lớn hơn 1900')
-            .typeError('Vui lòng nhập thông tin này')
-            .test(
-                'sonamtoida',
-                'Năm phải nhỏ hơn năm hiện tại',
-                (value) =>
-                    value <= new Date().getFullYear() || value === undefined
-            ),
-        sonamdieutrithaythe: Yup.number().nullable(),
-        sanhconlancuoivaonam: Yup.number()
-            .nullable()
-            .min(1900, 'Năm phải lớn hơn 1900')
-            .typeError('Vui lòng nhập thông tin này')
-            .test(
-                'sonamtoida',
-                'Năm phải nhỏ hơn năm hiện tại',
-                (value) =>
-                    value <= new Date().getFullYear() || value === undefined
-            ),
-        sanhconmaylan: Yup.number()
-            .nullable()
-            .min(0, 'Số lần phải lớn hơn 0')
-            .max(1000, 'Số lần phải nhỏ hơn hoặc bằng 1000')
-            .typeError('Vui lòng nhập thông tin này'),
-        thoidiemtruyenmau: Yup.string()
-            .nullable()
-            .typeError('Vui lòng nhập thông tin này')
-            .test(
-                'ngày nhỏ nhất',
-                'Ngày phải lớn hơn 1/1/1900',
-                (value) =>
-                    new Date(value) > new Date('1/1/1900') ||
-                    value === undefined
-            )
-            .test(
-                'ngày lớn nhất',
-                'Ngày không được vượt quá ngày hiện tại',
-                (value) => new Date(value) <= new Date() || value === undefined
-            ),
-        namphathienctnttrolai: Yup.number()
-            .nullable()
-            .min(1900, 'Năm phải lớn hơn 1900')
-            .typeError('Vui lòng nhập thông tin này')
-            .test(
-                'sonamtoida',
-                'Năm phải nhỏ hơn năm hiện tại',
-                (value) =>
-                    value <= new Date().getFullYear() || value === undefined
-            )
-    });
-
-    const SignupSchemaTangKhac = Yup.object().shape({
-        hoTenBN: Yup.string()
-            .trim()
-            .test(
-                'lxxen',
-                'Họ tên không được sử dụng ký tự đặc biệt và số',
-                (val) => {
-                    const str = removeAscent(val);
-                    return /^[a-zA-Z ]*$/.test(str);
-                }
-            )
-            .min(2, 'Vui lòng nhập ít nhất 2 ký tự không phải khoảng trắng')
-            .max(255, 'Vui lòng nhập không quá 255 ký tự')
-            .required('Vui lòng nhập thông tin này'),
-        ngheNghiep: Yup.string().trim().required('Vui lòng nhập thông tin này'),
-        nhomMau: Yup.string(),
-
-        nhomMau1: Yup.string(),
-        CMNDBN: Yup.string()
-            .trim()
-            .required('Vui lòng nhập thông tin này')
-            .min(9, 'CMND phải có ít nhất 9 số')
-            .max(12, 'CMND phải có ít nhất 12 số')
-            .test('len', 'CMND chỉ được sử dụng chữ số', (val) =>
-                /^[0-9 ]*$/.test(val)
-            ),
-        ngaySinh: Yup.string()
-            .required('Vui lòng nhập thông tin này')
-            .test(
-                'len',
-                'Ngày sinh vượt quá ngày hiện tại',
-                (val) => new Date() > new Date(val)
-            )
-            .test(
-                'len',
-                'Ngày sinh phải sau ngày 1 tháng 1 năm 1920',
-                (val) => new Date('1920-1-1') < new Date(val)
-            ),
-        baoHiemYTe: Yup.string()
-            .trim()
-            .test(
-                'len',
-                'Số bảo hiểm y tế chỉ được sử dụng chữ cái và số',
-                (val) => /^[a-zA-Z0-9 ]*$/.test(val)
-            ),
-        trinhDoVanHoa: Yup.string()
-            .trim()
-            .required('Vui lòng nhập thông tin này'),
-        dienThoai: Yup.string()
-            .trim()
-            .min(10, 'Vui lòng nhập ít nhất 10 ký tự')
-            .max(12, 'Vui lòng nhập không quá 12 ký tự')
-            .required('Vui lòng nhập thông tin này')
-            .test('xxx', 'Số điện thoại chỉ được sử dụng chữ số', (val) =>
-                /^[0-9+.]*$/.test(val)
-            ),
-        dienThoai1: Yup.string()
-            .trim()
-            .min(10, 'Vui lòng nhập ít nhất 10 ký tự')
-            .max(12, 'Vui lòng nhập không quá 12 ký tự')
-            .nullable()
-            .test(
-                'xxx',
-                'Số điện thoại chỉ sử dụng chữ số',
-                (val) =>
-                    /^[0-9+.]*$/.test(val) || val === undefined || val === null
-            ),
-        // .test('xxx', 'Số điện thoại phải bắt đầu bằng số 0', (val) => {
-        //     if (val !== undefined) {
-        //         return val.charAt(0) === '0';
-        //     }
-        //     return true;
-        // }),
-        dienThoaiVoChong: Yup.string()
-            .nullable()
-            .min(10, 'Vui lòng nhập ít nhất 10 ký tự')
-            .max(12, 'Vui lòng nhập không quá 12 ký tự')
-            .nullable()
-            .test(
-                'len',
-                'Số điện thoại chỉ được sử dụng chữ số',
-                (val) =>
-                    /^[0-9+.]*$/.test(val) || val === undefined || val === null
-            ),
-        diaChiThuongChu: Yup.string()
-            .trim()
-            .required('Vui lòng nhập thông tin này'),
-        diaChiTamChu: Yup.string(),
-        NgayCapCMNDBN: Yup.string()
-            .required('Vui lòng nhập thông tin này')
-            .test(
-                'len',
-                'Ngày cấp vượt quá ngày hiện tại',
-                (val) => new Date() > new Date(val)
-            )
-            .test(
-                'len',
-                'Ngày cấp phải sau ngày 1 tháng 1 năm 1920',
-                (val) => new Date('1920-1-1') < new Date(val)
-            ),
-        nguyenNhanSuyThan: Yup.string().trim().nullable(),
-        ngayPhatHienSuyThan: Yup.string().nullable(),
-        // .required('Vui lòng nhập thông tin này')
-        // .test(
-        //     'len',
-        //     'Ngày vượt quá ngày hiện tại',
-        //     (val) => new Date() > new Date(val)
-        // )
-        // .test(
-        //     'len',
-        //     'Ngày phải sau ngày 1 tháng 1 năm 1920',
-        //     (val) => new Date('1920-1-1') < new Date(val)
-        // ),
-        NoiCapCMNDBN: Yup.string()
-            .trim()
-            .required('Vui lòng nhập thông tin này'),
-        // dia chi thuong tru
-        tinh: Yup.string()
-            .required('Vui lòng nhập thông tin này')
-            .typeError('Vui lòng nhập thông tin này'),
-        xaphuong: Yup.string()
-            .required('Vui lòng nhập thông tin này')
-            .typeError('Vui lòng nhập thông tin này'),
-        quanhuyen: Yup.string()
-            .required('Vui lòng nhập thông tin này')
-            .typeError('Vui lòng nhập thông tin này'),
-        // dia chi tam tru
-        tinhtt: Yup.string().nullable(),
-        xaphuongtt: Yup.string().nullable(),
-        quanhuyentt: Yup.string().nullable(),
-        thuocDangSuDungNgay: Yup.string().trim().nullable(),
-        lonNhatSinhNam: Yup.number()
-            .positive('Số phải lớn hơn 0')
-            .min(1900)
-            .typeError('Năm sinh phải là số lớn hơn 1900')
-            .integer('Năm sinh phải là số nguyên')
-            .nullable(),
-        laConThuMay: Yup.string()
-            .typeError('Vui lòng nhập thông tin này')
-            .required('Vui lòng nhập thông tin này'),
-        coMayCon: Yup.number()
-            .positive('Số phải lớn hơn 0')
-            .min(0)
-            .typeError('Hãy nhập một số lớn hơn hoặc bằng 0')
-            .nullable(),
-        soConTrai: Yup.number()
-            .positive('Số phải lớn hơn 0')
-            .min(0)
-            .typeError('Hãy nhập một số lớn hơn hoặc bằng 0')
-            .nullable(),
-        soConGai: Yup.number()
-            .positive('Số phải lớn hơn 0')
-            .min(0)
-            .typeError('Hãy nhập một số lớn hơn hoặc bằng 0')
-            .nullable(),
-        nhoNhatSinhNam: Yup.number()
-            .positive('Số phải lớn hơn 0')
-            .min(1900)
-            .typeError('Năm sinh phải là số lớn hơn 1900')
-            .integer('Năm sinh phải là số nguyên')
-            .nullable(),
-        baoNhieuDonViMau: Yup.number().positive('Số phải lớn hơn 0'),
-        thang: Yup.number()
-            .positive('Số phải lớn hơn 0')
-            .min(1)
-            .max(12)
-            .nullable()
-            .typeError('Hãy nhập một số từ 1 đến 12')
-            .integer('Tháng phải là số nguyên'),
-        nam: Yup.number()
-            .positive('Số phải lớn hơn 0')
-            .min(1900)
-            .nullable()
-            .typeError('Năm phải là số lớn hơn 1900')
-            .integer('Năm phải là số nguyên'),
-        chieuCao: Yup.number()
-            .positive('Số phải lớn hơn 0')
-            .min(0)
-            .typeError('Hãy nhập một số lớn hơn hoặc bằng 0')
-            .required('Vui lòng nhập thông tin này')
-            .typeError('Vui lòng nhập thông tin này'),
-        canNang: Yup.number()
-            .positive('Số phải lớn hơn 0')
-            .min(0)
-            .typeError('Hãy nhập một số lớn hơn hoặc bằng 0')
-            .required('Vui lòng nhập thông tin này')
-            .typeError('Vui lòng nhập thông tin này'),
-        soLanTuan: Yup.number()
-            .positive('Số phải lớn hơn hoặc bằng 0')
-            .min(0)
-            .typeError('Hãy nhập một số lớn hơn hoặc bằng 0'),
-        dieuTrenNgay: Yup.number()
-            .positive('Số phải lớn hơn hoặc bằng 0')
-            .min(0),
-        thuNhapVoChongBenhNhan: Yup.number().positive('Số phải lớn hơn 0'),
-        thuNhapKhac: Yup.number().positive('Số phải lớn hơn 0'),
-        thuocTaoMau: Yup.string().trim(),
-        bacSiDieuTri: Yup.string().trim(),
-        dienThoaiBacSi: Yup.string()
-            .trim()
-            .min(10, 'Vui lòng nhập ít nhất 10 ký tự')
-            .max(12, 'Vui lòng nhập không quá 12 ký tự')
-            .nullable()
-            .test(
-                'len',
-                'Số điện thoại chỉ được sử dụng chữ số',
-                (val) =>
-                    /^[0-9.+]*$/.test(val) || val === undefined || val === null
-            ),
-        thuNhapBenhNhan: Yup.string().required('Vui lòng nhập thông tin này'),
-        tienChuanBiChoViecGhepThan: Yup.string().required(
-            'Vui lòng nhập thông tin này'
-        ),
-        choGhepBenh: Yup.string()
-            .trim()
-            .required('Vui lòng nhập')
-            .typeError('Vui lòng nhập thông tin'),
-        choGhepBVDieuTri: Yup.string()
-            .trim()
-            .required('Vui lòng nhập')
-            .typeError('Vui lòng nhập thông tin'),
-        hoTenVoChong: Yup.string()
-            .test(
-                'lxxen',
-                'Họ tên không được sử dụng ký tự đặc biệt và số',
-                (val) => {
-                    const str = removeAscent(val);
-                    return /^[a-zA-Z ]*$/.test(str);
-                }
-            )
-            .min(2, 'Vui lòng nhập ít nhất 2 ký tự không phải khoảng trắng')
-            .max(255, 'Vui lòng nhập không quá 255 ký tự')
-            .nullable(),
-        email: Yup.string()
-            .required('Vui lòng nhập thông tin')
-            .test('isEmail', 'Email không hợp lệ', (val) => {
-                const isEmail = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-                return (
-                    isEmail.test(val) ||
-                    val === '' ||
-                    val === undefined ||
-                    val === null
-                );
-            }),
-        maso: Yup.number()
-            .nullable()
-            .min(0, 'Vui lòng nhập số lớn hơn 0')
-            .typeError('Vui lòng nhập số')
-    });
+    const DropTinh = () => {
+        return Tinh.map((item) => {
+            return (
+                <option value={item.MaTinh} key={item.MaTinh}>
+                    {item.TenTinh}
+                </option>
+            );
+        });
+    };
+    const DropTinhTT = () => {
+        return TinhTT.map((item) => {
+            return (
+                <option value={item.MaHuyen} key={item.MaHuyen}>
+                    {item.TenHuyen}
+                </option>
+            );
+        });
+    };
     const KhongBiNhiemCheck = () => {
         const isChecked = $('#NhiemCovid').prop('checked');
         if (isChecked === true) {
@@ -901,176 +325,245 @@ const DangKyChoGhepTangEditAdm = (props) => {
             toast.info('Xóa thành công');
         };
         return (
-            <div>
+            <div style={{width: '100%'}}>
                 <div>
                     <Button
-                        variant="primary"
-                        size="sm"
+                        type="primary"
+                        size="small"
                         onClick={() => {
                             const NewItem = [...lstAnhChiEm, {}];
+
                             setLstAnhChiEm(NewItem);
                         }}
                     >
-                        <i className="fas fa-plus" /> Thêm anh/chị/em
+                        <i className="fas fa-plus" /> Thêm thông tin quan hệ gia
+                        đình
                     </Button>
                 </div>
-                {lstAnhChiEm.map((item, key) => {
-                    return (
-                        <div className="row">
-                            <div className="col-md-11 col-sm-11">
-                                <div
-                                    className="row"
-                                    key={`${item.hoTenBN}--${key}`}
+                {lstAnhChiEm &&
+                    lstAnhChiEm.map((item, key) => {
+                        return (
+                            <Row key={key} gutter={[10, 5]}>
+                                <Col
+                                    lg={{span: 22}}
+                                    md={{span: 24}}
+                                    sm={{span: 24}}
+                                    xs={{span: 24}}
                                 >
-                                    <div className="form-group col-md-6 col-sm-6">
-                                        <label htmlFor="HoTenNguoiThan">
-                                            Họ và tên
-                                        </label>
-                                        <Field
-                                            name="HoTenNguoiThan"
-                                            key="HoTenNguoiThan"
-                                            value={item.HoTenNguoiThan}
-                                            className="form-control "
-                                            onChange={(event) =>
-                                                handleChange(event, key)
-                                            }
-                                        />
-                                    </div>
-                                    <div className="form-group col-md-2 col-sm-2">
-                                        <label htmlFor="QuanHeNguoiThan">
-                                            Quan hệ
-                                        </label>
-                                        <Field
-                                            name="QuanHeNguoiThan"
-                                            as="select"
-                                            key="QuanHeNguoiThan"
-                                            className="form-control "
-                                            value={item.QuanHeNguoiThan}
-                                            onChange={(event) =>
-                                                handleChange(event, key)
-                                            }
+                                    <Row gutter={[10, 5]}>
+                                        <Col
+                                            lg={{span: 12}}
+                                            md={{span: 24}}
+                                            sm={{span: 24}}
+                                            xs={{span: 24}}
                                         >
-                                            <option value="">--Chọn--</option>
-                                            <DropDMQHGD />
-                                        </Field>
-                                    </div>
-                                    <div className="form-group col-md-2 col-sm-2">
-                                        <label htmlFor="NamSinhNguoiThan">
-                                            Sinh năm
-                                        </label>
-                                        <Field
-                                            type="number"
-                                            name="NamSinhNguoiThan"
-                                            key="NamSinhNguoiThan"
-                                            className="form-control "
-                                            defaultValue={item.NamSinhNguoiThan}
-                                            onChange={(event) =>
-                                                handleChange(event, key)
-                                            }
-                                        />
-                                    </div>
-                                    <div className="form-group col-md-2 col-sm-2">
-                                        <label htmlFor="NhomMauNguoiThan">
-                                            Nhóm máu ABO
-                                        </label>
-                                        <Field
-                                            as="select"
-                                            name="NhomMauNguoiThan"
-                                            key="NhomMauNguoiThan"
-                                            className="form-control "
-                                            value={item.NhomMauNguoiThan}
-                                            onChange={(event) =>
-                                                handleChange(event, key)
-                                            }
-                                            onKeyUp={(event) =>
-                                                handleChange(event, key)
-                                            }
-                                        >
-                                            <option>--Chọn--</option>
-                                            <DropDMNhomMau />
-                                        </Field>
-                                    </div>
-                                </div>
-                                <div className="row" key={key}>
-                                    <div className="form-group col-md-2 col-sm-2">
-                                        <label htmlFor="TrinhDoVHNguoiThan">
-                                            Trình độ văn hóa
-                                        </label>
+                                            <Form.Item
+                                                label="Họ và tên"
+                                                className="my-label"
+                                            >
+                                                <Input
+                                                    id={`hoTenNguoiThan-${key}`}
+                                                    value={item.hoTenNguoiThan}
+                                                    name="hoTenNguoiThan"
+                                                    onChange={(event) =>
+                                                        handleChange(event, key)
+                                                    }
+                                                />
+                                            </Form.Item>
+                                        </Col>
 
-                                        <Field
-                                            name="TrinhDoVHNguoiThan"
-                                            key="TrinhDoVHNguoiThan"
-                                            defaultValue={
-                                                item.TrinhDoVHNguoiThan
-                                            }
-                                            className="form-control "
-                                            onChange={(event) =>
-                                                handleChange(event, key)
-                                            }
-                                        />
+                                        <Col
+                                            lg={{span: 4}}
+                                            md={{span: 24}}
+                                            sm={{span: 24}}
+                                            xs={{span: 24}}
+                                        >
+                                            <Form.Item
+                                                className="my-label"
+                                                label="Quan hệ"
+                                            >
+                                                <Select
+                                                    defaultValue=""
+                                                    name="quanHeNguoiThan"
+                                                    onChange={(value) => {
+                                                        const newItem = [
+                                                            ...lstAnhChiEm
+                                                        ];
+                                                        newItem[key] = {
+                                                            ...newItem[key],
+                                                            quanHeNguoiThan: value
+                                                        };
+                                                        setLstAnhChiEm(newItem);
+                                                    }}
+                                                >
+                                                    <Select.Option value="">
+                                                        --Chọn--
+                                                    </Select.Option>
+
+                                                    {DropDMQHGD()}
+                                                </Select>
+                                            </Form.Item>
+                                        </Col>
+
+                                        <Col
+                                            lg={{span: 4}}
+                                            md={{span: 24}}
+                                            sm={{span: 24}}
+                                            xs={{span: 24}}
+                                        >
+                                            <Form.Item
+                                                className="my-label"
+                                                label="Sinh Năm"
+                                            >
+                                                <InputNumber
+                                                    name="namSinhNguoiThan"
+                                                    min={1970}
+                                                    max={2022}
+                                                    style={{width: '100%'}}
+                                                    onChange={(value) => {
+                                                        const newItem = [
+                                                            ...lstAnhChiEm
+                                                        ];
+                                                        newItem[key] = {
+                                                            ...newItem[key],
+                                                            namSinhNguoiThan: value
+                                                        };
+                                                        setLstAnhChiEm(newItem);
+                                                    }}
+                                                />
+                                            </Form.Item>
+                                        </Col>
+
+                                        <Col
+                                            lg={{span: 4}}
+                                            md={{span: 24}}
+                                            sm={{span: 24}}
+                                            xs={{span: 24}}
+                                        >
+                                            <Form.Item
+                                                className="my-label"
+                                                label="Nhóm máu"
+                                            >
+                                                <Select
+                                                    defaultValue=""
+                                                    name="nhomMauNguoiThan"
+                                                    onChange={(value) => {
+                                                        const newItem = [
+                                                            ...lstAnhChiEm
+                                                        ];
+                                                        newItem[key] = {
+                                                            ...newItem[key],
+                                                            nhomMauNguoiThan: value
+                                                        };
+                                                        setLstAnhChiEm(newItem);
+                                                    }}
+                                                >
+                                                    <Select.Option value="">
+                                                        --Chọn--
+                                                    </Select.Option>
+
+                                                    {DropDMNhomMau()}
+                                                </Select>
+                                            </Form.Item>
+                                        </Col>
+                                    </Row>
+
+                                    <Row gutter={[10, 5]}>
+                                        <Col
+                                            lg={{span: 4}}
+                                            md={{span: 24}}
+                                            sm={{span: 24}}
+                                            xs={{span: 24}}
+                                        >
+                                            <Form.Item
+                                                className="my-label"
+                                                label="Trình độ văn hóa"
+                                            >
+                                                <Input
+                                                    name="trinhDoVHNguoiThan"
+                                                    onChange={(event) =>
+                                                        handleChange(event, key)
+                                                    }
+                                                />
+                                            </Form.Item>
+                                        </Col>
+
+                                        <Col
+                                            lg={{span: 8}}
+                                            md={{span: 24}}
+                                            sm={{span: 24}}
+                                            xs={{span: 24}}
+                                        >
+                                            <Form.Item
+                                                className="my-label"
+                                                label="Địa chỉ thường chú"
+                                            >
+                                                <Input
+                                                    name="diaChiThuongTruNguoiThan"
+                                                    onChange={(event) =>
+                                                        handleChange(event, key)
+                                                    }
+                                                />
+                                            </Form.Item>
+                                        </Col>
+
+                                        <Col
+                                            lg={{span: 4}}
+                                            md={{span: 24}}
+                                            sm={{span: 24}}
+                                            xs={{span: 24}}
+                                        >
+                                            <Form.Item
+                                                className="my-label"
+                                                label="Số điện thoại"
+                                            >
+                                                <Input
+                                                    name="dienThoaiNguoiThan"
+                                                    onChange={(event) =>
+                                                        handleChange(event, key)
+                                                    }
+                                                />
+                                            </Form.Item>
+                                        </Col>
+
+                                        <Col
+                                            lg={{span: 8}}
+                                            md={{span: 24}}
+                                            sm={{span: 24}}
+                                            xs={{span: 24}}
+                                        >
+                                            <Form.Item
+                                                className="my-label"
+                                                label="Lý do không hiển thị được"
+                                            >
+                                                <Input
+                                                    name="LyDoKhongHien"
+                                                    onChange={(event) =>
+                                                        handleChange(event, key)
+                                                    }
+                                                />
+                                            </Form.Item>
+                                        </Col>
+                                    </Row>
+                                </Col>
+                                <Col
+                                    lg={{span: 2}}
+                                    md={{span: 24}}
+                                    sm={{span: 24}}
+                                    xs={{span: 24}}
+                                >
+                                    <div>
+                                        <Button
+                                            type="danger"
+                                            onClick={() => DeleteItem(key)}
+                                        >
+                                            <i className="fas fa-times" />
+                                        </Button>
                                     </div>
-                                    <div className="form-group col-md-4 col-sm-4">
-                                        <label htmlFor="DiaChiThuongTruNguoiThan">
-                                            Địa chỉ thường trú
-                                        </label>
-                                        <Field
-                                            name="DiaChiThuongTruNguoiThan"
-                                            key="DiaChiThuongTruNguoiThan"
-                                            defaultValue={
-                                                item.DiaChiThuongTruNguoiThan
-                                            }
-                                            className="form-control "
-                                            onChange={(event) =>
-                                                handleChange(event, key)
-                                            }
-                                        />
-                                    </div>
-                                    <div className="form-group col-md-2 col-sm-2">
-                                        <label htmlFor="DienThoaiNguoiThan">
-                                            Số điện thoại
-                                        </label>
-                                        <Field
-                                            name="DienThoaiNguoiThan"
-                                            key="DienThoaiNguoiThan"
-                                            className="form-control "
-                                            defaultValue={
-                                                item.DienThoaiNguoiThan
-                                            }
-                                            onChange={(event) =>
-                                                handleChange(event, key)
-                                            }
-                                        />
-                                    </div>
-                                    <div className="form-group col-md-4 col-sm-4">
-                                        <label htmlFor="LyDoKhongHien">
-                                            Lý do không hiến được
-                                        </label>
-                                        <Field
-                                            name="LyDoKhongHien"
-                                            key="LyDoKhongHien"
-                                            className="form-control "
-                                            defaultValue={item.LyDoKhongHien}
-                                            onChange={(event) =>
-                                                handleChange(event, key)
-                                            }
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="form-group col-md-1 col-sm-1">
-                                <label htmlFor="a">Xóa</label>
-                                <div>
-                                    <Button
-                                        variant="danger"
-                                        onClick={() => DeleteItem(key)}
-                                    >
-                                        <i className="fas fa-times" />
-                                    </Button>
-                                </div>
-                            </div>
-                        </div>
-                    );
-                })}
+                                </Col>
+                            </Row>
+                        );
+                    })}
             </div>
         );
     };
@@ -1083,17 +576,78 @@ const DangKyChoGhepTangEditAdm = (props) => {
             quanhuyentt:
                 entityObj.QuanHuyentt === null ? '' : entityObj.QuanHuyentt
         });
+        const [Huyen, setHuyen] = useState([]);
+        const [HuyenTT, setHuyenTT] = useState([]);
+        const [Xa, setXa] = useState([]);
+        const [XaTT, setXaTT] = useState([]);
         function onchangeloaddiachi(name, value) {
             if (name === 'tinh') {
                 setloaddiachi({...loaddiachi, tinh: value, quanhuyen: ''});
+
+                LoadDiachi.DaTaQuanhuyen(value).then((rs) => {
+                    if (rs.Status) {
+                        setHuyen(rs.Data);
+                    }
+                });
             } else if (name === 'quanhuyen') {
                 setloaddiachi({...loaddiachi, quanhuyen: value});
+                LoadDiachi.DaTaXaphuong(value).then((rs) => {
+                    if (rs.Status) {
+                        setXa(rs.Data);
+                    }
+                });
             } else if (name === 'tinhtt') {
                 setloaddiachi({...loaddiachi, tinhtt: value, quanhuyentt: ''});
+                LoadDiachi.DaTaQuanhuyen(value).then((rs) => {
+                    if (rs.Status) {
+                        setHuyenTT(rs.Data);
+                    }
+                });
             } else if (name === 'quanhuyentt') {
                 setloaddiachi({...loaddiachi, quanhuyentt: value});
+                LoadDiachi.DaTaXaphuong(value).then((rs) => {
+                    if (rs.Status) {
+                        setXaTT(rs.Data);
+                    }
+                });
             }
         }
+        const DropQuanHuyen = () => {
+            return Huyen.map((item) => {
+                return (
+                    <option value={item.MaHuyen} key={item.MaHuyen}>
+                        {item.TenHuyen}
+                    </option>
+                );
+            });
+        };
+        const DropXa = () => {
+            return Xa.map((item) => {
+                return (
+                    <option value={item.MaXa} key={item.MaXa}>
+                        {item.TenXa}
+                    </option>
+                );
+            });
+        };
+        const DropHuyenTT = () => {
+            return HuyenTT.map((item) => {
+                return (
+                    <option value={item.MaHuyen} key={item.MaHuyen}>
+                        {item.TenHuyen}
+                    </option>
+                );
+            });
+        };
+        const DropXaTT = () => {
+            return XaTT.map((item) => {
+                return (
+                    <option value={item.MaXa} key={item.MaXa}>
+                        {item.TenXa}
+                    </option>
+                );
+            });
+        };
         const submitEdit = () => {
             if (formRef.current) {
                 formRef.current.handleSubmit();
@@ -1102,4630 +656,3709 @@ const DangKyChoGhepTangEditAdm = (props) => {
         return (
             <>
                 <Modal
-                    show={
+                    visible={
                         IsShowEditPopup &&
                         entityObj.TypePhieuDKGhepTang ===
                             TypeBoPhanConstant.than
                     }
-                    dialogClassName="modal-90w"
-                    onHide={() => onCloseEntityEditModal()}
-                    backdrop="static"
+                    onCancel={() => onCloseEntityEditModal()}
+                    width={1600}
+                    zIndex={1040}
+                    okText="Hoàn thành"
+                    cancelText="Thoát"
+                    title="Cập nhật đăng ký chờ ghép Thận"
                 >
-                    <Modal.Header closeButton>
-                        <Modal.Title>
-                            Cập nhật đăng ký chờ ghép Thận
-                        </Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        <Formik
-                            innerRef={formRef}
-                            initialValues={{
-                                id: entityObj.Id,
-                                typePhieuDKGhepTang:
-                                    entityObj.TypePhieuDKGhepTang,
-                                hoTenBN: entityObj.HoTenBN,
-                                tinh: entityObj.Tinh,
-                                xaphuong: entityObj.XaPhuong,
-                                quanhuyen: entityObj.QuanHuyen,
-                                tinhtt: entityObj.Tinhtt,
-                                xaphuongtt: entityObj.XaPhuongtt,
-                                quanhuyentt: entityObj.QuanHuyentt,
-                                gioiTinh: String(entityObj.GioiTinh),
-                                ngaySinh: CommonUtility.GetDateSetField(
-                                    entityObj.NgaySinh
-                                ),
-                                nhomMau: entityObj.NhomMau,
-                                nhomMau1: entityObj.NhomMau1,
-                                baoHiemYTe: entityObj.BaoHiemYTe,
-                                CMNDBN: entityObj.CMNDBN,
-                                NgayCapCMNDBN: CommonUtility.GetDateSetField(
-                                    entityObj.NgayCapCMNDBN
-                                ),
-                                NoiCapCMNDBN: entityObj.NoiCapCMNDBN,
-                                ngheNghiep: entityObj.NgheNghiep,
-                                ngheNhiepBoSung: entityObj.NgheNhiepBoSung,
-                                trinhDoVanHoa: entityObj.TrinhDoVanHoa,
-                                dienThoai: entityObj.DienThoai,
-                                dienThoai1: entityObj.DienThoai1,
-                                diaChiThuongChu: entityObj.DiaChiThuongChu,
-                                diaChiTamChu: entityObj.DiaChiTamChu,
-                                laConThuMay: entityObj.LaConThuMay,
-                                tinhTrangHonNhan: String(
-                                    entityObj.TinhTrangHonNhan
-                                ),
-                                hoTenVoChong: entityObj.HoTenVoChong,
-                                dienThoaiVoChong: entityObj.DienThoaiVoChong,
-                                coMayCon: entityObj.CoMayCon,
-                                soConTrai: entityObj.SoConTrai,
-                                soConGai: entityObj.SoConGai,
-                                lonNhatSinhNam: entityObj.LonNhatSinhNam,
-                                nhoNhatSinhNam: entityObj.NhoNhatSinhNam,
-                                tienCanGiaDinh: entityObj.TienCanGiaDinh,
-                                tienCanBanThan: entityObj.TienCanBanThan,
-                                nguyenNhanSuyThan: entityObj.NguyenNhanSuyThan,
-                                chuanDoanSuyThanGhep:
-                                    entityObj.ChuanDoanSuyThanGhep,
-                                benhSu: entityObj.BenhSu,
-                                thuocTriViemGan: entityObj.ThuocTriViemGan,
-                                sinhThietThan: String(entityObj.SinhThietThan),
-                                ketQuaSinhThietThan:
-                                    entityObj.KetQuaSinhThietThan,
-                                ngayPhatHienSuyThan: CommonUtility.GetDateSetField(
-                                    entityObj.NgayPhatHienSuyThan
-                                ),
-                                ngayCTNTHoacKhamThamPhanBenhLy: CommonUtility.GetDateSetField(
-                                    entityObj.NgayCTNTHoacKhamThamPhanBenhLy
-                                ),
-                                dieuTriViemGanTu: entityObj.DieuTriViemGanTu,
-                                CTNTVaoNgay: String(entityObj.CTNTVaoNgay),
-                                soGioTrenLan:
-                                    entityObj.SoGioTrenLan !== null
-                                        ? entityObj.SoGioTrenLan
-                                        : '',
-                                soLanCTNTTuan:
-                                    entityObj.SoLanCTNTTuan !== null
-                                        ? entityObj.SoLanCTNTTuan
-                                        : '',
-                                chuKyThamPhan:
-                                    entityObj.ChuKyThamPhan !== null
-                                        ? entityObj.ChuKyThamPhan
-                                        : '',
-                                chuKyThamPhanTaiBV:
-                                    entityObj.ChuKyThamPhanTaiBV !== null
-                                        ? entityObj.ChuKyThamPhanTaiBV
-                                        : '',
-                                thamPhanBangMay: String(
-                                    entityObj.ThamPhanBangMay
-                                ),
-                                thamPhanBangMayTaiBV:
-                                    entityObj.ThamPhanBangMayTaiBV,
-                                truyenMau: String(entityObj.TruyenMau),
-                                baoNhieuDonViMau: entityObj.BaoNhieuDonViMau,
-                                thang:
-                                    entityObj.Thang !== null
-                                        ? entityObj.Thang
-                                        : '',
-                                nam:
-                                    entityObj.Nam !== null ? entityObj.Nam : '',
-                                benhVienTruyenMau: entityObj.BenhVienTruyenMau,
-                                daGhepLan1Ngay: CommonUtility.GetDateSetField(
-                                    entityObj.DaGhepLan1Ngay
-                                ),
-                                daGhepLan1TaiBV: entityObj.DaGhepLan1TaiBV,
-                                nguoiChoThan: entityObj.NguoiChoThan,
-                                ngayChayThanTroLai: CommonUtility.GetDateSetField(
-                                    entityObj.NgayChayThanTroLai
-                                ),
-                                chayThanTroLaiTaiBV:
-                                    entityObj.ChayThanTroLaiTaiBV,
-                                ctntHoacKhamThamPhan: CommonUtility.GetDateSetField(
-                                    entityObj.CTNTHoacKhamThamPhan
-                                ),
-                                ctntVaoNgayThuMay: entityObj.CTNTVaoNgayThuMay,
-                                caCTNT: entityObj.CaCTNT,
-                                chieuCao: entityObj.ChieuCao,
-                                canNang: entityObj.CanNang,
-                                nuocTieu24h: String(entityObj.NuocTieu24h),
-                                soLuongNuocTieu24h:
-                                    entityObj.SoLuongNuocTieu24h,
-                                thuocDangSuDungNgay:
-                                    entityObj.ThuocDangSuDungNgay,
-                                thoiGianBiTangHuyetAp: CommonUtility.GetDateSetField(
-                                    entityObj.ThoiGianBiTangHuyetAp
-                                ),
-                                thuocTaoMau: entityObj.ThuocTaoMau,
-                                bacSiDieuTri: entityObj.BacSiDieuTri,
-                                dienThoaiBacSi: entityObj.DienThoaiBacSi,
-                                khongBiViemGan: entityObj.KhongBiViemGan,
-                                viemGanSieuViA: entityObj.ViemGanSieuViA,
-                                viemGanSieuViB: entityObj.ViemGanSieuViB,
-                                viemGanSieuViC: entityObj.ViemGanSieuViC,
-                                truocHoacSauLocMau: String(
-                                    entityObj.TruocHoacSauLocMau
-                                ),
-                                tangHuyetAp: String(entityObj.TangHuyetAp),
-                                daiThaoDuong: String(entityObj.DaiThaoDuong),
-                                thoiGianBiDaiThaoDuong: CommonUtility.GetDateSetField(
-                                    entityObj.ThoiGianBiDaiThaoDuong
-                                ),
-                                thuocDieuTriDaiThaoDuong:
-                                    entityObj.ThuocDieuTriDaiThaoDuong,
-                                tinhTrang: entityObj.TinhTrang,
-                                laoPhoi: String(entityObj.LaoPhoi),
-                                hutThuoc: String(entityObj.HutThuoc),
-                                dieuTrenNgay:
-                                    entityObj.DieuTrenNgay !== null
-                                        ? entityObj.DieuTrenNgay
-                                        : '',
-                                uongRuouBia: String(entityObj.UongRuouBia),
-                                soLanTuan:
-                                    entityObj.SoLanTuan !== null
-                                        ? entityObj.SoLanTuan
-                                        : '',
-                                soLuongLan: entityObj.SoLuongLan,
-                                benhKhac: entityObj.BenhKhac,
-                                laoCoQuanKhac: entityObj.LaoCoQuanKhac,
-                                thoiGianBiLao: CommonUtility.GetDateSetField(
-                                    entityObj.ThoiGianBiLao
-                                ),
-                                thoiGianDieuTriAndNoiDieuTri:
-                                    entityObj.ThoiGianDieuTriAndNoiDieuTri,
-                                namPhatHien: entityObj.NamPhatHien,
-                                dieuTriTaiBV: entityObj.DieuTriTaiBV,
-                                thoiGianDieuTri: entityObj.ThoiGianDieuTri,
-                                thuocDieuTri: entityObj.ThuocDieuTri,
-                                daPhauThuat: String(entityObj.DaPhauThuat),
-                                coPhauThuat: entityObj.CoPhauThuat,
-                                tinhTrangHienTai: entityObj.TinhTrangHienTai,
-                                ngayThangPhauThuat: CommonUtility.GetDateSetField(
-                                    entityObj.NgayThangPhauThuat
-                                ),
-                                benhVienPhauThuat: entityObj.BenhVienPhauThuat,
-                                biBenhThan: String(entityObj.BiBenhThan),
-                                biBenhLao: String(entityObj.BiBenhLao),
-                                biDaiThaoDuong: String(
-                                    entityObj.BiDaiThaoDuong
-                                ),
-                                biTangHuyetAp: String(entityObj.BiTangHuyetAp),
-                                biUngThu: String(entityObj.BiUngThu),
-                                songCungDiaChi: String(
-                                    entityObj.SongCungDiaChi
-                                ),
-                                biBenhKhac: entityObj.BiBenhKhac,
-                                nguoiThanBiBenh: entityObj.NguoiThanBiBenh,
-                                thuNhapBenhNhan: entityObj.ThuNhapBenhNhan,
-                                tinhTrangBenhNguoiThanHienTai:
-                                    entityObj.TinhTrangBenhNguoiThanHienTai,
-                                thuNhapVoChongBenhNhan:
-                                    entityObj.ThuNhapVoChongBenhNhan,
-                                ngheNghiepVoChong: entityObj.NgheNghiepVoChong,
-                                thuNhapKhac: entityObj.ThuNhapKhac,
-                                tienChuanBiChoViecGhepThan:
-                                    entityObj.TienChuanBiChoViecGhepThan,
-                                khongCoNguoiNhan: entityObj.KhongCoNguoiNhan,
-                                nguoiChoBiBenh: entityObj.NguoiChoBiBenh,
-                                nguoiChoKhongHoaHopMau:
-                                    entityObj.NguoiChoKhongHoaHopMau,
-                                lyDoKhac: entityObj.LyDoKhac,
-                                email: entityObj.Email,
-                                maso: entityObj.MaSo,
-                                ghichu: entityObj.GhiChu,
-                                namsinh: entityObj.NamSinh,
-                                ngaydkhien: CommonUtility.stringToDMY(
-                                    entityObj.NgayDKHien
-                                ),
-                                namdk: entityObj.NamDK,
-                                thoigianbhyt: entityObj.thoigianBHYT,
-                                chisobmi: entityObj.chisoBMI,
-                                nambatdaudieutri: entityObj.nambatdaudieutri,
-                                sonamdieutrithaythe:
-                                    entityObj.sonamdieutrithaythe,
-                                CAPD: entityObj.CAPD,
-                                sanhconlancuoivaonam:
-                                    entityObj.sanhconlancuoivaonam,
-                                sanhconmaylan: entityObj.sanhconmaylan,
-                                benhlyhethongduongtietnieu:
-                                    entityObj.benhlyhethongduongtietnieu,
-                                benhlytimmach: entityObj.benhlytimmach,
-                                THA: entityObj.THA,
-                                tiencanngoaikhoakhac:
-                                    entityObj.tiencanngoaikhoakhac,
-                                ngoaitietnieu: entityObj.ngoaitietnieu,
-                                ngoaitongquat: entityObj.ngoaitongquat,
-                                thoidiemtruyenmau: CommonUtility.stringToDMY(
-                                    entityObj.thoidiemtruyenmau
-                                ),
-                                namphathienctnttrolai:
-                                    entityObj.namphathienctnttrolai,
-                                hoatri: entityObj.hoatri,
-                                xatri: entityObj.xatri,
-                                phauthuat: entityObj.phauthuat,
-                                NhiemCovid: entityObj.NhiemCovid,
-                                BiTruocTiem: entityObj.BiTruocTiem,
-                                BiSauTiem: entityObj.BiSauTiem,
-                                CoTrieuChung: entityObj.CoTrieuChung,
-                                TrieuChungNhe: entityObj.TrieuChungNhe,
-                                TrieuChungtrungBinh:
-                                    entityObj.TrieuChungtrungBinh,
-                                NhapVien: entityObj.NhapVien,
-                                ThoiGianNamVien: entityObj.ThoiGianNamVien,
-                                ThoMay: entityObj.ThoMay,
-                                ThoHFNC: entityObj.ThoHFNC,
-                                TiemVaccine: entityObj.TiemVaccine,
-                                NgayTiemMui1: CommonUtility.stringToDMY(
-                                    entityObj.NgayTiemMui1
-                                ),
-                                NgayTiemMui2: CommonUtility.stringToDMY(
-                                    entityObj.NgayTiemMui2
-                                ),
-                                PhanUng: entityObj.PhanUng,
-                                TiemVaccine2: entityObj.TiemVaccine2,
-                                PhanUng2: entityObj.PhanUng2,
-                                NgayTiemMui3: CommonUtility.stringToDMY(
-                                    entityObj.NgayTiemMui3
-                                ),
-                                TiemVaccine3: entityObj.TiemVaccine3,
-                                PhanUng3: entityObj.PhanUng3
-                            }}
-                            validationSchema={SignupSchema}
-                            onSubmit={(values) => {
-                                // sua gia tri 3 checkbox viem gan sieu vi A B C
-                                const values1 = values;
-                                let CMNDtruoc = false;
-                                let CMNDsau = false;
-                                if (values.khongBiViemGan) {
-                                    values1.viemGanSieuViA = false;
-                                    values1.viemGanSieuViB = false;
-                                    values1.viemGanSieuViC = false;
-                                    values1.truocHoacSauLocMau = 0;
-                                }
+                    <Form
+                        labelCol={{span: 24}}
+                        wrapperCol={{span: 24}}
+                        layout="vertical"
+                        initialValues={{
+                            id: entityObj.Id,
+                            typePhieuDKGhepTang: entityObj.TypePhieuDKGhepTang,
+                            hoTenBN: entityObj.HoTenBN,
+                            tinh: entityObj.Tinh,
+                            xaphuong: entityObj.XaPhuong,
+                            quanhuyen: entityObj.QuanHuyen,
+                            tinhtt: entityObj.Tinhtt,
+                            xaphuongtt: entityObj.XaPhuongtt,
+                            quanhuyentt: entityObj.QuanHuyentt,
+                            gioiTinh: String(entityObj.GioiTinh),
+                            ngaySinh:
+                                entityObj.NgaySinh !== null
+                                    ? moment(entityObj.NgaySinh)
+                                    : '',
+                            nhomMau: entityObj.NhomMau,
+                            nhomMau1: entityObj.NhomMau1,
+                            baoHiemYTe: entityObj.BaoHiemYTe,
+                            CMNDBN: entityObj.CMNDBN,
+                            NgayCapCMNDBN:
+                                entityObj.NgayCapCMNDBN !== null
+                                    ? moment(entityObj.NgayCapCMNDBN)
+                                    : '',
+                            NoiCapCMNDBN: entityObj.NoiCapCMNDBN,
+                            ngheNghiep: entityObj.NgheNghiep,
+                            ngheNhiepBoSung: entityObj.NgheNhiepBoSung,
+                            trinhDoVanHoa: entityObj.TrinhDoVanHoa,
+                            dienThoai: entityObj.DienThoai,
+                            dienThoai1: entityObj.DienThoai1,
+                            diaChiThuongChu: entityObj.DiaChiThuongChu,
+                            diaChiTamChu: entityObj.DiaChiTamChu,
+                            laConThuMay: entityObj.LaConThuMay,
+                            tinhTrangHonNhan: String(
+                                entityObj.TinhTrangHonNhan
+                            ),
+                            hoTenVoChong: entityObj.HoTenVoChong,
+                            dienThoaiVoChong: entityObj.DienThoaiVoChong,
+                            coMayCon: entityObj.CoMayCon,
+                            soConTrai: entityObj.SoConTrai,
+                            soConGai: entityObj.SoConGai,
+                            lonNhatSinhNam: entityObj.LonNhatSinhNam,
+                            nhoNhatSinhNam: entityObj.NhoNhatSinhNam,
+                            tienCanGiaDinh: entityObj.TienCanGiaDinh,
+                            tienCanBanThan: entityObj.TienCanBanThan,
+                            nguyenNhanSuyThan: entityObj.NguyenNhanSuyThan,
+                            chuanDoanSuyThanGhep:
+                                entityObj.ChuanDoanSuyThanGhep,
+                            benhSu: entityObj.BenhSu,
+                            thuocTriViemGan: entityObj.ThuocTriViemGan,
+                            sinhThietThan: String(entityObj.SinhThietThan),
+                            ketQuaSinhThietThan: entityObj.KetQuaSinhThietThan,
+                            ngayPhatHienSuyThan:
+                                entityObj.NgayPhatHienSuyThan !== null
+                                    ? moment(entityObj.NgayPhatHienSuyThan)
+                                    : '',
+                            ngayCTNTHoacKhamThamPhanBenhLy:
+                                entityObj.NgayCTNTHoacKhamThamPhanBenhLy !==
+                                undefined
+                                    ? moment(
+                                          entityObj.NgayCTNTHoacKhamThamPhanBenhLy
+                                      )
+                                    : '',
+                            dieuTriViemGanTu: entityObj.DieuTriViemGanTu,
+                            CTNTVaoNgay: String(entityObj.CTNTVaoNgay),
+                            soGioTrenLan:
+                                entityObj.SoGioTrenLan !== null
+                                    ? entityObj.SoGioTrenLan
+                                    : '',
+                            soLanCTNTTuan:
+                                entityObj.SoLanCTNTTuan !== null
+                                    ? entityObj.SoLanCTNTTuan
+                                    : '',
+                            chuKyThamPhan:
+                                entityObj.ChuKyThamPhan !== null
+                                    ? entityObj.ChuKyThamPhan
+                                    : '',
+                            chuKyThamPhanTaiBV:
+                                entityObj.ChuKyThamPhanTaiBV !== null
+                                    ? entityObj.ChuKyThamPhanTaiBV
+                                    : '',
+                            thamPhanBangMay: String(entityObj.ThamPhanBangMay),
+                            thamPhanBangMayTaiBV:
+                                entityObj.ThamPhanBangMayTaiBV,
+                            truyenMau: String(entityObj.TruyenMau),
+                            baoNhieuDonViMau: entityObj.BaoNhieuDonViMau,
+                            thang:
+                                entityObj.Thang !== null ? entityObj.Thang : '',
+                            nam: entityObj.Nam !== null ? entityObj.Nam : '',
+                            benhVienTruyenMau: entityObj.BenhVienTruyenMau,
+                            daGhepLan1Ngay:
+                                entityObj.DaGhepLan1Ngay !== null
+                                    ? moment(entityObj.DaGhepLan1Ngay)
+                                    : '',
+                            daGhepLan1TaiBV: entityObj.DaGhepLan1TaiBV,
+                            nguoiChoThan: entityObj.NguoiChoThan,
+                            ngayChayThanTroLai:
+                                entityObj.NgayChayThanTroLai !== null
+                                    ? moment(entityObj.NgayChayThanTroLai)
+                                    : '',
+                            chayThanTroLaiTaiBV: entityObj.ChayThanTroLaiTaiBV,
+                            ctntHoacKhamThamPhan:
+                                entityObj.CTNTHoacKhamThamPhan !== null
+                                    ? moment(entityObj.CTNTHoacKhamThamPhan)
+                                    : '',
+                            ctntVaoNgayThuMay: entityObj.CTNTVaoNgayThuMay,
+                            caCTNT: entityObj.CaCTNT,
+                            chieuCao: entityObj.ChieuCao,
+                            canNang: entityObj.CanNang,
+                            nuocTieu24h: String(entityObj.NuocTieu24h),
+                            soLuongNuocTieu24h: entityObj.SoLuongNuocTieu24h,
+                            thuocDangSuDungNgay: entityObj.ThuocDangSuDungNgay,
+                            thoiGianBiTangHuyetAp:
+                                entityObj.ThoiGianBiTangHuyetAp !== null
+                                    ? moment(entityObj.ThoiGianBiTangHuyetAp)
+                                    : '',
+                            thuocTaoMau: entityObj.ThuocTaoMau,
+                            bacSiDieuTri: entityObj.BacSiDieuTri,
+                            dienThoaiBacSi: entityObj.DienThoaiBacSi,
+                            khongBiViemGan: entityObj.KhongBiViemGan,
+                            viemGanSieuViA: entityObj.ViemGanSieuViA,
+                            viemGanSieuViB: entityObj.ViemGanSieuViB,
+                            viemGanSieuViC: entityObj.ViemGanSieuViC,
+                            truocHoacSauLocMau: String(
+                                entityObj.TruocHoacSauLocMau
+                            ),
+                            tangHuyetAp: String(entityObj.TangHuyetAp),
+                            daiThaoDuong: String(entityObj.DaiThaoDuong),
+                            thoiGianBiDaiThaoDuong:
+                                entityObj.ThoiGianBiDaiThaoDuong !== null
+                                    ? moment(entityObj.ThoiGianBiDaiThaoDuong)
+                                    : '',
+                            thuocDieuTriDaiThaoDuong:
+                                entityObj.ThuocDieuTriDaiThaoDuong,
+                            tinhTrang: entityObj.TinhTrang,
+                            laoPhoi: String(entityObj.LaoPhoi),
+                            hutThuoc: String(entityObj.HutThuoc),
+                            dieuTrenNgay:
+                                entityObj.DieuTrenNgay !== null
+                                    ? entityObj.DieuTrenNgay
+                                    : '',
+                            uongRuouBia: String(entityObj.UongRuouBia),
+                            soLanTuan:
+                                entityObj.SoLanTuan !== null
+                                    ? entityObj.SoLanTuan
+                                    : '',
+                            soLuongLan: entityObj.SoLuongLan,
+                            benhKhac: entityObj.BenhKhac,
+                            laoCoQuanKhac: entityObj.LaoCoQuanKhac,
+                            thoiGianBiLao:
+                                entityObj.ThoiGianBiLao !== null
+                                    ? moment(entityObj.ThoiGianBiLao)
+                                    : '',
+                            thoiGianDieuTriAndNoiDieuTri:
+                                entityObj.ThoiGianDieuTriAndNoiDieuTri,
+                            namPhatHien: entityObj.NamPhatHien,
+                            dieuTriTaiBV: entityObj.DieuTriTaiBV,
+                            thoiGianDieuTri: entityObj.ThoiGianDieuTri,
+                            thuocDieuTri: entityObj.ThuocDieuTri,
+                            daPhauThuat: String(entityObj.DaPhauThuat),
+                            coPhauThuat: entityObj.CoPhauThuat,
+                            tinhTrangHienTai: entityObj.TinhTrangHienTai,
+                            ngayThangPhauThuat:
+                                entityObj.NgayThangPhauThuat !== null
+                                    ? moment(entityObj.NgayThangPhauThuat)
+                                    : '',
+                            benhVienPhauThuat: entityObj.BenhVienPhauThuat,
+                            biBenhThan: String(entityObj.BiBenhThan),
+                            biBenhLao: String(entityObj.BiBenhLao),
+                            biDaiThaoDuong: String(entityObj.BiDaiThaoDuong),
+                            biTangHuyetAp: String(entityObj.BiTangHuyetAp),
+                            biUngThu: String(entityObj.BiUngThu),
+                            songCungDiaChi: String(entityObj.SongCungDiaChi),
+                            biBenhKhac: entityObj.BiBenhKhac,
+                            nguoiThanBiBenh: entityObj.NguoiThanBiBenh,
+                            thuNhapBenhNhan: entityObj.ThuNhapBenhNhan,
+                            tinhTrangBenhNguoiThanHienTai:
+                                entityObj.TinhTrangBenhNguoiThanHienTai,
+                            thuNhapVoChongBenhNhan:
+                                entityObj.ThuNhapVoChongBenhNhan,
+                            ngheNghiepVoChong: entityObj.NgheNghiepVoChong,
+                            thuNhapKhac: entityObj.ThuNhapKhac,
+                            tienChuanBiChoViecGhepThan:
+                                entityObj.TienChuanBiChoViecGhepThan,
+                            khongCoNguoiNhan: entityObj.KhongCoNguoiNhan,
+                            nguoiChoBiBenh: entityObj.NguoiChoBiBenh,
+                            nguoiChoKhongHoaHopMau:
+                                entityObj.NguoiChoKhongHoaHopMau,
+                            lyDoKhac: entityObj.LyDoKhac,
+                            email: entityObj.Email,
+                            maso: entityObj.MaSo,
+                            ghichu: entityObj.GhiChu,
+                            namsinh: entityObj.NamSinh,
+                            ngaydkhien:
+                                entityObj.NgayDKHien !== null
+                                    ? moment(entityObj.NgayDKHien)
+                                    : '',
+                            namdk: entityObj.NamDK,
+                            thoigianbhyt: entityObj.thoigianBHYT,
+                            chisobmi: entityObj.chisoBMI,
+                            nambatdaudieutri: entityObj.nambatdaudieutri,
+                            sonamdieutrithaythe: entityObj.sonamdieutrithaythe,
+                            CAPD: entityObj.CAPD,
+                            sanhconlancuoivaonam:
+                                entityObj.sanhconlancuoivaonam,
+                            sanhconmaylan: entityObj.sanhconmaylan,
+                            benhlyhethongduongtietnieu:
+                                entityObj.benhlyhethongduongtietnieu,
+                            benhlytimmach: entityObj.benhlytimmach,
+                            THA: entityObj.THA,
+                            tiencanngoaikhoakhac:
+                                entityObj.tiencanngoaikhoakhac,
+                            ngoaitietnieu: entityObj.ngoaitietnieu,
+                            ngoaitongquat: entityObj.ngoaitongquat,
+                            thoidiemtruyenmau:
+                                entityObj.thoidiemtruyenmau !== null
+                                    ? moment(entityObj.thoidiemtruyenmau)
+                                    : '',
+                            namphathienctnttrolai:
+                                entityObj.namphathienctnttrolai,
+                            hoatri: entityObj.hoatri,
+                            xatri: entityObj.xatri,
+                            phauthuat: entityObj.phauthuat,
+                            NhiemCovid: entityObj.NhiemCovid,
+                            BiTruocTiem: entityObj.BiTruocTiem,
+                            BiSauTiem: entityObj.BiSauTiem,
+                            CoTrieuChung: entityObj.CoTrieuChung,
+                            TrieuChungNhe: entityObj.TrieuChungNhe,
+                            TrieuChungtrungBinh: entityObj.TrieuChungtrungBinh,
+                            NhapVien: entityObj.NhapVien,
+                            ThoiGianNamVien: entityObj.ThoiGianNamVien,
+                            ThoMay: entityObj.ThoMay,
+                            ThoHFNC: entityObj.ThoHFNC,
+                            TiemVaccine: entityObj.TiemVaccine,
+                            NgayTiemMui1:
+                                entityObj.NgayTiemMui1 !== null
+                                    ? moment(entityObj.NgayTiemMui1)
+                                    : '',
+                            NgayTiemMui2:
+                                entityObj.NgayTiemMui2 !== null
+                                    ? moment(entityObj.NgayTiemMui2)
+                                    : '',
+                            PhanUng: entityObj.PhanUng,
+                            TiemVaccine2: entityObj.TiemVaccine2,
+                            PhanUng2: entityObj.PhanUng2,
+                            NgayTiemMui3:
+                                entityObj.NgayTiemMui3 !== null
+                                    ? moment(entityObj.NgayTiemMui3)
+                                    : '',
+                            TiemVaccine3: entityObj.TiemVaccine3,
+                            PhanUng3: entityObj.PhanUng3
+                        }}
+                    >
+                        <Form.Item name="id" hidden>
+                            <Input name="id" id="id" type="hidden" />
+                        </Form.Item>
+                        <Form.Item name="typePhieuDKGhepTang" hidden="true">
+                            <Input
+                                name="typePhieuDKGhepTang"
+                                id="typePhieuDKGhepTang"
+                                type="hidden"
+                            />
+                        </Form.Item>
 
-                                const qhgd = dataGiaDinhEdit.current
-                                    ? dataGiaDinhEdit.current
-                                    : [];
-                                const ObjSave = {
-                                    dangKyChoGhepThanEditVM: {
-                                        ...values1,
-                                        Avatar: entityObj.Avatar,
-                                        typePhieuDKGhepTang:
-                                            entityObj.TypePhieuDKGhepTang,
-                                        ImgCMNDBNMatTruoc:
-                                            entityObj.ImgCMNDBNMatTruoc,
-                                        ImgCMNDBNMatSau:
-                                            entityObj.ImgCMNDBNMatSau
-                                    },
-                                    quanHeGiaDinhEditVMs: qhgd
-                                };
-                                if (
-                                    FileSelected !== undefined &&
-                                    FileSelected.data
-                                ) {
-                                    ObjSave.dangKyChoGhepThanEditVM.imgAvatar = FileSelected;
-                                }
+                        <Row>
+                            <div className="solama">I. HÀNH CHÍNH:</div>
+                        </Row>
 
-                                if (
-                                    FileSelectedCMNDMT !== undefined &&
-                                    FileSelectedCMNDMT.data
-                                ) {
-                                    ObjSave.dangKyChoGhepThanEditVM.imgCMND1 = FileSelectedCMNDMT;
-                                    CMNDtruoc = true;
-                                }
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 4}}
+                                md={{span: 16}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Họ và tên"
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        }
+                                    ]}
+                                    name="hoTenBN"
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input name="hoTenBN" />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 4}}
+                                md={{span: 8}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Mã số bệnh nhân"
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        }
+                                    ]}
+                                    name="maso"
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input name="maso" />
+                                </Form.Item>
+                            </Col>
+                            <Col>
+                                <Form.Item
+                                    className="my-label"
+                                    label="Giới tính"
+                                    name="gioiTinh"
+                                    valuePropName="checked"
+                                >
+                                    <Radio.Group
+                                        name="gioiTinh"
+                                        defaultValue={
+                                            entityObj.GioiTinh !== undefined
+                                                ? String(entityObj.GioiTinh)
+                                                : String(0)
+                                        }
+                                    >
+                                        <Radio value="1">Nam</Radio>
+                                        <Radio value="0">Nữ</Radio>
+                                    </Radio.Group>
+                                </Form.Item>
+                            </Col>
 
-                                if (
-                                    FileSelectedCMNDMs !== undefined &&
-                                    FileSelectedCMNDMs.data
-                                ) {
-                                    ObjSave.dangKyChoGhepThanEditVM.imgCMND2 = FileSelectedCMNDMs;
-                                    CMNDsau = true;
-                                }
-
-                                // kiem tra xem du 2 cmnd
-                                onSaveEditEntity(ObjSave);
-                                // FileSelectedCMNDMs = null;
-                                // FileSelectedCMNDMT = null;
-                                // FileSelected = null;
-                                // FileSelected = null;
-                            }}
-                        >
-                            {({errors, touched, values, setFieldValue}) => (
-                                <Form ref={formCreateEntity}>
-                                    <Field type="hidden" name="id" key="id" />
-                                    <Field
-                                        type="hidden"
-                                        name="typePhieuDKGhepTang"
-                                        key="TypePhieuDKGhepTang"
+                            <Col
+                                lg={{span: 4}}
+                                md={{span: 16}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item className="my-label" label="Ảnh">
+                                    <Input
+                                        type="file"
+                                        name="ImageSrc"
+                                        key="ImageSrc"
+                                        className="form-control img-padding"
+                                        onChange={ChangeFileUpload}
                                     />
-                                    <div className="col-md-12 no-padding">
-                                        <div className="solama">
-                                            I. HÀNH CHÁNH:
-                                        </div>
-                                    </div>
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 4}}
+                                md={{span: 8}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    label="Ảnh thẻ cũ"
+                                    className="my-label"
+                                >
                                     <div>
-                                        <div className="form-row ">
-                                            <div className="form-group col-md-2">
-                                                <label htmlFor="hoTenBN">
-                                                    Họ và tên
-                                                    <span className="red">
-                                                        *
-                                                    </span>
-                                                </label>
-                                                <Field
-                                                    name="hoTenBN"
-                                                    key="hoTenBN"
-                                                    className="form-control "
-                                                />
-                                                {errors.hoTenBN &&
-                                                touched.hoTenBN ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.hoTenBN}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-2">
-                                                <label htmlFor="maso">
-                                                    Mã số bệnh nhân
-                                                </label>
-                                                <Field
-                                                    name="maso"
-                                                    key="maso"
-                                                    className="form-control "
-                                                />
-                                                {errors.maso && touched.maso ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.maso}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-2">
-                                                <label htmlFor="gioiTinh">
-                                                    Giới tính
-                                                </label>
-                                                <div
-                                                    role="group"
-                                                    aria-labelledby="my-radio-group"
-                                                >
-                                                    <label
-                                                        htmlFor
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="radio"
-                                                            name="gioiTinh"
-                                                            value="1"
-                                                        />{' '}
-                                                        Nam
-                                                    </label>
-                                                    <label htmlFor>
-                                                        <Field
-                                                            type="radio"
-                                                            name="gioiTinh"
-                                                            value="0"
-                                                        />{' '}
-                                                        Nữ
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div className="form-group col-md-2">
-                                                <label htmlFor="ImageSrc">
-                                                    Ảnh
-                                                </label>
-                                                <Field
-                                                    type="file"
-                                                    name="ImageSrc"
-                                                    key="ImageSrc"
-                                                    className="form-control img-padding"
-                                                    onChange={ChangeFileUpload}
-                                                />
-                                                {errors.ImageSrc &&
-                                                touched.ImageSrc ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.ImageSrc}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-2">
-                                                <label htmlFor="ImageSrc">
-                                                    Ảnh thẻ cũ
-                                                </label>
-                                                <div>
-                                                    <>
-                                                        <img
-                                                            className="imgHinhAnhAccount"
-                                                            src={`${Constant.PathServer}${entityObj.Avatar}`}
-                                                            alt=""
-                                                            onError={
-                                                                NotFoundUserImage
-                                                            }
-                                                        />
-                                                    </>
-                                                </div>
-                                            </div>
-                                            <div className="form-group col-md-2">
-                                                <label htmlFor="ImageSrc">
-                                                    Ảnh thẻ mới
-                                                </label>
-                                                <div>
-                                                    <>
-                                                        <img
-                                                            id="Avatar"
-                                                            alt=""
-                                                        />
-                                                    </>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="form-row">
-                                            <div className="form-group col-md-4">
-                                                <label htmlFor="ngaySinh">
-                                                    Ngày sinh
-                                                    <span className="red">
-                                                        *
-                                                    </span>
-                                                </label>
-                                                <Field
-                                                    type="date"
-                                                    name="ngaySinh"
-                                                    key="ngaySinh"
-                                                    className="form-control "
-                                                />
-                                                {errors.ngaySinh &&
-                                                touched.ngaySinh ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.ngaySinh}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-
-                                            <div className="form-group col-md-2">
-                                                <label htmlFor="nhomMau">
-                                                    Nhóm máu ABO
-                                                </label>
-                                                <Field
-                                                    as="select"
-                                                    name="nhomMau"
-                                                    key="nhomMau"
-                                                    defaultValue={
-                                                        entityObj.NhomMau
-                                                    }
-                                                    className="form-control "
-                                                >
-                                                    <option>--Chọn--</option>
-                                                    <DropDMNhomMau />
-                                                </Field>
-
-                                                {errors.nhomMau &&
-                                                touched.nhomMau ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.nhomMau}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-2">
-                                                <label htmlFor="nhomMau1">
-                                                    Nhóm máu Rh
-                                                </label>
-                                                <Field
-                                                    as="select"
-                                                    name="nhomMau1"
-                                                    key="nhomMau1"
-                                                    defaultValue={
-                                                        entityObj.NhomMau1
-                                                    }
-                                                    className="form-control "
-                                                >
-                                                    <option>--Chọn--</option>
-                                                    <DropDMNhomMauRh />
-                                                </Field>
-
-                                                {errors.nhomMau1 &&
-                                                touched.nhomMau1 ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.nhomMau1}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-4">
-                                                <label htmlFor="baoHiemYTe">
-                                                    Bảo hiểm y tế
-                                                </label>
-                                                <Field
-                                                    name="baoHiemYTe"
-                                                    key="baoHiemYTe"
-                                                    className="form-control "
-                                                />
-                                                {errors.baoHiemYTe &&
-                                                touched.baoHiemYTe ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.baoHiemYTe}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-4">
-                                                <label htmlFor="ngaydkhien">
-                                                    Ngày đăng ký
-                                                </label>
-                                                <Field
-                                                    type="date"
-                                                    name="ngaydkhien"
-                                                    key="ngaydkhien"
-                                                    className="form-control "
-                                                />
-                                                {errors.ngaydkhien &&
-                                                touched.ngaydkhien ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.ngaydkhien}
-                                                        </div>
-                                                    </>
-                                                ) : null}{' '}
-                                            </div>
-                                            {/* <div className="form-group col-md-2">
-                                                
-                                            </div> */}
-                                            <div className="form-group col-md-4">
-                                                <label htmlFor="thoigianbhyt">
-                                                    Thời gian đăng ký BHYT
-                                                </label>
-                                                <Field
-                                                    name="thoigianbhyt"
-                                                    key="thoigianbhyt"
-                                                    className="form-control "
-                                                />
-                                                {errors.thoigianbhyt &&
-                                                touched.thoigianbhyt ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.thoigianbhyt
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-4">
-                                                <label htmlFor="CMNDBN">
-                                                    CMND/ CCCD/ hộ chiếu
-                                                    <span className="red">
-                                                        *
-                                                    </span>
-                                                </label>
-                                                <Field
-                                                    name="CMNDBN"
-                                                    key="CMNDBN"
-                                                    className="form-control "
-                                                />
-                                                {errors.CMNDBN &&
-                                                touched.CMNDBN ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.CMNDBN}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-4">
-                                                <label htmlFor="NgayCapCMNDBN">
-                                                    Ngày cấp
-                                                    <span className="red">
-                                                        *
-                                                    </span>
-                                                </label>
-                                                <Field
-                                                    type="date"
-                                                    name="NgayCapCMNDBN"
-                                                    key="NgayCapCMNDBN"
-                                                    className="form-control "
-                                                />
-                                                {errors.NgayCapCMNDBN &&
-                                                touched.NgayCapCMNDBN ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.NgayCapCMNDBN
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-4">
-                                                <label htmlFor="NoiCapCMNDBN">
-                                                    Nơi cấp
-                                                    <span className="red">
-                                                        *
-                                                    </span>
-                                                </label>
-                                                <Field
-                                                    name="NoiCapCMNDBN"
-                                                    key="NoiCapCMNDBN"
-                                                    className="form-control "
-                                                />
-                                                {errors.NoiCapCMNDBN &&
-                                                touched.NoiCapCMNDBN ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.NoiCapCMNDBN
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="ImgCMNDBNMatTruoc">
-                                                    Ảnh CMND / CCCD / hộ chiếu
-                                                    mặt trước
-                                                    <span className="red">
-                                                        *
-                                                    </span>
-                                                </label>
-                                                <Field
-                                                    type="file"
-                                                    name="ImgCMNDBNMatTruoc"
-                                                    key="ImgCMNDBNMatTruoc"
-                                                    className="form-control "
-                                                    onChange={
-                                                        ChangeFileUploadCMNDMT
-                                                    }
-                                                />
-                                                {errors.ImgCMNDBNMatTruoc &&
-                                                touched.ImgCMNDBNMatTruoc ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.ImgCMNDBNMatTruoc
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="ImgCMNDBNMatSau">
-                                                    Ảnh CMND/CCCD mặt sau
-                                                    <span className="red">
-                                                        *
-                                                    </span>
-                                                </label>
-
-                                                <Field
-                                                    type="file"
-                                                    name="ImgCMNDBNMatSau"
-                                                    key="ImgCMNDBNMatSau"
-                                                    className="form-control  img-padding"
-                                                    onChange={
-                                                        ChangeFileUploadCMNDMs
-                                                    }
-                                                />
-                                                {errors.ImgCMNDBNMatSau &&
-                                                touched.ImgCMNDBNMatSau ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.ImgCMNDBNMatSau
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="ImgCMNDBNMatSau">
-                                                    Ảnh CMND/CCCD mặt trước cũ
-                                                </label>
-                                                <div>
-                                                    <>
-                                                        <img
-                                                            className=" imgCMND"
-                                                            src={`${Constant.PathServer}${entityObj.ImgCMNDBNMatTruoc}`}
-                                                            alt=""
-                                                            onError={
-                                                                NotFoundImage
-                                                            }
-                                                        />
-                                                    </>
-                                                </div>
-                                            </div>
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="ImgCMNDBNMatSau">
-                                                    Ảnh CMND/CCCD mặt trước mới
-                                                </label>
-                                                <div>
-                                                    <>
-                                                        <img
-                                                            className=" imgCMND"
-                                                            id="ImgCMNDBNMatTruoc"
-                                                            alt=""
-                                                            onError={
-                                                                NotFoundImage
-                                                            }
-                                                        />
-                                                    </>
-                                                </div>
-                                            </div>
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="ImgCMNDBNMatSau">
-                                                    Ảnh CMND/CCCD mặt sau cũ
-                                                </label>
-                                                <div>
-                                                    <img
-                                                        className=" imgCMND"
-                                                        src={`${Constant.PathServer}${entityObj.ImgCMNDBNMatSau}`}
-                                                        alt=""
-                                                        onError={NotFoundImage}
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="ImgCMNDBNMatSau">
-                                                    Ảnh CMND/CCCD mặt sau mới
-                                                </label>
-                                                <div>
-                                                    <img
-                                                        className=" imgCMND"
-                                                        id="ImgCMNDBNMatSau"
-                                                        alt=""
-                                                        onError={NotFoundImage}
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="form-row">
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="ngheNghiep">
-                                                    Nghề Nghiệp
-                                                    <span className="red">
-                                                        *
-                                                    </span>
-                                                </label>
-                                                <Field
-                                                    as="select"
-                                                    name="ngheNghiep"
-                                                    key="ngheNghiep"
-                                                    className="form-control "
-                                                >
-                                                    <option value="">
-                                                        --Chọn--
-                                                    </option>
-                                                    {/* <option value="Bác sĩ">
-                                                    Bác sĩ
-                                                </option>
-                                                <option value="Kỹ Sư">
-                                                    Kỹ Sư
-                                                </option>
-                                                <option value="Giáo viên">
-                                                    Giáo viên
-                                                </option>
-                                                <option value="Công nhân">
-                                                    Công nhân
-                                                </option> */}
-                                                    {/* <RenderDropdownDanhMuc code="nghenghiep" /> */}
-                                                    <DropDMNgheNghiep />
-                                                </Field>
-
-                                                {errors.ngheNghiep &&
-                                                touched.ngheNghiep ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.ngheNghiep}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="ngheNhiepBoSung">
-                                                    Nghề Nghiệp ghi rõ
-                                                </label>
-                                                <Field
-                                                    name="ngheNhiepBoSung"
-                                                    key="ngheNhiepBoSung"
-                                                    className="form-control "
-                                                />
-                                                {errors.ngheNhiepBoSung &&
-                                                touched.ngheNhiepBoSung ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.ngheNhiepBoSung
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-
-                                        <div className="form-row">
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="trinhDoVanHoa">
-                                                    Trình độ văn hóa
-                                                    <span className="red">
-                                                        *
-                                                    </span>
-                                                </label>
-                                                <Field
-                                                    name="trinhDoVanHoa"
-                                                    key="trinhDoVanHoa"
-                                                    className="form-control "
-                                                />
-                                                {errors.trinhDoVanHoa &&
-                                                touched.trinhDoVanHoa ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.trinhDoVanHoa
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="dienThoai">
-                                                    Điện thoại
-                                                    <span className="red">
-                                                        *
-                                                    </span>
-                                                </label>
-                                                <Field
-                                                    name="dienThoai"
-                                                    key="dienThoai"
-                                                    className="form-control "
-                                                />
-                                                {errors.dienThoai &&
-                                                touched.dienThoai ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.dienThoai}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="dienThoai1">
-                                                    Điện thoại khác
-                                                </label>
-                                                <Field
-                                                    name="dienThoai1"
-                                                    key="dienThoai1"
-                                                    className="form-control "
-                                                />
-                                                {errors.dienThoai1 &&
-                                                touched.dienThoai1 ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.dienThoai1}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="email">
-                                                    Email
-                                                    <span className="red">
-                                                        *
-                                                    </span>
-                                                </label>
-                                                <Field
-                                                    name="email"
-                                                    key="email"
-                                                    className="form-control "
-                                                />
-                                                {errors.email &&
-                                                touched.email ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.email}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <br />
-                                        <div className="form-row">
-                                            <label htmlFor="diaChi">
-                                                Địa Chỉ Thường Trú :
-                                            </label>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-4">
-                                                <label
-                                                    htmlFor="tinh"
-                                                    className="chitietdiachi"
-                                                >
-                                                    Tỉnh/Thành Phố
-                                                    <span className="red">
-                                                        *
-                                                    </span>
-                                                </label>
-                                                <Field
-                                                    as="select"
-                                                    name="tinh"
-                                                    key="tinh"
-                                                    className="form-control "
-                                                    onChange={(e) => {
-                                                        const {
-                                                            value
-                                                        } = e.target;
-                                                        onchangeloaddiachi(
-                                                            'tinh',
-                                                            value
-                                                        );
-                                                        setFieldValue(
-                                                            'tinh',
-                                                            value
-                                                        );
-                                                        setFieldValue(
-                                                            'quanhuyen',
-                                                            ''
-                                                        );
-                                                        setFieldValue(
-                                                            'xaphuong',
-                                                            ''
-                                                        );
-                                                    }}
-                                                >
-                                                    <option value="">
-                                                        --Chọn--
-                                                    </option>
-                                                    {RenderDropdownTinh({
-                                                        code: 'tinh'
-                                                    })}
-                                                </Field>
-                                                {errors.tinh && touched.tinh ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.tinh}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-4">
-                                                <label
-                                                    htmlFor="quanhuyen"
-                                                    className="chitietdiachi"
-                                                >
-                                                    Quận/Huyện
-                                                    <span className="red">
-                                                        *
-                                                    </span>
-                                                </label>
-                                                <Field
-                                                    as="select"
-                                                    name="quanhuyen"
-                                                    key="quanhuyen"
-                                                    className="form-control "
-                                                    onChange={(e) => {
-                                                        const {
-                                                            value
-                                                        } = e.target;
-                                                        onchangeloaddiachi(
-                                                            'quanhuyen',
-                                                            value
-                                                        );
-                                                        setFieldValue(
-                                                            'quanhuyen',
-                                                            value
-                                                        );
-                                                        setFieldValue(
-                                                            'xaphuong',
-                                                            ''
-                                                        );
-                                                    }}
-                                                >
-                                                    <option value="">
-                                                        --Chọn--
-                                                    </option>
-                                                    {loaddiachi.tinh !== '' ? (
-                                                        <RenderDropdownQuanhuyen
-                                                            code="quanhuyen"
-                                                            data={
-                                                                loaddiachi.tinh
-                                                            }
-                                                        />
-                                                    ) : (
-                                                        ''
-                                                    )}
-                                                </Field>
-                                                {errors.quanhuyen &&
-                                                touched.quanhuyen ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.quanhuyen}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-4">
-                                                <label
-                                                    htmlFor="xaphuong"
-                                                    className="chitietdiachi"
-                                                >
-                                                    Xã/Phường
-                                                    <span className="red">
-                                                        *
-                                                    </span>
-                                                </label>
-                                                <Field
-                                                    as="select"
-                                                    name="xaphuong"
-                                                    key="xaphuong"
-                                                    className="form-control "
-                                                >
-                                                    <option value="">
-                                                        --Chọn--
-                                                    </option>
-                                                    {loaddiachi.quanhuyen !==
-                                                    '' ? (
-                                                        <RenderDropdownXaphuong
-                                                            code="xaphuong"
-                                                            data={
-                                                                loaddiachi.quanhuyen
-                                                            }
-                                                        />
-                                                    ) : (
-                                                        ''
-                                                    )}
-                                                </Field>
-                                                {errors.xaphuong &&
-                                                touched.xaphuong ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.xaphuong}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <label
-                                                htmlFor="diaChiThuongChu"
-                                                className="chitietdiachi"
-                                            >
-                                                Số nhà, phố, tổ dân phố/thôn/đội
-                                                <span className="red">*</span>
-                                            </label>
-                                            <Field
-                                                name="diaChiThuongChu"
-                                                key="diaChiThuongChu"
-                                                className="form-control "
+                                        <>
+                                            <img
+                                                className="imgHinhAnhAccount"
+                                                src={`${Constant.PathServer}${entityObj.Avatar}`}
+                                                alt=""
+                                                onError={NotFoundUserImage}
                                             />
-                                            {errors.diaChiThuongChu &&
-                                            touched.diaChiThuongChu ? (
-                                                <>
-                                                    <div className="invalid-feedback">
-                                                        {errors.diaChiThuongChu}
-                                                    </div>
-                                                </>
-                                            ) : null}
-                                        </div>
-                                        <br />
-                                        <div className="form-row">
-                                            <label htmlFor="diaChiTamChu">
-                                                Địa Chỉ Tạm Trú :
-                                            </label>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-4">
-                                                <label
-                                                    htmlFor="tinhtt"
-                                                    className="chitietdiachi"
-                                                >
-                                                    Tỉnh/Thành Phố
-                                                </label>
-                                                <Field
-                                                    as="select"
-                                                    name="tinhtt"
-                                                    key="tinhtt"
-                                                    className="form-control "
-                                                    onChange={(e) => {
-                                                        const {
-                                                            value
-                                                        } = e.target;
-                                                        onchangeloaddiachi(
-                                                            'tinhtt',
-                                                            value
-                                                        );
-                                                        setFieldValue(
-                                                            'tinhtt',
-                                                            value
-                                                        );
-                                                        setFieldValue(
-                                                            'quanhuyentt',
-                                                            ''
-                                                        );
-                                                        setFieldValue(
-                                                            'xaphuongtt',
-                                                            ''
-                                                        );
-                                                    }}
-                                                >
-                                                    <option value="">
-                                                        --Chọn--
-                                                    </option>
-                                                    {RenderDropdownTinh({
-                                                        code: 'tinh'
-                                                    })}
-                                                </Field>
-                                                {errors.tinhtt &&
-                                                touched.tinhtt ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.tinhtt}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-4">
-                                                <label
-                                                    htmlFor="quanhuyentt"
-                                                    className="chitietdiachi"
-                                                >
-                                                    Quận/Huyện
-                                                </label>
-                                                <Field
-                                                    as="select"
-                                                    name="quanhuyentt"
-                                                    key="quanhuyentt"
-                                                    className="form-control "
-                                                    onChange={(e) => {
-                                                        const {
-                                                            value
-                                                        } = e.target;
-                                                        onchangeloaddiachi(
-                                                            'quanhuyentt',
-                                                            value
-                                                        );
-                                                        setFieldValue(
-                                                            'quanhuyentt',
-                                                            value
-                                                        );
-                                                        setFieldValue(
-                                                            'xaphuongtt',
-                                                            ''
-                                                        );
-                                                    }}
-                                                >
-                                                    <option value="">
-                                                        --Chọn--
-                                                    </option>
-                                                    {loaddiachi.tinhtt !==
-                                                    '' ? (
-                                                        <RenderDropdownQuanhuyen
-                                                            code="quanhuyentt"
-                                                            data={
-                                                                loaddiachi.tinhtt
-                                                            }
-                                                        />
-                                                    ) : (
-                                                        ''
-                                                    )}
-                                                </Field>
-                                                {errors.quanhuyentt &&
-                                                touched.quanhuyentt ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.quanhuyentt}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-4">
-                                                <label
-                                                    htmlFor="xaphuongtt"
-                                                    className="chitietdiachi"
-                                                >
-                                                    Xã/Phường
-                                                </label>
-                                                <Field
-                                                    as="select"
-                                                    name="xaphuongtt"
-                                                    key="xaphuongtt"
-                                                    className="form-control "
-                                                >
-                                                    <option value="">
-                                                        --Chọn--
-                                                    </option>
-                                                    {loaddiachi.quanhuyentt !==
-                                                    '' ? (
-                                                        <RenderDropdownXaphuong
-                                                            code="xaphuongtt"
-                                                            data={
-                                                                loaddiachi.quanhuyentt
-                                                            }
-                                                        />
-                                                    ) : (
-                                                        ''
-                                                    )}
-                                                </Field>
-                                                {errors.xaphuongtt &&
-                                                touched.xaphuongtt ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.xaphuongtt}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <label
-                                                htmlFor="diaChiTamChu"
-                                                className="chitietdiachi"
-                                            >
-                                                Số nhà, phố, tổ dân phố/thôn/đội
-                                            </label>
-                                            <Field
-                                                name="diaChiTamChu"
-                                                key="diaChiTamChu"
-                                                className="form-control "
-                                            />
-                                            {errors.diaChiTamChu &&
-                                            touched.diaChiTamChu ? (
-                                                <>
-                                                    <div className="invalid-feedback">
-                                                        {errors.diaChiTamChu}
-                                                    </div>
-                                                </>
-                                            ) : null}
-                                        </div>
-                                        <br />
-                                        <div className="form-row">
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="laConThuMay">
-                                                    Gia đình: là con thứ mấy?
-                                                    <span className="red">
-                                                        *
-                                                    </span>
-                                                </label>
-                                                <Field
-                                                    name="laConThuMay"
-                                                    key="laConThuMay"
-                                                    className="form-control "
-                                                    placeholder="VD: là con thứ 1 trong gia đình 2 con viết là 1/2"
-                                                />
-                                                {errors.laConThuMay &&
-                                                touched.laConThuMay ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.laConThuMay}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="tinhTrangHonNhan">
-                                                    Tình trạng hôn nhân
-                                                </label>
-                                                <div
-                                                    role="group"
-                                                    aria-labelledby="my-radio-group"
-                                                >
-                                                    <label
-                                                        htmlFor
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="radio"
-                                                            name="tinhTrangHonNhan"
-                                                            value="0"
-                                                        />{' '}
-                                                        Độc thân
-                                                    </label>
-                                                    <label htmlFor>
-                                                        <Field
-                                                            type="radio"
-                                                            name="tinhTrangHonNhan"
-                                                            value="1"
-                                                        />{' '}
-                                                        Đã có gia đình
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="hoTenVoChong">
-                                                    Họ tên Vợ/Chồng:
-                                                </label>
-                                                <Field
-                                                    name="hoTenVoChong"
-                                                    key="hoTenVoChong"
-                                                    className="form-control "
-                                                />
-                                                {errors.hoTenVoChong &&
-                                                touched.hoTenVoChong ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.hoTenVoChong
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="dienThoaiVoChong">
-                                                    Điện thoại
-                                                </label>
-                                                <Field
-                                                    name="dienThoaiVoChong"
-                                                    key="dienThoaiVoChong"
-                                                    className="form-control "
-                                                />
-                                                {errors.dienThoaiVoChong &&
-                                                touched.dienThoaiVoChong ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.dienThoaiVoChong
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-2">
-                                                <label htmlFor="coMayCon">
-                                                    Có mấy con
-                                                </label>
-                                                <Field
-                                                    name="coMayCon"
-                                                    key="coMayCon"
-                                                    className="form-control "
-                                                />
-                                                {errors.coMayCon &&
-                                                touched.coMayCon ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.coMayCon}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-2">
-                                                <label htmlFor="soConTrai">
-                                                    Trai
-                                                </label>
-                                                <Field
-                                                    name="soConTrai"
-                                                    key="soConTrai"
-                                                    className="form-control "
-                                                />
-                                                {errors.soConTrai &&
-                                                touched.soConTrai ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.soConTrai}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-2">
-                                                <label htmlFor="soConGai">
-                                                    Gái
-                                                </label>
-                                                <Field
-                                                    name="soConGai"
-                                                    key="soConGai"
-                                                    className="form-control "
-                                                />
-                                                {errors.soConGai &&
-                                                touched.soConGai ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.soConGai}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="lonNhatSinhNam">
-                                                    Lớn nhất sinh năm
-                                                </label>
-                                                <Field
-                                                    name="lonNhatSinhNam"
-                                                    key="lonNhatSinhNam"
-                                                    className="form-control "
-                                                />
-                                                {errors.lonNhatSinhNam &&
-                                                touched.lonNhatSinhNam ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.lonNhatSinhNam
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="nhoNhatSinhNam">
-                                                    Nhỏ nhất sinh năm
-                                                </label>
-                                                <Field
-                                                    name="nhoNhatSinhNam"
-                                                    key="nhoNhatSinhNam"
-                                                    className="form-control "
-                                                />
-                                                {errors.nhoNhatSinhNam &&
-                                                touched.nhoNhatSinhNam ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.nhoNhatSinhNam
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
+                                        </>
                                     </div>
-                                    <div className="col-md-12 no-padding">
-                                        <div className="solama">
-                                            II.TÌNH TRẠNG BỆNH LÝ
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-12">
-                                                <label htmlFor="nguyenNhanSuyThan">
-                                                    1.Nguyên nhân dẫn đến suy
-                                                    thận mạn giai đoạn cuối
-                                                </label>
-                                                <Field
-                                                    name="nguyenNhanSuyThan"
-                                                    key="nguyenNhanSuyThan"
-                                                    className="form-control "
-                                                />
-                                                {errors.nguyenNhanSuyThan &&
-                                                touched.nguyenNhanSuyThan ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.nguyenNhanSuyThan
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-
-                                        <div className="form-row">
-                                            <div className="form-group col-md-12">
-                                                <label htmlFor="benhSu">
-                                                    2.Chẩn đoán về thận học
-                                                    trước đó: có sinh thiết thận
-                                                </label>
-                                                <div
-                                                    role="group"
-                                                    aria-labelledby="my-radio-group"
-                                                >
-                                                    <label
-                                                        htmlFor
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="radio"
-                                                            name="sinhThietThan"
-                                                            value="1"
-                                                        />{' '}
-                                                        Có
-                                                    </label>
-                                                    <label htmlFor>
-                                                        <Field
-                                                            type="radio"
-                                                            name="sinhThietThan"
-                                                            value="0"
-                                                        />{' '}
-                                                        Không
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-12">
-                                                <label htmlFor="ketQuaSinhThietThan">
-                                                    Kết quả sinh thiết
-                                                </label>
-                                                <Field
-                                                    name="ketQuaSinhThietThan"
-                                                    key="ketQuaSinhThietThan"
-                                                    className="form-control "
-                                                />
-                                                {errors.ketQuaSinhThietThan &&
-                                                touched.ketQuaSinhThietThan ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.ketQuaSinhThietThan
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="ngayPhatHienSuyThan">
-                                                    3.Phát hiện suy thận
-                                                </label>
-                                                <Field
-                                                    type="date"
-                                                    name="ngayPhatHienSuyThan"
-                                                    key="ngayPhatHienSuyThan"
-                                                    className="form-control "
-                                                />
-                                                {errors.ngayPhatHienSuyThan &&
-                                                touched.ngayPhatHienSuyThan ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.ngayPhatHienSuyThan
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="ngayCTNTHoacKhamThamPhanBenhLy">
-                                                    Chạy thận nhân tạo/Thẩm phân
-                                                    phúc mạc từ
-                                                </label>
-                                                <Field
-                                                    type="date"
-                                                    name="ngayCTNTHoacKhamThamPhanBenhLy"
-                                                    key="ngayCTNTHoacKhamThamPhanBenhLy"
-                                                    className="form-control "
-                                                />
-                                                {errors.ngayCTNTHoacKhamThamPhanBenhLy &&
-                                                touched.ngayCTNTHoacKhamThamPhanBenhLy ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.ngayCTNTHoacKhamThamPhanBenhLy
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-4">
-                                                <label htmlFor="soLanCTNTTuan">
-                                                    Số lần chạy thận một tuần:
-                                                </label>
-                                                <Field
-                                                    name="soLanCTNTTuan"
-                                                    key="soLanCTNTTuan"
-                                                    className="form-control "
-                                                />
-                                                {errors.soLanCTNTTuan &&
-                                                touched.soLanCTNTTuan ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.soLanCTNTTuan
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-4">
-                                                <label htmlFor="CTNTVaoNgay">
-                                                    Vào ngày
-                                                </label>
-                                                <div
-                                                    role="group"
-                                                    aria-labelledby="my-radio-group"
-                                                >
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="radio"
-                                                            name="CTNTVaoNgay"
-                                                            value="1"
-                                                        />{' '}
-                                                        Chẵn
-                                                    </label>
-                                                    <label htmlFor="a">
-                                                        <Field
-                                                            type="radio"
-                                                            name="CTNTVaoNgay"
-                                                            value="0"
-                                                        />{' '}
-                                                        Lẻ
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div className="form-group col-md-4">
-                                                <label htmlFor="soGioTrenLan">
-                                                    Số giờ một lần
-                                                </label>
-                                                <Field
-                                                    name="soGioTrenLan"
-                                                    key="soGioTrenLan"
-                                                    className="form-control "
-                                                />
-                                                {errors.soGioTrenLan &&
-                                                touched.soGioTrenLan ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.soGioTrenLan
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="chuKyThamPhan">
-                                                    Chu kỳ thẩm phân phúc mạc
-                                                    (số lần/ngày)
-                                                </label>
-                                                <Field
-                                                    name="chuKyThamPhan"
-                                                    key="chuKyThamPhan"
-                                                    className="form-control "
-                                                />
-                                                {errors.chuKyThamPhan &&
-                                                touched.chuKyThamPhan ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.chuKyThamPhan
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="chuKyThamPhanTaiBV">
-                                                    Khám và theo dõi tại bệnh
-                                                    viện
-                                                </label>
-                                                <Field
-                                                    name="chuKyThamPhanTaiBV"
-                                                    key="chuKyThamPhanTaiBV"
-                                                    className="form-control "
-                                                />
-                                                {errors.chuKyThamPhanTaiBV &&
-                                                touched.chuKyThamPhanTaiBV ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.chuKyThamPhanTaiBV
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="thamPhanBangMay">
-                                                    Thẩm phân phúc mạc bằng máy
-                                                </label>
-                                                <div
-                                                    role="group"
-                                                    aria-labelledby="my-radio-group"
-                                                >
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="radio"
-                                                            name="thamPhanBangMay"
-                                                            value="1"
-                                                        />{' '}
-                                                        Có
-                                                    </label>
-                                                    <label htmlFor="a">
-                                                        <Field
-                                                            type="radio"
-                                                            name="thamPhanBangMay"
-                                                            value="0"
-                                                        />{' '}
-                                                        Không
-                                                    </label>
-                                                </div>
-                                            </div>
-
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="thamPhanBangMayTaiBV">
-                                                    Bệnh viện theo dõi
-                                                </label>
-                                                <Field
-                                                    name="thamPhanBangMayTaiBV"
-                                                    key="thamPhanBangMayTaiBV"
-                                                    className="form-control "
-                                                />
-                                                {errors.thamPhanBangMayTaiBV &&
-                                                touched.thamPhanBangMayTaiBV ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.thamPhanBangMayTaiBV
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="benhSu">
-                                                    Truyền máu
-                                                </label>
-                                                <div
-                                                    role="group"
-                                                    aria-labelledby="my-radio-group"
-                                                >
-                                                    <label
-                                                        htmlFor
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="radio"
-                                                            name="truyenMau"
-                                                            value="1"
-                                                        />{' '}
-                                                        Có
-                                                    </label>
-                                                    <label htmlFor>
-                                                        <Field
-                                                            type="radio"
-                                                            name="truyenMau"
-                                                            value="0"
-                                                        />{' '}
-                                                        Không
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="baoNhieuDonViMau">
-                                                    Bao nhiêu đơn vị máu
-                                                </label>
-                                                <Field
-                                                    type="number"
-                                                    name="baoNhieuDonViMau"
-                                                    key="baoNhieuDonViMau"
-                                                    className="form-control "
-                                                />
-                                                {errors.baoNhieuDonViMau &&
-                                                touched.baoNhieuDonViMau ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.baoNhieuDonViMau
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-
-                                            <div className="form-group col-md-4">
-                                                <label htmlFor="thang">
-                                                    Truyền máu lần cuối
-                                                </label>
-                                                <Field
-                                                    type="number"
-                                                    placeholder="vào tháng"
-                                                    name="thang"
-                                                    key="thang"
-                                                    className="form-control "
-                                                />
-                                                {errors.thang &&
-                                                touched.thang ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.thang}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-2">
-                                                <label htmlFor="nam">Năm</label>
-                                                <Field
-                                                    type="number"
-                                                    name="nam"
-                                                    key="nam"
-                                                    className="form-control "
-                                                />
-                                                {errors.nam && touched.nam ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.nam}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-12">
-                                                <label htmlFor="benhVienTruyenMau">
-                                                    Truyền máu tại bệnh viện
-                                                </label>
-                                                <Field
-                                                    name="benhVienTruyenMau"
-                                                    key="benhVienTruyenMau"
-                                                    className="form-control "
-                                                />
-                                                {errors.benhVienTruyenMau &&
-                                                touched.benhVienTruyenMau ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.benhVienTruyenMau
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-
-                                        <div className="form-row">
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="daGhepLan1Ngay">
-                                                    Đã ghép thận lần 1 vào ngày
-                                                </label>
-                                                <Field
-                                                    type="date"
-                                                    name="daGhepLan1Ngay"
-                                                    key="daGhepLan1Ngay"
-                                                    className="form-control "
-                                                />
-                                                {errors.daGhepLan1Ngay &&
-                                                touched.daGhepLan1Ngay ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.daGhepLan1Ngay
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="daGhepLan1TaiBV">
-                                                    Tại bệnh viện
-                                                </label>
-                                                <Field
-                                                    name="daGhepLan1TaiBV"
-                                                    key="daGhepLan1TaiBV"
-                                                    className="form-control "
-                                                />
-                                                {errors.daGhepLan1TaiBV &&
-                                                touched.daGhepLan1TaiBV ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.daGhepLan1TaiBV
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-12">
-                                                <label htmlFor="nguoiChoThan">
-                                                    Người cho thận
-                                                    (Cha/mẹ/anh/chị/em?)
-                                                </label>
-                                                <Field
-                                                    name="nguoiChoThan"
-                                                    key="nguoiChoThan"
-                                                    className="form-control "
-                                                />
-                                                {errors.nguoiChoThan &&
-                                                touched.nguoiChoThan ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.nguoiChoThan
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-
-                                        <div className="form-row">
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="ngayChayThanTroLai">
-                                                    Ngày chạy thận nhân tạo trở
-                                                    lại
-                                                </label>
-                                                <Field
-                                                    type="date"
-                                                    name="ngayChayThanTroLai"
-                                                    key="ngayChayThanTroLai"
-                                                    className="form-control "
-                                                />
-                                                {errors.ngayChayThanTroLai &&
-                                                touched.ngayChayThanTroLai ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.ngayChayThanTroLai
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="chuanDoanSuyThanGhep">
-                                                    Chẩn đoán suy chức năng thận
-                                                    ghép
-                                                </label>
-                                                <Field
-                                                    name="chuanDoanSuyThanGhep"
-                                                    key="chuanDoanSuyThanGhep"
-                                                    className="form-control "
-                                                />
-                                                {errors.chuanDoanSuyThanGhep &&
-                                                touched.chuanDoanSuyThanGhep ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.chuanDoanSuyThanGhep
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="ctntHoacKhamThamPhan">
-                                                    Ngày chạy thận nhân tạo/Thẩm
-                                                    phân phúc mạc
-                                                </label>
-                                                <Field
-                                                    type="date"
-                                                    name="ctntHoacKhamThamPhan"
-                                                    key="ctntHoacKhamThamPhan"
-                                                    className="form-control "
-                                                />
-                                                {errors.ctntHoacKhamThamPhan &&
-                                                touched.ctntHoacKhamThamPhan ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.ctntHoacKhamThamPhan
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="chayThanTroLaiTaiBV">
-                                                    Tại bệnh viện
-                                                </label>
-                                                <Field
-                                                    name="chayThanTroLaiTaiBV"
-                                                    key="chayThanTroLaiTaiBV"
-                                                    className="form-control "
-                                                />
-                                                {errors.chayThanTroLaiTaiBV &&
-                                                touched.chayThanTroLaiTaiBV ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.chayThanTroLaiTaiBV
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-
-                                        <div className="form-row">
-                                            <div className="form-group col-md-2">
-                                                <label htmlFor="nuocTieu24h">
-                                                    Số lượng nước tiểu/24 giờ
-                                                </label>
-                                                <div
-                                                    role="group"
-                                                    aria-labelledby="my-radio-group"
-                                                >
-                                                    {errors.soLuongNuocTieu24h &&
-                                                    touched.soLuongNuocTieu24h ? (
-                                                        <>
-                                                            <div className="invalid-feedback">
-                                                                {
-                                                                    errors.soLuongNuocTieu24h
-                                                                }
-                                                            </div>
-                                                        </>
-                                                    ) : null}
-                                                </div>
-                                            </div>
-                                            <div className="form-group col-md-1">
-                                                <label htmlFor>
-                                                    <Field
-                                                        type="radio"
-                                                        name="nuocTieu24h"
-                                                        value="0"
-                                                    />{' '}
-                                                    Không
-                                                </label>
-                                            </div>
-                                            <div className="form-group col-md-3">
-                                                <label
-                                                    htmlFor="nuocTieu24h"
-                                                    className="mgr15"
-                                                >
-                                                    <Field
-                                                        type="radio"
-                                                        name="nuocTieu24h"
-                                                        value="1"
-                                                    />{' '}
-                                                    Có (ml/24h)
-                                                </label>
-
-                                                <Field
-                                                    type="number"
-                                                    placeholder="ml/24h"
-                                                    name="soLuongNuocTieu24h"
-                                                    key="soLuongNuocTieu24h"
-                                                    className="form-control "
-                                                />
-                                            </div>
-
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="chieuCao">
-                                                    Chiều cao (cm)
-                                                </label>
-                                                <Field
-                                                    type="number"
-                                                    name="chieuCao"
-                                                    key="chieuCao"
-                                                    className="form-control "
-                                                />
-
-                                                {errors.chieuCao &&
-                                                touched.chieuCao ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.chieuCao}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="canNang">
-                                                    Cân nặng (kg)
-                                                </label>
-                                                <Field
-                                                    type="number"
-                                                    name="canNang"
-                                                    key="canNang"
-                                                    className="form-control "
-                                                />
-
-                                                {errors.canNang &&
-                                                touched.canNang ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.canNang}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-12">
-                                                <label htmlFor="thuocDangSuDungNgay">
-                                                    Thuốc đang sử dụng/ngày
-                                                </label>
-                                                <Field
-                                                    as="textarea"
-                                                    rows={3}
-                                                    name="thuocDangSuDungNgay"
-                                                    key="thuocDangSuDungNgay"
-                                                    className="form-control "
-                                                />
-
-                                                {errors.thuocDangSuDungNgay &&
-                                                touched.thuocDangSuDungNgay ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.thuocDangSuDungNgay
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-12">
-                                                <label htmlFor="thuocTaoMau">
-                                                    Thuốc tạo máu
-                                                </label>
-                                                <Field
-                                                    name="thuocTaoMau"
-                                                    key="thuocTaoMau"
-                                                    className="form-control "
-                                                />
-
-                                                {errors.thuocTaoMau &&
-                                                touched.thuocTaoMau ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.thuocTaoMau}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-
-                                        <div className="form-row">
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="bacSiDieuTri">
-                                                    Bác sĩ điều trị
-                                                </label>
-                                                <Field
-                                                    name="bacSiDieuTri"
-                                                    key="bacSiDieuTri"
-                                                    className="form-control "
-                                                />
-
-                                                {errors.bacSiDieuTri &&
-                                                touched.bacSiDieuTri ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.bacSiDieuTri
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="dienThoaiBacSi">
-                                                    Điện thoại bác sĩ
-                                                </label>
-                                                <Field
-                                                    name="dienThoaiBacSi"
-                                                    key="dienThoaiBacSi"
-                                                    className="form-control "
-                                                />
-
-                                                {errors.dienThoaiBacSi &&
-                                                touched.dienThoaiBacSi ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.dienThoaiBacSi
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="col-md-12 no-padding">
-                                            <label htmlFor="khongBiViemGan">
-                                                4.Bệnh lý kèm theo
-                                            </label>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="col-md-3">
-                                                <div className="custom-control custom-checkbox">
-                                                    <Field
-                                                        type="checkbox"
-                                                        name="khongBiViemGan"
-                                                        key="khongBiViemGan"
-                                                        id="khongBiViemGan"
-                                                        className="custom-control-input"
-                                                    />
-
-                                                    <label
-                                                        className="custom-control-label"
-                                                        htmlFor="khongBiViemGan"
-                                                    >
-                                                        Không bị viêm gan
-                                                    </label>
-                                                    {errors.khongBiViemGan &&
-                                                    touched.khongBiViemGan ? (
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.khongBiViemGan
-                                                            }
-                                                        </div>
-                                                    ) : null}
-                                                </div>
-                                            </div>
-                                            <div className="col-md-3">
-                                                <div className="custom-control custom-checkbox ">
-                                                    <Field
-                                                        type="checkbox"
-                                                        name="viemGanSieuViA"
-                                                        key="viemGanSieuViA"
-                                                        id="viemGanSieuViA"
-                                                        className="custom-control-input"
-                                                        disabled={
-                                                            values.khongBiViemGan
-                                                        }
-                                                        checked={
-                                                            values.khongBiViemGan
-                                                                ? ''
-                                                                : values.viemGanSieuViA
-                                                        }
-                                                    />
-
-                                                    <label
-                                                        className="custom-control-label"
-                                                        htmlFor="viemGanSieuViA"
-                                                    >
-                                                        Viêm gan siêu vi A
-                                                    </label>
-                                                    {errors.viemGanSieuViA &&
-                                                    touched.viemGanSieuViA ? (
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.viemGanSieuViA
-                                                            }
-                                                        </div>
-                                                    ) : null}
-                                                </div>
-                                            </div>
-                                            <div className="col-md-3">
-                                                <div className="custom-control custom-checkbox ">
-                                                    <Field
-                                                        type="checkbox"
-                                                        name="viemGanSieuViB"
-                                                        key="viemGanSieuViB"
-                                                        id="viemGanSieuViB"
-                                                        className="custom-control-input"
-                                                        disabled={
-                                                            values.khongBiViemGan
-                                                        }
-                                                        checked={
-                                                            values.khongBiViemGan
-                                                                ? ''
-                                                                : values.viemGanSieuViB
-                                                        }
-                                                    />
-
-                                                    <label
-                                                        className="custom-control-label"
-                                                        htmlFor="viemGanSieuViB"
-                                                    >
-                                                        Viêm gan siêu vi B
-                                                    </label>
-                                                    {errors.viemGanSieuViB &&
-                                                    touched.viemGanSieuViB ? (
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.viemGanSieuViB
-                                                            }
-                                                        </div>
-                                                    ) : null}
-                                                </div>
-                                            </div>
-                                            <div className="col-md-3">
-                                                <div className="custom-control custom-checkbox ">
-                                                    <Field
-                                                        type="checkbox"
-                                                        name="viemGanSieuViC"
-                                                        key="viemGanSieuViC"
-                                                        id="viemGanSieuViC"
-                                                        className="custom-control-input"
-                                                        disabled={
-                                                            values.khongBiViemGan
-                                                        }
-                                                        checked={
-                                                            values.khongBiViemGan
-                                                                ? ''
-                                                                : values.viemGanSieuViC
-                                                        }
-                                                    />
-
-                                                    <label
-                                                        className="custom-control-label"
-                                                        htmlFor="viemGanSieuViC"
-                                                    >
-                                                        Viêm gan siêu vi C
-                                                    </label>
-                                                    {errors.viemGanSieuViC &&
-                                                    touched.viemGanSieuViC ? (
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.viemGanSieuViC
-                                                            }
-                                                        </div>
-                                                    ) : null}
-                                                </div>
-                                            </div>
-                                            <div
-                                                className="form-row col-md-6"
-                                                id="truocHoacSauLocMau"
-                                            >
-                                                <div className="col-md-6">
-                                                    <div
-                                                        role="group"
-                                                        aria-labelledby="my-radio-group"
-                                                    >
-                                                        <label
-                                                            htmlFor="a"
-                                                            className="mgr15"
-                                                        >
-                                                            <Field
-                                                                type="radio"
-                                                                name="truocHoacSauLocMau"
-                                                                value="1"
-                                                                disabled={
-                                                                    values.khongBiViemGan
-                                                                }
-                                                                checked={
-                                                                    values.khongBiViemGan
-                                                                        ? ''
-                                                                        : values.truocHoacSauLocMau ===
-                                                                          '1'
-                                                                }
-                                                            />{' '}
-                                                            Viêm gan trước lọc
-                                                            máu
-                                                        </label>
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-6">
-                                                    <div
-                                                        role="group"
-                                                        aria-labelledby="my-radio-group"
-                                                    >
-                                                        <label htmlFor="a">
-                                                            <Field
-                                                                type="radio"
-                                                                name="truocHoacSauLocMau"
-                                                                value="2"
-                                                                disabled={
-                                                                    values.khongBiViemGan
-                                                                }
-                                                                checked={
-                                                                    values.khongBiViemGan
-                                                                        ? ''
-                                                                        : values.truocHoacSauLocMau ===
-                                                                          '2'
-                                                                }
-                                                            />{' '}
-                                                            Sau lọc máu
-                                                        </label>
-                                                    </div>
-                                                </div>
-                                                {errors.truocHoacSauLocMau &&
-                                                touched.truocHoacSauLocMau ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.truocHoacSauLocMau
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>{' '}
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-4">
-                                                <label htmlFor="dieuTriViemGanTu">
-                                                    Điều trị viêm gan từ lúc nào
-                                                </label>
-                                                <Field
-                                                    name="dieuTriViemGanTu"
-                                                    key="dieuTriViemGanTu"
-                                                    className="form-control "
-                                                />
-                                                {errors.dieuTriViemGanTu &&
-                                                touched.dieuTriViemGanTu ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.dieuTriViemGanTu
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-8">
-                                                <label htmlFor="thuocTriViemGan">
-                                                    Thuốc điều trị viêm gan
-                                                </label>
-                                                <Field
-                                                    name="thuocTriViemGan"
-                                                    key="thuocTriViemGan"
-                                                    className="form-control "
-                                                />
-                                                {errors.thuocTriViemGan &&
-                                                touched.thuocTriViemGan ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.thuocTriViemGan
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="col-md-3">
-                                                <div
-                                                    role="group"
-                                                    aria-labelledby="my-radio-group"
-                                                >
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="radio"
-                                                            key="laoPhoi"
-                                                            name="laoPhoi"
-                                                            value="0"
-                                                        />{' '}
-                                                        Không có tiền căn lao
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div className="col-md-3">
-                                                <div
-                                                    role="group"
-                                                    aria-labelledby="my-radio-group"
-                                                >
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="radio"
-                                                            key="laoPhoi"
-                                                            name="laoPhoi"
-                                                            value="1"
-                                                        />{' '}
-                                                        Lao phổi
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="laoCoQuanKhac">
-                                                    Lao các cơ quan khác
-                                                </label>
-                                                <Field
-                                                    name="laoCoQuanKhac"
-                                                    key="laoCoQuanKhac"
-                                                    className="form-control "
-                                                />
-                                                {errors.laoCoQuanKhac &&
-                                                touched.laoCoQuanKhac ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.laoCoQuanKhac
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-4">
-                                                <label htmlFor="thoiGianBiLao">
-                                                    Từ lúc nào
-                                                </label>
-                                                <Field
-                                                    type="date"
-                                                    name="thoiGianBiLao"
-                                                    key="thoiGianBiLao"
-                                                    className="form-control "
-                                                />
-                                                {errors.thoiGianBiLao &&
-                                                touched.thoiGianBiLao ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.thoiGianBiLao
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-8">
-                                                <label htmlFor="thoiGianDieuTriAndNoiDieuTri">
-                                                    Thời gian điều trị/Nơi điều
-                                                    trị
-                                                </label>
-                                                <Field
-                                                    name="thoiGianDieuTriAndNoiDieuTri"
-                                                    key="thoiGianDieuTriAndNoiDieuTri"
-                                                    className="form-control "
-                                                />
-                                                {errors.thoiGianDieuTriAndNoiDieuTri &&
-                                                touched.thoiGianDieuTriAndNoiDieuTri ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.thoiGianDieuTriAndNoiDieuTri
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="daiThaoDuong">
-                                                    Đái tháo đường
-                                                </label>
-                                                <div
-                                                    role="group"
-                                                    aria-labelledby="my-radio-group"
-                                                >
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="radio"
-                                                            name="daiThaoDuong"
-                                                            value="1"
-                                                        />{' '}
-                                                        Có
-                                                    </label>
-                                                    <label htmlFor="a">
-                                                        <Field
-                                                            type="radio"
-                                                            name="daiThaoDuong"
-                                                            value="0"
-                                                        />{' '}
-                                                        Không
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="thoiGianBiDaiThaoDuong">
-                                                    Từ lúc nào
-                                                </label>
-                                                <Field
-                                                    type="date"
-                                                    name="thoiGianBiDaiThaoDuong"
-                                                    key="thoiGianBiDaiThaoDuong"
-                                                    className="form-control "
-                                                />
-                                                {errors.thoiGianBiDaiThaoDuong &&
-                                                touched.thoiGianBiDaiThaoDuong ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.thoiGianBiDaiThaoDuong
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="thuocDieuTriDaiThaoDuong">
-                                                    Thuốc điều trị
-                                                </label>
-                                                <Field
-                                                    name="thuocDieuTriDaiThaoDuong"
-                                                    key="thuocDieuTriDaiThaoDuong"
-                                                    className="form-control "
-                                                />
-                                                {errors.thuocDieuTriDaiThaoDuong &&
-                                                touched.thuocDieuTriDaiThaoDuong ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.thuocDieuTriDaiThaoDuong
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="tangHuyetAp">
-                                                    Tăng huyết áp
-                                                </label>
-                                                <div
-                                                    role="group"
-                                                    aria-labelledby="my-radio-group"
-                                                >
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="radio"
-                                                            name="tangHuyetAp"
-                                                            value="1"
-                                                        />{' '}
-                                                        Có
-                                                    </label>
-                                                    <label htmlFor="a">
-                                                        <Field
-                                                            type="radio"
-                                                            name="tangHuyetAp"
-                                                            value="0"
-                                                        />{' '}
-                                                        Không
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="thoiGianBiTangHuyetAp">
-                                                    Từ lúc nào
-                                                </label>
-                                                <Field
-                                                    type="date"
-                                                    name="thoiGianBiTangHuyetAp"
-                                                    key="thoiGianBiTangHuyetAp"
-                                                    className="form-control "
-                                                />
-                                                {errors.thoiGianBiTangHuyetAp &&
-                                                touched.thoiGianBiTangHuyetAp ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.thoiGianBiTangHuyetAp
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="thuocDieuTri">
-                                                    Thuốc điều trị
-                                                </label>
-                                                <Field
-                                                    name="thuocDieuTri"
-                                                    key="thuocDieuTri"
-                                                    className="form-control "
-                                                />
-                                                {errors.thuocDieuTri &&
-                                                touched.thuocDieuTri ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.thuocDieuTri
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="benhKhac">
-                                                    Các bệnh khác
-                                                </label>
-                                                <Field
-                                                    name="benhKhac"
-                                                    key="benhKhac"
-                                                    className="form-control "
-                                                />
-                                                {errors.benhKhac &&
-                                                touched.benhKhac ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.benhKhac}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="tinhTrang">
-                                                    Tình hình hiện tại
-                                                </label>
-                                                <Field
-                                                    name="tinhTrang"
-                                                    key="tinhTrang"
-                                                    className="form-control "
-                                                />
-                                                {errors.tinhTrang &&
-                                                touched.tinhTrang ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.tinhTrang}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="col-md-12 no-padding">
-                                            <label htmlFor="coPhauThuat">
-                                                5.Tiền căn ngoại khoa
-                                            </label>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="daPhauThuat">
-                                                    Có phẫu thuật gì trước đó
-                                                    không
-                                                </label>
-                                            </div>
-                                            <div className="form-group col-md-3">
-                                                <div
-                                                    role="group"
-                                                    aria-labelledby="my-radio-group"
-                                                >
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="radio"
-                                                            name="daPhauThuat"
-                                                            value="1"
-                                                        />{' '}
-                                                        Có
-                                                    </label>
-                                                    <label htmlFor="a">
-                                                        <Field
-                                                            type="radio"
-                                                            name="daPhauThuat"
-                                                            value="0"
-                                                        />{' '}
-                                                        Không
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="ngayThangPhauThuat">
-                                                    Ngày tháng năm phẫu thuật
-                                                </label>
-                                                <Field
-                                                    type="date"
-                                                    name="ngayThangPhauThuat"
-                                                    key="ngayThangPhauThuat"
-                                                    className="form-control "
-                                                />
-                                                {errors.ngayThangPhauThuat &&
-                                                touched.ngayThangPhauThuat ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.ngayThangPhauThuat
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="benhVienPhauThuat">
-                                                    Phẫu thuật tại bệnh viện
-                                                </label>
-                                                <Field
-                                                    name="benhVienPhauThuat"
-                                                    key="benhVienPhauThuat"
-                                                    className="form-control "
-                                                />
-                                                {errors.benhVienPhauThuat &&
-                                                touched.benhVienPhauThuat ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.benhVienPhauThuat
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="coPhauThuat">
-                                                    Nếu có thì do bệnh gì
-                                                </label>
-                                                <Field
-                                                    name="coPhauThuat"
-                                                    key="coPhauThuat"
-                                                    className="form-control "
-                                                />
-                                                {errors.coPhauThuat &&
-                                                touched.coPhauThuat ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.coPhauThuat}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="tinhTrangHienTai">
-                                                    Tình trạng hiện tại
-                                                </label>
-                                                <Field
-                                                    name="tinhTrangHienTai"
-                                                    key="tinhTrangHienTai"
-                                                    className="form-control "
-                                                />
-                                                {errors.tinhTrangHienTai &&
-                                                touched.tinhTrangHienTai ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.tinhTrangHienTai
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="uongRuouBia">
-                                                    6.Thói quen nghiện rượu
-                                                </label>
-                                                <div className="form-row">
-                                                    <div
-                                                        role="group"
-                                                        aria-labelledby="my-radio-group"
-                                                    >
-                                                        <label
-                                                            htmlFor="a"
-                                                            className="mgr15"
-                                                        >
-                                                            <Field
-                                                                type="radio"
-                                                                name="uongRuouBia"
-                                                                value="1"
-                                                            />{' '}
-                                                            Có
-                                                        </label>
-                                                    </div>
-                                                    <div
-                                                        role="group"
-                                                        aria-labelledby="my-radio-group"
-                                                    >
-                                                        <label
-                                                            htmlFor="a"
-                                                            className="mgr15"
-                                                        >
-                                                            <Field
-                                                                type="radio"
-                                                                name="uongRuouBia"
-                                                                value="0"
-                                                            />{' '}
-                                                            Không
-                                                        </label>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="soLanTuan">
-                                                    Số lần/tuần
-                                                </label>
-                                                <Field
-                                                    type="number"
-                                                    name="soLanTuan"
-                                                    key="soLanTuan"
-                                                    className="form-control "
-                                                />
-                                                {errors.soLanTuan &&
-                                                touched.soLanTuan ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.soLanTuan}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="soLuongLan">
-                                                    Số lượng trên lần
-                                                </label>
-                                                <Field
-                                                    placeholder="lít/chai/lon/ly"
-                                                    name="soLuongLan"
-                                                    key="soLuongLan"
-                                                    className="form-control "
-                                                />
-                                                {errors.soLuongLan &&
-                                                touched.soLuongLan ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.soLuongLan}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-3">
-                                                <p />
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="hutThuoc">
-                                                    7.Thói quen hút thuốc
-                                                </label>
-                                                <div className="form-row">
-                                                    <div
-                                                        role="group"
-                                                        aria-labelledby="my-radio-group"
-                                                    >
-                                                        <label
-                                                            htmlFor="a"
-                                                            className="mgr15"
-                                                        >
-                                                            <Field
-                                                                type="radio"
-                                                                name="hutThuoc"
-                                                                value="1"
-                                                            />{' '}
-                                                            Có
-                                                        </label>
-                                                    </div>
-                                                    <div
-                                                        role="group"
-                                                        aria-labelledby="my-radio-group"
-                                                    >
-                                                        <label
-                                                            htmlFor="a"
-                                                            className="mgr15"
-                                                        >
-                                                            <Field
-                                                                type="radio"
-                                                                name="hutThuoc"
-                                                                value="0"
-                                                            />{' '}
-                                                            Không
-                                                        </label>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="dieuTrenNgay">
-                                                    Số điếu trên ngày
-                                                </label>
-                                                <Field
-                                                    type="number"
-                                                    placeholder="điếu/ngày"
-                                                    name="dieuTrenNgay"
-                                                    key="dieuTrenNgay"
-                                                    className="form-control "
-                                                />
-                                                {errors.dieuTrenNgay &&
-                                                touched.dieuTrenNgay ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.dieuTrenNgay
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="col-md-12 no-padding">
-                                            <label htmlFor="BiBenhThan">
-                                                8.Tiền căn gia đình
-                                            </label>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-2">
-                                                <label htmlFor="biBenhThan">
-                                                    Bệnh thận
-                                                </label>
-
-                                                <div
-                                                    role="group"
-                                                    aria-labelledby="my-radio-group"
-                                                >
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="radio"
-                                                            name="biBenhThan"
-                                                            value="1"
-                                                        />{' '}
-                                                        Có
-                                                    </label>
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="radio"
-                                                            name="biBenhThan"
-                                                            value="0"
-                                                        />{' '}
-                                                        Không
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div className="form-group col-md-2">
-                                                <label htmlFor="biBenhLao">
-                                                    Bệnh lao
-                                                </label>
-
-                                                <div
-                                                    role="group"
-                                                    aria-labelledby="my-radio-group"
-                                                >
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="radio"
-                                                            name="biBenhLao"
-                                                            value="1"
-                                                        />{' '}
-                                                        Có
-                                                    </label>
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="radio"
-                                                            name="biBenhLao"
-                                                            value="0"
-                                                        />{' '}
-                                                        Không
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div className="form-group col-md-2">
-                                                <label htmlFor="biDaiThaoDuong">
-                                                    Đái tháo đường
-                                                </label>
-
-                                                <div
-                                                    role="group"
-                                                    aria-labelledby="my-radio-group"
-                                                >
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="radio"
-                                                            name="biDaiThaoDuong"
-                                                            value="1"
-                                                        />{' '}
-                                                        Có
-                                                    </label>
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="radio"
-                                                            name="biDaiThaoDuong"
-                                                            value="0"
-                                                        />{' '}
-                                                        Không
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div className="form-group col-md-2">
-                                                <label htmlFor="biTangHuyetAp">
-                                                    Tăng huyết áp
-                                                </label>
-
-                                                <div
-                                                    role="group"
-                                                    aria-labelledby="my-radio-group"
-                                                >
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="radio"
-                                                            name="biTangHuyetAp"
-                                                            value="1"
-                                                        />{' '}
-                                                        Có
-                                                    </label>
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="radio"
-                                                            name="biTangHuyetAp"
-                                                            value="0"
-                                                        />{' '}
-                                                        Không
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div className="form-group col-md-2">
-                                                <label htmlFor="biUngThu">
-                                                    Ung thư
-                                                </label>
-
-                                                <div
-                                                    role="group"
-                                                    aria-labelledby="my-radio-group"
-                                                >
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="radio"
-                                                            name="biUngThu"
-                                                            value="1"
-                                                        />{' '}
-                                                        Có
-                                                    </label>
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="radio"
-                                                            name="biUngThu"
-                                                            value="0"
-                                                        />{' '}
-                                                        Không
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        {/* <div className="form-row">
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="biBenhThan">
-                                                    Bệnh thận
-                                                </label>
-
-                                                <div
-                                                    role="group"
-                                                    aria-labelledby="my-radio-group"
-                                                >
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="radio"
-                                                            name="biBenhThan"
-                                                            value="1"
-                                                        />{' '}
-                                                        Có
-                                                    </label>
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="radio"
-                                                            name="biBenhThan"
-                                                            value="0"
-                                                        />{' '}
-                                                        Không
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div className="form-group col-md-2">
-                                                <div
-                                                    role="group"
-                                                    aria-labelledby="my-radio-group"
-                                                >
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="checkbox"
-                                                            name="biBenhLao"
-                                                            value="1"
-                                                        />{' '}
-                                                        Lao
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div className="form-group col-md-2">
-                                                <div
-                                                    role="group"
-                                                    aria-labelledby="my-radio-group"
-                                                >
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="checkbox"
-                                                            name="biDaiThaoDuong"
-                                                            value="1"
-                                                        />{' '}
-                                                        Đái tháo đường
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div className="form-group col-md-2">
-                                                <div
-                                                    role="group"
-                                                    aria-labelledby="my-radio-group"
-                                                >
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="checkbox"
-                                                            name="biTangHuyetAp"
-                                                            value="1"
-                                                        />{' '}
-                                                        Tăng huyết áp
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div className="form-group col-md-2">
-                                                <div
-                                                    role="group"
-                                                    aria-labelledby="my-radio-group"
-                                                >
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="checkbox"
-                                                            name="biUngThu"
-                                                            value="1"
-                                                        />{' '}
-                                                        Ung thư
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        </div> */}
-                                        <div className="form-row">
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="biBenhKhac">
-                                                    Bệnh khác
-                                                </label>
-                                                <Field
-                                                    name="biBenhKhac"
-                                                    key="biBenhKhac"
-                                                    className="form-control "
-                                                />
-
-                                                {errors.biBenhKhac &&
-                                                touched.biBenhKhac ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.biBenhKhac}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-6">
-                                                <div
-                                                    role="group"
-                                                    aria-labelledby="my-radio-group"
-                                                >
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        Sống cùng địa chỉ{' '}
-                                                        <Field
-                                                            type="radio"
-                                                            name="songCungDiaChi"
-                                                            value="1"
-                                                        />
-                                                    </label>
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        Không cùng địa chỉ{' '}
-                                                        <Field
-                                                            type="radio"
-                                                            name="songCungDiaChi"
-                                                            value="0"
-                                                        />
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="nguoiThanBiBenh">
-                                                    Nếu có thì là ai
-                                                </label>
-                                                <Field
-                                                    name="nguoiThanBiBenh"
-                                                    key="nguoiThanBiBenh"
-                                                    className="form-control "
-                                                />
-
-                                                {errors.nguoiThanBiBenh &&
-                                                touched.nguoiThanBiBenh ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.nguoiThanBiBenh
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="tinhTrangBenhNguoiThanHienTai">
-                                                    Tình trạng hiện tại
-                                                </label>
-                                                <Field
-                                                    name="tinhTrangBenhNguoiThanHienTai"
-                                                    key="tinhTrangBenhNguoiThanHienTai"
-                                                    className="form-control "
-                                                />
-
-                                                {errors.tinhTrangBenhNguoiThanHienTai &&
-                                                touched.tinhTrangBenhNguoiThanHienTai ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.tinhTrangBenhNguoiThanHienTai
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="col-md-12 no-padding">
-                                            <label htmlFor="chisobmi">
-                                                9. Thông tin bổ sung
-                                            </label>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-2">
-                                                <label htmlFor="chisobmi">
-                                                    Chỉ số BMI (%)
-                                                </label>
-                                                <Field
-                                                    type="number"
-                                                    name="chisobmi"
-                                                    key="chisobmi"
-                                                    className="form-control "
-                                                />
-                                                {errors.chisobmi &&
-                                                touched.chisobmi ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.chisobmi}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-2">
-                                                <label htmlFor="nambatdaudieutri">
-                                                    Năm bắt đầu điều trị
-                                                </label>
-                                                <Field
-                                                    type="number"
-                                                    name="nambatdaudieutri"
-                                                    key="nambatdaudieutri"
-                                                    className="form-control "
-                                                />
-                                                {errors.nambatdaudieutri &&
-                                                touched.nambatdaudieutri ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.nambatdaudieutri
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-2">
-                                                <label htmlFor="sonamdieutrithaythe">
-                                                    Số năm điều trị thay thế
-                                                </label>
-                                                <Field
-                                                    type="number"
-                                                    name="sonamdieutrithaythe"
-                                                    key="sonamdieutrithaythe"
-                                                    className="form-control "
-                                                />
-                                                {errors.sonamdieutrithaythe &&
-                                                touched.sonamdieutrithaythe ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.sonamdieutrithaythe
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="sanhconmaylan">
-                                                    Sanh con mấy lần
-                                                </label>
-                                                <Field
-                                                    type="number"
-                                                    name="sanhconmaylan"
-                                                    key="sanhconmaylan"
-                                                    className="form-control "
-                                                />
-                                                {errors.sanhconmaylan &&
-                                                touched.sanhconmaylan ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.sanhconmaylan
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="sanhconlancuoivaonam">
-                                                    Sanh con lần cuối vào năm
-                                                </label>
-                                                <Field
-                                                    type="number"
-                                                    name="sanhconlancuoivaonam"
-                                                    key="sanhconlancuoivaonam"
-                                                    className="form-control "
-                                                />
-                                                {errors.sanhconlancuoivaonam &&
-                                                touched.sanhconlancuoivaonam ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.sanhconlancuoivaonam
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-2">
-                                                <label htmlFor="ngoaitongquat">
-                                                    Ngoại tổng quát
-                                                </label>
-                                                <Field
-                                                    name="ngoaitongquat"
-                                                    key="ngoaitongquat"
-                                                    className="form-control "
-                                                />
-                                                {errors.ngoaitongquat &&
-                                                touched.ngoaitongquat ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.ngoaitongquat
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-2">
-                                                <label htmlFor="ngoaitietnieu">
-                                                    Ngoại tiết niệu
-                                                </label>
-                                                <Field
-                                                    name="ngoaitietnieu"
-                                                    key="ngoaitietnieu"
-                                                    className="form-control "
-                                                />
-                                                {errors.ngoaitietnieu &&
-                                                touched.ngoaitietnieu ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.ngoaitietnieu
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="tiencanngoaikhoakhac">
-                                                    Tiền căn ngoại khoa khác
-                                                </label>
-                                                <Field
-                                                    name="tiencanngoaikhoakhac"
-                                                    key="tiencanngoaikhoakhac"
-                                                    className="form-control "
-                                                />
-                                                {errors.tiencanngoaikhoakhac &&
-                                                touched.tiencanngoaikhoakhac ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.tiencanngoaikhoakhac
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="thoidiemtruyenmau">
-                                                    Thời điểm truyền máu
-                                                </label>
-                                                <Field
-                                                    type="date"
-                                                    name="thoidiemtruyenmau"
-                                                    key="thoidiemtruyenmau"
-                                                    className="form-control "
-                                                />
-                                                {errors.thoidiemtruyenmau &&
-                                                touched.thoidiemtruyenmau ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.thoidiemtruyenmau
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-2">
-                                                <label htmlFor="namphathienctnttrolai">
-                                                    Năm phát hiện CTNT trở lại
-                                                </label>
-                                                <Field
-                                                    type="number"
-                                                    name="namphathienctnttrolai"
-                                                    key="namphathienctnttrolai"
-                                                    className="form-control "
-                                                />
-                                                {errors.namphathienctnttrolai &&
-                                                touched.namphathienctnttrolai ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.namphathienctnttrolai
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="phauthuat">
-                                                    Thông tin phẫu thuật
-                                                </label>
-                                                <Field
-                                                    name="phauthuat"
-                                                    key="phauthuat"
-                                                    className="form-control "
-                                                />
-                                                {errors.phauthuat &&
-                                                touched.phauthuat ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.phauthuat}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group custom-checkbox col-md-3">
-                                                <br />
-                                                <div className="custom-control custom-checkbox ">
-                                                    <Field
-                                                        type="checkbox"
-                                                        name="xatri"
-                                                        key="xatri"
-                                                        id="xatri"
-                                                        className="custom-control-input"
-                                                        checked={values.xatri}
-                                                    />
-
-                                                    <label
-                                                        className="custom-control-label"
-                                                        htmlFor="xatri"
-                                                    >
-                                                        Xạ trị
-                                                    </label>
-                                                    {errors.xatri &&
-                                                    touched.xatri ? (
-                                                        <div className="invalid-feedback">
-                                                            {errors.xatri}
-                                                        </div>
-                                                    ) : null}
-                                                </div>
-                                            </div>
-                                            <div className="form-group custom-checkbox col-md-3">
-                                                <br />
-                                                <div className="custom-control custom-checkbox ">
-                                                    <Field
-                                                        type="checkbox"
-                                                        name="hoatri"
-                                                        key="hoatri"
-                                                        id="hoatri"
-                                                        className="custom-control-input"
-                                                        checked={values.hoatri}
-                                                    />
-
-                                                    <label
-                                                        className="custom-control-label"
-                                                        htmlFor="hoatri"
-                                                    >
-                                                        Hoá trị
-                                                    </label>
-                                                    {errors.hoatri &&
-                                                    touched.hoatri ? (
-                                                        <div className="invalid-feedback">
-                                                            {errors.hoatri}
-                                                        </div>
-                                                    ) : null}
-                                                </div>
-                                            </div>
-                                            <div className="form-group custom-checkbox col-md-3">
-                                                <br />
-                                                <div className="custom-control custom-checkbox ">
-                                                    <Field
-                                                        type="checkbox"
-                                                        name="benhlyhethongduongtietnieu"
-                                                        key="benhlyhethongduongtietnieu"
-                                                        id="benhlyhethongduongtietnieu"
-                                                        className="custom-control-input"
-                                                        checked={
-                                                            values.benhlyhethongduongtietnieu
-                                                        }
-                                                    />
-
-                                                    <label
-                                                        className="custom-control-label"
-                                                        htmlFor="benhlyhethongduongtietnieu"
-                                                    >
-                                                        Bệnh lý hệ thống đường
-                                                        tiết niệu
-                                                    </label>
-                                                    {errors.benhlyhethongduongtietnieu &&
-                                                    touched.benhlyhethongduongtietnieu ? (
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.benhlyhethongduongtietnieu
-                                                            }
-                                                        </div>
-                                                    ) : null}
-                                                </div>
-                                            </div>
-                                            <div className="form-group custom-checkbox col-md-3">
-                                                <br />
-                                                <div className="custom-control custom-checkbox ">
-                                                    <Field
-                                                        type="checkbox"
-                                                        name="benhlytimmach"
-                                                        key="benhlytimmach"
-                                                        id="benhlytimmach"
-                                                        className="custom-control-input"
-                                                        checked={
-                                                            values.benhlytimmach
-                                                        }
-                                                    />
-
-                                                    <label
-                                                        className="custom-control-label"
-                                                        htmlFor="benhlytimmach"
-                                                    >
-                                                        Bệnh lý tim mạch
-                                                    </label>
-                                                    {errors.benhlytimmach &&
-                                                    touched.benhlytimmach ? (
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.benhlytimmach
-                                                            }
-                                                        </div>
-                                                    ) : null}
-                                                </div>
-                                            </div>
-                                            <div className="form-group custom-checkbox col-md-3">
-                                                <br />
-                                                <div className="custom-control custom-checkbox ">
-                                                    <Field
-                                                        type="checkbox"
-                                                        name="THA"
-                                                        key="THA"
-                                                        id="THA"
-                                                        className="custom-control-input"
-                                                        checked={values.THA}
-                                                    />
-
-                                                    <label
-                                                        className="custom-control-label"
-                                                        htmlFor="THA"
-                                                    >
-                                                        THA
-                                                    </label>
-                                                    {errors.THA &&
-                                                    touched.THA ? (
-                                                        <div className="invalid-feedback">
-                                                            {errors.THA}
-                                                        </div>
-                                                    ) : null}
-                                                </div>
-                                            </div>
-                                            <div className="form-group custom-checkbox col-md-3">
-                                                <br />
-                                                <div className="custom-control custom-checkbox ">
-                                                    <Field
-                                                        type="checkbox"
-                                                        name="CAPD"
-                                                        key="CAPD"
-                                                        id="CAPD"
-                                                        className="custom-control-input"
-                                                        checked={values.CAPD}
-                                                    />
-
-                                                    <label
-                                                        className="custom-control-label"
-                                                        htmlFor="CAPD"
-                                                    >
-                                                        CAPD
-                                                    </label>
-                                                    {errors.CAPD &&
-                                                    touched.CAPD ? (
-                                                        <div className="invalid-feedback">
-                                                            {errors.CAPD}
-                                                        </div>
-                                                    ) : null}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="col-md-12 no-padding">
-                                            <label htmlFor="NhiemCovid">
-                                                10. Tiền sử covid
-                                            </label>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="col-md-3">
-                                                <div className="custom-control custom-checkbox">
-                                                    <Field
-                                                        type="checkbox"
-                                                        name="NhiemCovid"
-                                                        key="NhiemCovid"
-                                                        id="NhiemCovid"
-                                                        className="custom-control-input"
-                                                        onClick={() =>
-                                                            KhongBiNhiemCheck()
-                                                        }
-                                                    />
-
-                                                    <label
-                                                        className="custom-control-label"
-                                                        htmlFor="NhiemCovid"
-                                                    >
-                                                        Không bị nhiễm covid
-                                                    </label>
-                                                    {errors.NhiemCovid &&
-                                                    touched.NhiemCovid ? (
-                                                        <div className="invalid-feedback">
-                                                            {errors.NhiemCovid}
-                                                        </div>
-                                                    ) : null}
-                                                </div>
-                                            </div>
-                                            <div className="col-md-3">
-                                                <div className="custom-control custom-checkbox ">
-                                                    <Field
-                                                        type="checkbox"
-                                                        name="BiTruocTiem"
-                                                        key="BiTruocTiem"
-                                                        id="BiTruocTiem"
-                                                        className="custom-control-input"
-                                                        disabled={
-                                                            values.NhiemCovid
-                                                        }
-                                                        checked={
-                                                            values.NhiemCovid
-                                                                ? ''
-                                                                : values.BiTruocTiem
-                                                        }
-                                                    />
-
-                                                    <label
-                                                        className="custom-control-label"
-                                                        htmlFor="BiTruocTiem"
-                                                    >
-                                                        Bị nhiễm trước tiêm
-                                                    </label>
-                                                    {errors.BiTruocTiem &&
-                                                    touched.BiTruocTiem ? (
-                                                        <div className="invalid-feedback">
-                                                            {errors.BiTruocTiem}
-                                                        </div>
-                                                    ) : null}
-                                                </div>
-                                            </div>
-                                            <div className="col-md-3">
-                                                <div className="custom-control custom-checkbox ">
-                                                    <Field
-                                                        type="checkbox"
-                                                        name="BiSauTiem"
-                                                        key="BiSauTiem"
-                                                        id="BiSauTiem"
-                                                        className="custom-control-input"
-                                                        disabled={
-                                                            values.NhiemCovid
-                                                        }
-                                                        checked={
-                                                            values.NhiemCovid
-                                                                ? ''
-                                                                : values.BiSauTiem
-                                                        }
-                                                    />
-
-                                                    <label
-                                                        className="custom-control-label"
-                                                        htmlFor="BiSauTiem"
-                                                    >
-                                                        Bị nhiễm sau tiêm
-                                                    </label>
-                                                    {errors.BiSauTiem &&
-                                                    touched.BiSauTiem ? (
-                                                        <div className="invalid-feedback">
-                                                            {errors.BiSauTiem}
-                                                        </div>
-                                                    ) : null}
-                                                </div>
-                                            </div>
-                                            <div className="col-md-3">
-                                                <div className="custom-control custom-checkbox ">
-                                                    <Field
-                                                        type="checkbox"
-                                                        name="CoTrieuChung"
-                                                        key="CoTrieuChung"
-                                                        id="CoTrieuChung"
-                                                        className="custom-control-input"
-                                                        disabled={
-                                                            values.NhiemCovid
-                                                        }
-                                                        checked={
-                                                            values.NhiemCovid
-                                                                ? ''
-                                                                : values.CoTrieuChung
-                                                        }
-                                                    />
-
-                                                    <label
-                                                        className="custom-control-label"
-                                                        htmlFor="CoTrieuChung"
-                                                    >
-                                                        Không có triệu chứng
-                                                    </label>
-                                                    {errors.CoTrieuChung &&
-                                                    touched.CoTrieuChung ? (
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.CoTrieuChung
-                                                            }
-                                                        </div>
-                                                    ) : null}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="col-md-3">
-                                                <div className="custom-control custom-checkbox ">
-                                                    <Field
-                                                        type="checkbox"
-                                                        name="TrieuChungNhe"
-                                                        key="TrieuChungNhe"
-                                                        id="TrieuChungNhe"
-                                                        className="custom-control-input"
-                                                        disabled={
-                                                            values.NhiemCovid
-                                                        }
-                                                        checked={
-                                                            values.NhiemCovid
-                                                                ? ''
-                                                                : values.TrieuChungNhe
-                                                        }
-                                                    />
-
-                                                    <label
-                                                        className="custom-control-label"
-                                                        htmlFor="TrieuChungNhe"
-                                                    >
-                                                        Triệu chứng nhẹ
-                                                    </label>
-                                                    {errors.TrieuChungNhe &&
-                                                    touched.TrieuChungNhe ? (
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.TrieuChungNhe
-                                                            }
-                                                        </div>
-                                                    ) : null}
-                                                </div>
-                                            </div>
-                                            <div className="col-md-3">
-                                                <div className="custom-control custom-checkbox ">
-                                                    <Field
-                                                        type="checkbox"
-                                                        name="TrieuChungtrungBinh"
-                                                        key="TrieuChungtrungBinh"
-                                                        id="TrieuChungtrungBinh"
-                                                        className="custom-control-input"
-                                                        disabled={
-                                                            values.NhiemCovid
-                                                        }
-                                                        checked={
-                                                            values.NhiemCovid
-                                                                ? ''
-                                                                : values.TrieuChungtrungBinh
-                                                        }
-                                                    />
-
-                                                    <label
-                                                        className="custom-control-label"
-                                                        htmlFor="TrieuChungtrungBinh"
-                                                    >
-                                                        Triệu chúng trung bình
-                                                    </label>
-                                                    {errors.TrieuChungtrungBinh &&
-                                                    touched.TrieuChungtrungBinh ? (
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.TrieuChungtrungBinh
-                                                            }
-                                                        </div>
-                                                    ) : null}
-                                                </div>
-                                            </div>
-                                            <div className="col-md-3">
-                                                <div className="custom-control custom-checkbox ">
-                                                    <Field
-                                                        type="checkbox"
-                                                        name="NhapVien"
-                                                        key="NhapVien"
-                                                        id="NhapVien"
-                                                        className="custom-control-input"
-                                                        disabled={
-                                                            values.NhiemCovid
-                                                        }
-                                                        checked={
-                                                            values.NhiemCovid
-                                                                ? ''
-                                                                : values.NhapVien
-                                                        }
-                                                    />
-
-                                                    <label
-                                                        className="custom-control-label"
-                                                        htmlFor="NhapVien"
-                                                    >
-                                                        Nhập viện
-                                                    </label>
-                                                    {errors.NhapVien &&
-                                                    touched.NhapVien ? (
-                                                        <div className="invalid-feedback">
-                                                            {errors.NhapVien}
-                                                        </div>
-                                                    ) : null}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="col-md-3">
-                                                <label htmlFor="ThoiGianNamVien">
-                                                    Thời gian nằm viện(ngày)
-                                                </label>
-                                                <Field
-                                                    type="number"
-                                                    name="ThoiGianNamVien"
-                                                    key="ThoiGianNamVien"
-                                                    className="form-control "
-                                                />
-
-                                                {errors.ThoiGianNamVien &&
-                                                touched.ThoiGianNamVien ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.ThoiGianNamVien
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="col-md-3">
-                                                <div className="custom-control custom-checkbox ">
-                                                    <Field
-                                                        type="checkbox"
-                                                        name="ThoMay"
-                                                        key="ThoMay"
-                                                        id="ThoMay"
-                                                        className="custom-control-input"
-                                                        disabled={
-                                                            values.NhiemCovid
-                                                        }
-                                                        checked={
-                                                            values.NhiemCovid
-                                                                ? ''
-                                                                : values.ThoMay
-                                                        }
-                                                    />
-
-                                                    <label
-                                                        className="custom-control-label"
-                                                        htmlFor="ThoMay"
-                                                    >
-                                                        Thở máy
-                                                    </label>
-                                                    {errors.ThoMay &&
-                                                    touched.ThoMay ? (
-                                                        <div className="invalid-feedback">
-                                                            {errors.ThoMay}
-                                                        </div>
-                                                    ) : null}
-                                                </div>
-                                            </div>
-                                            <div className="col-md-3">
-                                                <div className="custom-control custom-checkbox ">
-                                                    <Field
-                                                        type="checkbox"
-                                                        name="ThoHFNC"
-                                                        key="ThoHFNC"
-                                                        id="ThoHFNC"
-                                                        className="custom-control-input"
-                                                        disabled={
-                                                            values.NhiemCovid
-                                                        }
-                                                        checked={
-                                                            values.NhiemCovid
-                                                                ? ''
-                                                                : values.ThoHFNC
-                                                        }
-                                                    />
-
-                                                    <label
-                                                        className="custom-control-label"
-                                                        htmlFor="ThoHFNC"
-                                                    >
-                                                        Thở HFNC
-                                                    </label>
-                                                    {errors.ThoHFNC &&
-                                                    touched.ThoHFNC ? (
-                                                        <div className="invalid-feedback">
-                                                            {errors.ThoHFNC}
-                                                        </div>
-                                                    ) : null}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="col-md-12 no-padding">
-                                            <label htmlFor="khongBiViemGan">
-                                                11. Tiêm vaccine ngừa covid
-                                            </label>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-4">
-                                                <label htmlFor="TiemVaccine">
-                                                    Tiêm vaccine ngừa covid mũi
-                                                    1
-                                                </label>
-                                                <Field
-                                                    name="TiemVaccine"
-                                                    key="TiemVaccine"
-                                                    className="form-control "
-                                                />
-
-                                                {errors.TiemVaccine &&
-                                                touched.TiemVaccine ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.TiemVaccine}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-4">
-                                                <label htmlFor="NgayTiemMui1">
-                                                    Ngày tiêm mũi 1
-                                                </label>
-                                                <Field
-                                                    type="date"
-                                                    name="NgayTiemMui1"
-                                                    key="NgayTiemMui1"
-                                                    className="form-control "
-                                                />
-
-                                                {errors.NgayTiemMui1 &&
-                                                touched.NgayTiemMui1 ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.NgayTiemMui1
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-4">
-                                                <label htmlFor="PhanUng">
-                                                    Phản ứng sau tiêm mũi 1
-                                                </label>
-                                                <Field
-                                                    name="PhanUng"
-                                                    key="PhanUng"
-                                                    className="form-control "
-                                                />
-
-                                                {errors.PhanUng &&
-                                                touched.PhanUng ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.PhanUng}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-4">
-                                                <label htmlFor="TiemVaccine2">
-                                                    Tiêm vaccine ngừa covid mũi
-                                                    2
-                                                </label>
-                                                <Field
-                                                    name="TiemVaccine2"
-                                                    key="TiemVaccine2"
-                                                    className="form-control "
-                                                />
-
-                                                {errors.TiemVaccine2 &&
-                                                touched.TiemVaccine2 ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.TiemVaccine2
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-4">
-                                                <label htmlFor="NgayTiemMui2">
-                                                    Ngày tiêm mũi 2
-                                                </label>
-                                                <Field
-                                                    type="date"
-                                                    name="NgayTiemMui2"
-                                                    key="NgayTiemMui2"
-                                                    className="form-control "
-                                                />
-
-                                                {errors.NgayTiemMui2 &&
-                                                touched.NgayTiemMui2 ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.NgayTiemMui2
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-4">
-                                                <label htmlFor="PhanUng2">
-                                                    Phản ứng sau tiêm mũi 2
-                                                </label>
-                                                <Field
-                                                    name="PhanUng2"
-                                                    key="PhanUng2"
-                                                    className="form-control "
-                                                />
-
-                                                {errors.PhanUng2 &&
-                                                touched.PhanUng2 ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.PhanUng2}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-4">
-                                                <label htmlFor="TiemVaccine3">
-                                                    Tiêm vaccine ngừa covid mũi
-                                                    3
-                                                </label>
-                                                <Field
-                                                    name="TiemVaccine3"
-                                                    key="TiemVaccine3"
-                                                    className="form-control "
-                                                />
-
-                                                {errors.TiemVaccine3 &&
-                                                touched.TiemVaccine3 ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.TiemVaccine3
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-4">
-                                                <label htmlFor="NgayTiemMui3">
-                                                    Ngày tiêm mũi 3
-                                                </label>
-                                                <Field
-                                                    type="date"
-                                                    name="NgayTiemMui3"
-                                                    key="NgayTiemMui3"
-                                                    className="form-control "
-                                                />
-
-                                                {errors.NgayTiemMui3 &&
-                                                touched.NgayTiemMui3 ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.NgayTiemMui3
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-4">
-                                                <label htmlFor="PhanUng3">
-                                                    Phản ứng sau tiêm mũi 3
-                                                </label>
-                                                <Field
-                                                    name="PhanUng3"
-                                                    key="PhanUng3"
-                                                    className="form-control "
-                                                />
-
-                                                {errors.PhanUng3 &&
-                                                touched.PhanUng3 ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.PhanUng3}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="col-md-12 no-padding">
-                                        <div className="solama">
-                                            III. KINH TẾ:
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="thuNhapBenhNhan">
-                                                    Thu nhập của bệnh nhân
-                                                    <span className="red">
-                                                        *
-                                                    </span>
-                                                </label>
-                                                <Field
-                                                    placeholder="VND/Tháng"
-                                                    name="thuNhapBenhNhan"
-                                                    key="thuNhapBenhNhan"
-                                                    className="form-control "
-                                                />
-
-                                                {errors.thuNhapBenhNhan &&
-                                                touched.thuNhapBenhNhan ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.thuNhapBenhNhan
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="thuNhapVoChongBenhNhan">
-                                                    Thu nhập của Vợ hoặc Chồng
-                                                </label>
-                                                <Field
-                                                    placeholder="VND/Tháng"
-                                                    name="thuNhapVoChongBenhNhan"
-                                                    key="thuNhapVoChongBenhNhan"
-                                                    className="form-control "
-                                                />
-
-                                                {errors.thuNhapVoChongBenhNhan &&
-                                                touched.thuNhapVoChongBenhNhan ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.thuNhapVoChongBenhNhan
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="ngheNghiepVoChong">
-                                                    Nghề nghiệp
-                                                </label>
-                                                <Field
-                                                    name="ngheNghiepVoChong"
-                                                    key="ngheNghiepVoChong"
-                                                    className="form-control "
-                                                />
-                                                {/* <option value="">
-                                                    --Chọn--
-                                                </option>
-                                                <option value="Bác sĩ">
-                                                    Bác sĩ
-                                                </option>
-                                                <option value="Kỹ Sư">
-                                                    Kỹ Sư
-                                                </option>
-                                                <option value="Giáo viên">
-                                                    Giáo viên
-                                                </option>
-                                                <option value="Công nhân">
-                                                    Công nhân
-                                                </option>
-                                                <RenderDropdownDanhMuc code="nghenghiep" /> 
-                                            </Field> */}
-
-                                                {errors.ngheNghiepVoChong &&
-                                                touched.ngheNghiepVoChong ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.ngheNghiepVoChong
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="thuNhapKhac">
-                                                    Thu nhập khác
-                                                </label>
-                                                <Field
-                                                    placeholder="VND/Tháng"
-                                                    name="thuNhapKhac"
-                                                    key="thuNhapKhac"
-                                                    className="form-control "
-                                                />
-
-                                                {errors.thuNhapKhac &&
-                                                touched.thuNhapKhac ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.thuNhapKhac}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="tienChuanBiChoViecGhepThan">
-                                                    Tiền chuẩn bị cho việc ghép
-                                                    thận (có sẵn)
-                                                    <span className="red">
-                                                        *
-                                                    </span>
-                                                </label>
-                                                <Field
-                                                    name="tienChuanBiChoViecGhepThan"
-                                                    key="tienChuanBiChoViecGhepThan"
-                                                    className="form-control "
-                                                />
-
-                                                {errors.tienChuanBiChoViecGhepThan &&
-                                                touched.tienChuanBiChoViecGhepThan ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.tienChuanBiChoViecGhepThan
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="col-md-12 no-padding">
-                                        <div className="solama">
-                                            IV. LÝ DO ĐĂNG KÝ CHỜ GHÉP THẬN TỪ
-                                            NGƯỜI HIẾN CHẾT NÃO:
-                                        </div>
-                                    </div>
-
-                                    <div className="form-row">
-                                        <div className="col-md-4">
-                                            <div className="custom-control custom-checkbox">
-                                                <Field
-                                                    type="checkbox"
-                                                    name="khongCoNguoiNhan"
-                                                    key="khongCoNguoiNhan"
-                                                    id="khongCoNguoiNhan"
-                                                    className="custom-control-input"
-                                                />
-
-                                                <label
-                                                    className="custom-control-label"
-                                                    htmlFor="khongCoNguoiNhan"
-                                                >
-                                                    Không có người hiến thận
-                                                </label>
-                                                {errors.khongCoNguoiNhan &&
-                                                touched.khongCoNguoiNhan ? (
-                                                    <div className="invalid-feedback">
-                                                        {
-                                                            errors.khongCoNguoiNhan
-                                                        }
-                                                    </div>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="col-md-4">
-                                            <div className="custom-control custom-checkbox ">
-                                                <Field
-                                                    type="checkbox"
-                                                    name="nguoiChoBiBenh"
-                                                    key="nguoiChoBiBenh"
-                                                    id="nguoiChoBiBenh"
-                                                    className="custom-control-input"
-                                                />
-
-                                                <label
-                                                    className="custom-control-label"
-                                                    htmlFor="nguoiChoBiBenh"
-                                                >
-                                                    Người hiến bị bệnh
-                                                </label>
-                                                {errors.nguoiChoBiBenh &&
-                                                touched.nguoiChoBiBenh ? (
-                                                    <div className="invalid-feedback">
-                                                        {errors.nguoiChoBiBenh}
-                                                    </div>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="col-md-4">
-                                            <div className="custom-control custom-checkbox ">
-                                                <Field
-                                                    type="checkbox"
-                                                    name="nguoiChoKhongHoaHopMau"
-                                                    key="nguoiChoKhongHoaHopMau"
-                                                    id="nguoiChoKhongHoaHopMau"
-                                                    className="custom-control-input"
-                                                />
-
-                                                <label
-                                                    className="custom-control-label"
-                                                    htmlFor="nguoiChoKhongHoaHopMau"
-                                                >
-                                                    Người hiến không hòa hợp
-                                                    nhóm máu
-                                                </label>
-                                                {errors.nguoiChoKhongHoaHopMau &&
-                                                touched.nguoiChoKhongHoaHopMau ? (
-                                                    <div className="invalid-feedback">
-                                                        {
-                                                            errors.nguoiChoKhongHoaHopMau
-                                                        }
-                                                    </div>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-group col-md-12">
-                                            <label htmlFor="lyDoKhac">
-                                                Lý do khác
-                                            </label>
-                                            <Field
-                                                name="lyDoKhac"
-                                                key="lyDoKhac"
-                                                className="form-control "
-                                            />
-                                            {errors.lyDoKhac &&
-                                            touched.lyDoKhac ? (
-                                                <div className="invalid-feedback">
-                                                    {errors.lyDoKhac}
-                                                </div>
-                                            ) : null}
-                                        </div>
-                                    </div>
-
-                                    <div className="col-md-12 no-padding">
-                                        <div className="solama">
-                                            VI. QUAN HỆ GIA ĐÌNH:
-                                        </div>
-                                        {RenderEditQuanHeGiaDinh()}
-                                    </div>
-                                    <div className="col-md-12 no-padding camket">
-                                        <div className="solama">
-                                            VI. CAM KẾT ĐĂNG KÝ CHỜ GHÉP THẬN TỪ
-                                            NGƯỜI HIẾN CHẾT NÃO HAY TIM NGỪNG
-                                            ĐẬP
-                                        </div>
-                                        <div className="form-group col-md-12">
-                                            <span>
-                                                Hiện tôi bị bệnh suy thận mạn
-                                                giai đoạn cuối đang phải lọc máu
-                                                định kỳ, có chỉ định ghép thận.
-                                                Tôi đã được các bác sĩ phụ trách
-                                                giải thích rõ về các bước thực
-                                                hiện đánh giá tình trạng sức
-                                                khỏe chung, thực hiện quá trình
-                                                tuyển chọn, thời gian chờ đợi,
-                                                tác dụng phụ của thuốc ức chế
-                                                miễn dịch điều trị sau ghép
-                                                thận, chi phí ghép thận, chuẩn
-                                                bị môi trường và cách sinh hoạt
-                                                sau khi được ghép thận….. Tôi
-                                                xin được đăng ký vào danh sách
-                                                chờ ghép thận từ người hiến chết
-                                                não hay tim ngừng đập tại Bệnh
-                                                viện Chợ Rẫy, tôi cam kết tuân
-                                                thủ các quy định trong quá trình
-                                                điều trị bệnh trước và sau ghép
-                                                thận.
-                                            </span>
-                                        </div>
-                                    </div>
-                                </Form>
-                            )}
-                        </Formik>
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button
-                            variant="secondary"
-                            onClick={() => onCloseEntityEditModal()}
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 4}}
+                                md={{span: 8}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    label="Ảnh thẻ mới"
+                                    className="my-label"
+                                >
+                                    <img id="Avatar" alt="" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Ngày sinh"
+                                    rules={[
+                                        {
+                                            type: 'object',
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        },
+                                        () => ({
+                                            validator(_, val) {
+                                                if (
+                                                    new Date() < new Date(val)
+                                                ) {
+                                                    return Promise.reject(
+                                                        'Ngày sinh vượt quá ngày hiện tại'
+                                                    );
+                                                }
+
+                                                if (
+                                                    new Date('1920-1-1') >
+                                                    new Date(val)
+                                                ) {
+                                                    return Promise.reject(
+                                                        'Ngày sinh phải sau ngày 1 tháng 1 năm 1920'
+                                                    );
+                                                }
+                                                return Promise.resolve();
+                                            }
+                                        })
+                                    ]}
+                                    name="ngaySinh"
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <DatePicker
+                                        format="DD/MM/YYYY"
+                                        name="ngaySinh"
+                                        placeholder="Vui lòng chọn ngày"
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 4}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Nhóm máu ABO"
+                                    name="nhomMau"
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Select defaultValue="" name="nhomMau">
+                                        <Select.Option value="">
+                                            --Chọn--
+                                        </Select.Option>
+
+                                        {DropDMNhomMau()}
+                                    </Select>
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 4}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Nhóm máu Rh"
+                                    name="nhomMau1"
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Select defaultValue="" name="nhomMau1">
+                                        <Select.Option value="">
+                                            --Chọn--
+                                        </Select.Option>
+
+                                        {DropDMNhomMauRh()}
+                                    </Select>
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Bảo hiểm y tế"
+                                    name="baoHiemYTe"
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input name="baoHiemYTe" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Ngày đăng ký"
+                                    rules={[
+                                        {
+                                            type: 'object',
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        },
+                                        () => ({
+                                            validator(_, val) {
+                                                if (
+                                                    new Date() < new Date(val)
+                                                ) {
+                                                    return Promise.reject(
+                                                        'Ngày sinh vượt quá ngày hiện tại'
+                                                    );
+                                                }
+
+                                                if (
+                                                    new Date('1920-1-1') >
+                                                    new Date(val)
+                                                ) {
+                                                    return Promise.reject(
+                                                        'Ngày sinh phải sau ngày 1 tháng 1 năm 1920'
+                                                    );
+                                                }
+                                                return Promise.resolve();
+                                            }
+                                        })
+                                    ]}
+                                    name="ngaydkhien"
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <DatePicker
+                                        format="DD/MM/YYYY"
+                                        name="ngaydkhien"
+                                        placeholder="Vui lòng chọn ngày"
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Thời gian đăng ký BHYT"
+                                    rules={[
+                                        {
+                                            type: 'object',
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        },
+                                        () => ({
+                                            validator(_, val) {
+                                                if (
+                                                    new Date() < new Date(val)
+                                                ) {
+                                                    return Promise.reject(
+                                                        'Thời gian đăng ký vượt quá ngày hiện tại'
+                                                    );
+                                                }
+
+                                                if (
+                                                    new Date('1920-1-1') >
+                                                    new Date(val)
+                                                ) {
+                                                    return Promise.reject(
+                                                        'Thời gian đăng ký phải sau ngày 1 tháng 1 năm 1920'
+                                                    );
+                                                }
+                                                return Promise.resolve();
+                                            }
+                                        })
+                                    ]}
+                                    name="thoigianbhyt"
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <DatePicker
+                                        format="DD/MM/YYYY"
+                                        name="thoigianbhyt"
+                                        placeholder="Vui lòng chọn ngày"
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="CMND/CCCD/Hộ chiếu"
+                                    name="CMNDBN"
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input name="CMNDBN" />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Ngày cấp"
+                                    rules={[
+                                        {
+                                            type: 'object',
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        },
+                                        () => ({
+                                            validator(_, val) {
+                                                if (
+                                                    new Date() < new Date(val)
+                                                ) {
+                                                    return Promise.reject(
+                                                        'Ngày cấp vượt quá ngày hiện tại'
+                                                    );
+                                                }
+
+                                                if (
+                                                    new Date('1920-1-1') >
+                                                    new Date(val)
+                                                ) {
+                                                    return Promise.reject(
+                                                        'Ngày cấp phải sau ngày 1 tháng 1 năm 1920'
+                                                    );
+                                                }
+                                                return Promise.resolve();
+                                            }
+                                        })
+                                    ]}
+                                    name="NgayCapCMNDBN"
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <DatePicker
+                                        format="DD/MM/YYYY"
+                                        name="NgayCapCMNDBN"
+                                        placeholder="Vui lòng chọn ngày"
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Nơi cấp"
+                                    name="NoiCapCMNDBN"
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input name="NoiCapCMNDBN" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Ảnh CMND/CCCD mặt trước"
+                                >
+                                    <Input
+                                        type="file"
+                                        name="ImgCMNDBNMatTruoc"
+                                        key="ImgCMNDBNMatTruoc"
+                                        className="form-control img-padding"
+                                        onChange={ChangeFileUploadCMNDMT}
+                                    />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Ảnh CMND/CCCD mặt sau"
+                                >
+                                    <Input
+                                        type="file"
+                                        name="ImgCMNDBNMatSau"
+                                        key="ImgCMNDBNMatSau"
+                                        className="form-control img-padding"
+                                        onChange={ChangeFileUploadCMNDMs}
+                                    />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 6}}
+                                sm={{span: 12}}
+                                xs={{span: 12}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Ảnh CMND/CCCD mặt trước cũ"
+                                >
+                                    <img
+                                        className="imgCMND"
+                                        src={`${Constant.PathServer}/${entityObj.ImgCMNDBNMatTruoc}`}
+                                        alt=""
+                                        onError={NotFoundImage}
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 6}}
+                                sm={{span: 12}}
+                                xs={{span: 12}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Ảnh CMND/CCCD mặt trước mới"
+                                >
+                                    <img
+                                        className="imgCMND"
+                                        id="ImgCMNDBNMatTruoc"
+                                        alt=""
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 6}}
+                                sm={{span: 12}}
+                                xs={{span: 12}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Ảnh CMND/CCCD mặt sau cũ"
+                                >
+                                    <img
+                                        className="imgCMND"
+                                        alt=""
+                                        src={`${Constant.PathServer}/${entityObj.ImgCMNDBNMatSau}`}
+                                        onError={NotFoundImage}
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 6}}
+                                sm={{span: 12}}
+                                xs={{span: 12}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Ảnh CMND/CCCD mặt sau mới"
+                                >
+                                    <img
+                                        className="imgCMND"
+                                        id="ImgCMNDBNMatSau"
+                                        alt=""
+                                    />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Nghề nghiệp"
+                                    name="ngheNghiep"
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Select defaultValue="" name="ngheNghiep">
+                                        <Select.Option value="">
+                                            --Chọn--
+                                        </Select.Option>
+
+                                        {DropDMNgheNghiep()}
+                                    </Select>
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Nghề nghiệp bổ xung"
+                                    name="ngheNghiepBoSung"
+                                >
+                                    <Input name="ngheNghiepBoSung" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Trình độ văn hóa"
+                                    name="trinhDoVanHoa"
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input name="trinhDoVanHoa" />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Điện thoại"
+                                    name="dienThoai"
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input name="dienThoai" />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Điện thoại khác"
+                                    name="dienThoai1"
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input name="dienThoai1" />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Email"
+                                    name="email"
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input name="email" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <label className="my-label">Địa chỉ thường trú:</label>
+
+                        <Row className="form-diachithuongchu" gutter={[10, 5]}>
+                            <Col lg={{span: 8}} md={{span: 12}} sm={{span: 24}}>
+                                <Form.Item
+                                    className="chitietdiachi"
+                                    label="Tỉnh/Thành Phố"
+                                    name="tinh"
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Select
+                                        defaultValue=""
+                                        name="tinh"
+                                        onChange={(value) => {
+                                            onchangeloaddiachi('tinh', value);
+                                        }}
+                                    >
+                                        <Select.Option value="">
+                                            --Chọn--
+                                        </Select.Option>
+                                        {DropTinh()}
+                                    </Select>
+                                </Form.Item>
+                            </Col>
+                            <Col lg={{span: 8}} md={{span: 12}} sm={{span: 24}}>
+                                <Form.Item
+                                    className="chitietdiachi"
+                                    label="Quận/Huyện"
+                                    name="quanhuyen"
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Select
+                                        defaultValue=""
+                                        name="quanhuyen"
+                                        onChange={(value) => {
+                                            onchangeloaddiachi(
+                                                'quanhuyen',
+                                                value
+                                            );
+                                        }}
+                                    >
+                                        <Select.Option value="">
+                                            --Chọn--
+                                        </Select.Option>
+
+                                        {DropQuanHuyen()}
+                                    </Select>
+                                </Form.Item>
+                            </Col>
+                            <Col lg={{span: 8}} md={{span: 12}} sm={{span: 24}}>
+                                <Form.Item
+                                    className="chitietdiachi"
+                                    label="Xã/Phường"
+                                    name="xaphuong"
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Select defaultValue="" name="xaphuong">
+                                        <Select.Option value="">
+                                            --Chọn--
+                                        </Select.Option>
+
+                                        {DropXa()}
+                                    </Select>
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row>
+                            <Col span={24}>
+                                <Form.Item
+                                    className="my-label"
+                                    label="Số nhà, phố, tổ dân phố /thôn / đội"
+                                    name="diaChiThuongChu"
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input name="diaChiThuongChu" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <label className="my-label">Địa chỉ tạm trú:</label>
+
+                        <Row className="form-diachithuongchu" gutter={[10, 5]}>
+                            <Col lg={{span: 8}} md={{span: 12}} sm={{span: 24}}>
+                                <Form.Item
+                                    className="chitietdiachi"
+                                    label="Tỉnh/Thành Phố"
+                                    name="tinhtt"
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Select
+                                        defaultValue=""
+                                        name="tinhtt"
+                                        onChange={(value) => {
+                                            onchangeloaddiachi('tinhtt', value);
+                                        }}
+                                    >
+                                        <Select.Option value="">
+                                            --Chọn--
+                                        </Select.Option>
+                                        {DropTinhTT()}
+                                    </Select>
+                                </Form.Item>
+                            </Col>
+                            <Col lg={{span: 8}} md={{span: 12}} sm={{span: 24}}>
+                                <Form.Item
+                                    className="chitietdiachi"
+                                    label="Quận/Huyện"
+                                    name="quanhuyentt"
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Select
+                                        defaultValue=""
+                                        name="quanhuyentt"
+                                        onChange={(value) => {
+                                            onchangeloaddiachi(
+                                                'quanhuyentt',
+                                                value
+                                            );
+                                        }}
+                                    >
+                                        <Select.Option value="">
+                                            --Chọn--
+                                        </Select.Option>
+
+                                        {DropHuyenTT()}
+                                    </Select>
+                                </Form.Item>
+                            </Col>
+                            <Col lg={{span: 8}} md={{span: 12}} sm={{span: 24}}>
+                                <Form.Item
+                                    className="chitietdiachi"
+                                    label="Xã/Phường"
+                                    name="xaphuongtt"
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Select defaultValue="" name="xaphuongtt">
+                                        <Select.Option value="">
+                                            --Chọn--
+                                        </Select.Option>
+
+                                        {DropXaTT()}
+                                    </Select>
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row>
+                            <Col span={24}>
+                                <Form.Item
+                                    className="my-label"
+                                    label="Số nhà, phố, tổ dân phố /thôn / đội"
+                                    name="diaChiTamChu"
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input name="diaChiTamChu" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Gia đình: là con thứ mấy?"
+                                    name="laConThuMay"
+                                    rules={[]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input
+                                        name="laConThuMay"
+                                        placeholder="VD: là con thứ 1 trong gia đình 2 con viết là 1/2"
+                                    />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Tình trạng hôn nhân"
+                                    name="tinhTrangHonNhan"
+                                    valuePropName="checked"
+                                >
+                                    <Radio.Group
+                                        name="tinhTrangHonNhan"
+                                        defaultValue="0"
+                                    >
+                                        <Radio value="0">Độc thân</Radio>
+                                        <Radio value="1">Đã có gia đình</Radio>
+                                    </Radio.Group>
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Họ tên Vợ/Chồng"
+                                    name="hoTenVoChong"
+                                >
+                                    <Input name="hoTenVoChong" />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Điện thoại"
+                                    name="dienThoaiVoChong"
+                                    rules={[
+                                        {
+                                            min: 10,
+                                            message:
+                                                'Vui lòng nhập ít nhất 10 ký tự'
+                                        },
+                                        {
+                                            max: 12,
+                                            message:
+                                                'Vui lòng nhập không quá 12 ký tự'
+                                        },
+                                        () => ({
+                                            validator(_, val) {
+                                                if (
+                                                    /^[0-9+.]*$/.test(val) ||
+                                                    val === undefined ||
+                                                    val === null
+                                                ) {
+                                                    return Promise.resolve();
+                                                }
+                                                return Promise.reject(
+                                                    'Số điện thoại chỉ được sử dụng chữ số'
+                                                );
+                                            }
+                                        })
+                                    ]}
+                                >
+                                    <Input name="dienThoaiVoChong" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 4}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Có mấy con"
+                                    name="coMayCon"
+                                >
+                                    <InputNumber
+                                        name="coMayCon"
+                                        min={0}
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 4}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Trai"
+                                    name="soConTrai"
+                                >
+                                    <InputNumber
+                                        name="soConTrai"
+                                        min={0}
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 4}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Gái"
+                                    name="soConGai"
+                                    style={{width: '100%'}}
+                                >
+                                    <InputNumber
+                                        name="soConGai"
+                                        min={0}
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Lớn nhất sinh năm"
+                                    name="lonNhatSinhNam"
+                                >
+                                    <InputNumber
+                                        name="lonNhatSinhNam"
+                                        min={1920}
+                                        max={3000}
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Nhỏ nhất sinh năm"
+                                    name="nhoNhatSinhNam"
+                                >
+                                    <InputNumber
+                                        name="nhoNhatSinhNam"
+                                        min={1920}
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row>
+                            <div className="solama">
+                                II. TÌNH TRẠNG BỆNH LÝ:
+                            </div>
+                        </Row>
+
+                        <Row>
+                            <Col
+                                lg={{span: 24}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="1.Nguyên nhân dẫn đến suy thận mạn giai đoạn cuối"
+                                    name="nguyenNhanSuyThan"
+                                >
+                                    <Input name="nguyenNhanSuyThan" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row>
+                            <Col
+                                lg={{span: 24}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="2.Chuẩn đoán về thận học trước đó: có sinh thiết thận"
+                                    name="sinhThietThan"
+                                    valuePropName="checked"
+                                >
+                                    <Radio.Group
+                                        name="sinhThietThan"
+                                        defaultValue="0"
+                                    >
+                                        <Radio value="1">Có</Radio>
+                                        <Radio value="0">Không</Radio>
+                                    </Radio.Group>
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row>
+                            <Col
+                                lg={{span: 24}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Kết quả sinh thiết"
+                                    name="ketQuaSinhThietThan"
+                                >
+                                    <Input name="ketQuaSinhThietThan" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="3.Phát hiện suy thận"
+                                    name="ngayPhatHienSuyThan"
+                                >
+                                    <DatePicker
+                                        format="DD/MM/YYYY"
+                                        name="ngayPhatHienSuyThan"
+                                        placeholder="Vui lòng chọn ngày"
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Chạy thận nhân tạo/Thẩm phân phúc mạc từ"
+                                    name="ngayCTNTHoacKhamThamPhanBenhLy"
+                                >
+                                    <DatePicker
+                                        format="DD/MM/YYYY"
+                                        name="ngayCTNTHoacKhamThamPhanBenhLy"
+                                        placeholder="Vui lòng chọn ngày"
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Số lần chạy thận một tuần"
+                                    name="soLanCTNTTuan"
+                                >
+                                    <Input name="soLanCTNTTuan" />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Vào ngày"
+                                    name="CTNTVaoNgay"
+                                    valuePropName="checked"
+                                >
+                                    <Radio.Group
+                                        name="CTNTVaoNgay"
+                                        defaultValue="0"
+                                    >
+                                        <Radio value="1">Chẵn</Radio>
+                                        <Radio value="0">Lẻ</Radio>
+                                    </Radio.Group>
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Số giờ một lần"
+                                    name="soGioTrenLan"
+                                >
+                                    <Input name="soGioTrenLan" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Chu kỳ thẩm phân phúc mạc(số lần/ngày)"
+                                    name="chuKyThamPhan"
+                                >
+                                    <InputNumber
+                                        name="chuKyThamPhan"
+                                        min={1}
+                                        max={10}
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Tại bệnh viện"
+                                    name="chuKyThamPhanTaiBV"
+                                >
+                                    <Input name="chuKyThamPhanTaiBV" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Thẩm phân phúc mạc bằng máy"
+                                    name="thamPhanBangMay"
+                                    valuePropName="checked"
+                                >
+                                    <Radio.Group
+                                        name="thamPhanBangMay"
+                                        defaultValue="0"
+                                    >
+                                        <Radio value="1">Có</Radio>
+                                        <Radio value="0">Không</Radio>
+                                    </Radio.Group>
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Bệnh viện theo dõi"
+                                    name="thamPhanBangMayTaiBV"
+                                >
+                                    <Input name="thamPhanBangMayTaiBV" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Truyền máu"
+                                    name="truyenMau"
+                                    valuePropName="checked"
+                                >
+                                    <Radio.Group
+                                        name="truyenMau"
+                                        defaultValue="0"
+                                    >
+                                        <Radio value="1">Có</Radio>
+                                        <Radio value="0">Không</Radio>
+                                    </Radio.Group>
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Bao nhiêu đơn vị máu"
+                                    name="baoNhieuDonViMau"
+                                >
+                                    <Input name="baoNhieuDonViMau" />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Truyền máu lần cuối"
+                                    name="thang"
+                                >
+                                    <InputNumber
+                                        name="thang"
+                                        placeholder="vào tháng"
+                                        min={1}
+                                        max={12}
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 4}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Năm"
+                                    name="nam"
+                                >
+                                    <InputNumber
+                                        name="nam"
+                                        min={1970}
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row>
+                            <Col
+                                lg={{span: 24}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Truyền máu tại bệnh viện"
+                                    name="benhVienTruyenMau"
+                                >
+                                    <Input name="benhVienTruyenMau" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Đã ghép thận lần 1 vào ngày"
+                                    name="daGhepLan1Ngay"
+                                >
+                                    <DatePicker
+                                        format="DD/MM/YYYY"
+                                        name="daGhepLan1Ngay"
+                                        placeholder="Vui lòng chọn ngày"
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Tại bệnh viện"
+                                    name="daGhepLan1TaiBV"
+                                >
+                                    <Input name="daGhepLan1TaiBV" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row>
+                            <Col
+                                lg={{span: 24}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Người cho thận(Cha/mẹ/anh/chị/em?)"
+                                    name="nguoiChoThan"
+                                >
+                                    <Input name="nguoiChoThan" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Ngày chạy thận nhân tạo trở lại"
+                                    name="ngayChayThanTroLai"
+                                >
+                                    <DatePicker
+                                        format="DD/MM/YYYY"
+                                        name="ngayChayThanTroLai"
+                                        placeholder="Vui lòng chọn ngày"
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Chuẩn đoán suy chức năng thận ghép"
+                                    name="chuanDoanSuyThanGhep"
+                                >
+                                    <Input name="chuanDoanSuyThanGhep" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Ngày chạy thận nhân tạo/Thẩm phân phúc mạc"
+                                    name="ctntHoacKhamThamPhan"
+                                >
+                                    <DatePicker
+                                        format="DD/MM/YYYY"
+                                        name="ctntHoacKhamThamPhan"
+                                        placeholder="Vui lòng chọn ngày"
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Tại bệnh viện"
+                                    name="chayThanTroLaiTaiBV"
+                                >
+                                    <Input name="chayThanTroLaiTaiBV" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 4}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    label="Số lượng nước tiểu/24 giờ"
+                                    className="my-label"
+                                />
+                            </Col>
+
+                            <Col
+                                lg={{span: 2}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <label>
+                                    <input
+                                        type="radio"
+                                        checked
+                                        name="nuocTieu24h"
+                                        value="0"
+                                    />
+                                    <div>Không</div>
+                                </label>
+                            </Col>
+
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <label>
+                                    <input
+                                        type="radio"
+                                        name="nuocTieu24h"
+                                        value="1"
+                                    />
+                                    &nbsp; Có(ml/24h)
+                                </label>
+
+                                <Input
+                                    name="soLuongNuocTieu24h"
+                                    placeholder="ml/24h"
+                                />
+                            </Col>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Chiều cao(cm)"
+                                    name="chieuCao"
+                                >
+                                    <InputNumber
+                                        name="chieuCao"
+                                        min={1}
+                                        max={300}
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Cân nặng(kg)"
+                                    name="canNang"
+                                >
+                                    <InputNumber
+                                        name="canNang"
+                                        min={1}
+                                        max={800}
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row>
+                            <Col
+                                lg={{span: 24}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Thuốc đang sử dụng/ngày"
+                                    name="thuocDangSuDungNgay"
+                                >
+                                    <Input.TextArea
+                                        showCount
+                                        maxLength={200}
+                                        name="thuocDangSuDungNgay"
+                                    />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row>
+                            <Col
+                                lg={{span: 24}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Thuốc tạo máu"
+                                    name="thuocTaoMau"
+                                >
+                                    <Input name="thuocTaoMau" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Bác sĩ điều trị"
+                                    name="bacSiDieuTri"
+                                >
+                                    <Input name="bacSiDieuTri" />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Điện thoại bác sĩ"
+                                    name="dienThoaiBacSi"
+                                    rules={[
+                                        {
+                                            min: 10,
+                                            message:
+                                                'Vui lòng nhập ít nhất 10 ký tự'
+                                        },
+                                        {
+                                            max: 12,
+                                            message:
+                                                'Vui lòng nhập không quá 12 ký tự'
+                                        },
+                                        () => ({
+                                            validator(_, val) {
+                                                if (
+                                                    /^[0-9+.]*$/.test(val) ||
+                                                    val === undefined ||
+                                                    val === null
+                                                ) {
+                                                    return Promise.resolve();
+                                                }
+                                                return Promise.reject(
+                                                    'Số điện thoại chỉ được sử dụng chữ số'
+                                                );
+                                            }
+                                        })
+                                    ]}
+                                >
+                                    <Input name="dienThoaiBacSi" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+                        <Row>
+                            <label
+                                className="class-b"
+                                style={{marginBottom: '0px'}}
+                            >
+                                4. Bệnh lý kèm theo
+                            </label>
+                        </Row>
+
+                        <Row gutter={[10, 0]}>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="khongBiViemGan"
+                                    style={{marginBottom: '0px'}}
+                                    valuePropName="checked"
+                                >
+                                    <Checkbox
+                                        name="khongBiViemGan"
+                                        id="khongBiViemGan"
+                                    >
+                                        Không bị viêm gan
+                                    </Checkbox>
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="viemGanSieuViA"
+                                    style={{marginBottom: '0px'}}
+                                    valuePropName="checked"
+                                >
+                                    <Checkbox
+                                        name="viemGanSieuViA"
+                                        id="viemGanSieuViA"
+                                    >
+                                        Viêm gan siêu vi A
+                                    </Checkbox>
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="viemGanSieuViB"
+                                    style={{marginBottom: '0px'}}
+                                    valuePropName="checked"
+                                >
+                                    <Checkbox
+                                        name="viemGanSieuViB"
+                                        id="viemGanSieuViB"
+                                    >
+                                        Viêm gan siêu vi B
+                                    </Checkbox>
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="viemGanSieuViC"
+                                    style={{marginBottom: '0px'}}
+                                    valuePropName="checked"
+                                >
+                                    <Checkbox
+                                        name="viemGanSieuViC"
+                                        id="viemGanSieuViC"
+                                    >
+                                        Viêm gan siêu vi C
+                                    </Checkbox>
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Form.Item
+                            name="truocHoacSauLocMau"
+                            valuePropName="checked"
                         >
-                            Đóng
-                        </Button>
-                        <Button
-                            variant="primary"
-                            onClick={() => {
-                                submitEdit();
-                                canhbaoErrorModal(formRef);
-                            }}
-                        >
-                            Hoàn thành
-                        </Button>
-                    </Modal.Footer>
+                            <Radio.Group name="truocHoacSauLocMau">
+                                <Radio value="1">Viêm gan trước lọc máu</Radio>
+                                <Radio value="2">Viêm gan sau lọc máu</Radio>
+                            </Radio.Group>
+                        </Form.Item>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Điều trị viêm gan từ lúc nào"
+                                    name="dieuTriViemGanTu"
+                                >
+                                    <Input name="dieuTriViemGanTu" />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 16}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Thuốc điều trị viêm gan"
+                                    name="thuocTriViemGan"
+                                >
+                                    <Input name="thuocTriViemGan" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="laoPhoi"
+                                    valuePropName="checked"
+                                >
+                                    <Radio.Group
+                                        name="laoPhoi"
+                                        defaultValue="0"
+                                    >
+                                        <Radio value="0">
+                                            Không có tiền căn lao
+                                        </Radio>
+                                        <Radio value="1">Lao phổi</Radio>
+                                    </Radio.Group>
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="laoCoQuanKhac"
+                                    label="Lao các cơ quan khác"
+                                >
+                                    <Input name="laoCoQuanKhac" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Từ lúc nào"
+                                    name="thoiGianBiLao"
+                                >
+                                    <DatePicker
+                                        format="DD/MM/YYYY"
+                                        name="thoiGianBiLao"
+                                        placeholder="Vui lòng chọn ngày"
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 16}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Thời gian điều trị/Nơi điều trị"
+                                    name="thoiGianDieuTriAndNoiDieuTri"
+                                >
+                                    <Input name="thoiGianDieuTriAndNoiDieuTri" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 6}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Đái tháo đường"
+                                    name="daiThaoDuong"
+                                    valuePropName="checked"
+                                >
+                                    <Radio.Group
+                                        name="daiThaoDuong"
+                                        defaultValue="0"
+                                    >
+                                        <Radio value="1">Có</Radio>
+                                        <Radio value="0">Không</Radio>
+                                    </Radio.Group>
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 6}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Từ lúc nào"
+                                    name="thoiGianBiDaiThaoDuong"
+                                >
+                                    <DatePicker
+                                        format="DD/MM/YYYY"
+                                        name="thoiGianBiDaiThaoDuong"
+                                        placeholder="Vui lòng chọn ngày"
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Thuốc điều trị"
+                                    name="thuocDieuTriDaiThaoDuong"
+                                >
+                                    <Input name="thuocDieuTriDaiThaoDuong" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 6}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Tăng huyết áp"
+                                    name="tangHuyetAp"
+                                    valuePropName="checked"
+                                >
+                                    <Radio.Group
+                                        name="tangHuyetAp"
+                                        defaultValue="0"
+                                    >
+                                        <Radio value="1">Có</Radio>
+                                        <Radio value="0">Không</Radio>
+                                    </Radio.Group>
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 6}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Từ lúc nào"
+                                    name="thoiGianBiTangHuyetAp"
+                                >
+                                    <DatePicker
+                                        format="DD/MM/YYYY"
+                                        name="thoiGianBiTangHuyetAp"
+                                        placeholder="Vui lòng chọn ngày"
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Thuốc điều trị"
+                                    name="thuocDieuTri"
+                                >
+                                    <Input name="thuocDieuTri" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Các bệnh khác"
+                                    name="benhKhac"
+                                >
+                                    <Input name="benhKhac" />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Tình hình hiện tại"
+                                    name="tinhTrang"
+                                >
+                                    <Input name="tinhTrang" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row>
+                            <label className="class-b">
+                                5.Tiền căn ngoại khoa
+                            </label>
+                        </Row>
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 6}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <label>Có phẫu thuật gì trước đó không</label>
+                            </Col>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 6}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="daPhauThuat"
+                                    valuePropName="checked"
+                                >
+                                    <Radio.Group
+                                        name="daPhauThuat"
+                                        defaultValue="0"
+                                    >
+                                        <Radio value="1">Có</Radio>
+                                        <Radio value="0">Không</Radio>
+                                    </Radio.Group>
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 6}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Ngày tháng năm phẫu thuật"
+                                    name="ngayThangPhauThuat"
+                                >
+                                    <DatePicker
+                                        format="DD/MM/YYYY"
+                                        name="ngayThangPhauThuat"
+                                        placeholder="Vui lòng chọn ngày"
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 6}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Phẫu thuật tại bệnh viện"
+                                    name="benhVienPhauThuat"
+                                >
+                                    <Input name="benhVienPhauThuat" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Nếu có thì bệnh gì"
+                                    name="coPhauThuat"
+                                >
+                                    <Input name="coPhauThuat" />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Tình trạng hiện tại"
+                                    name="tinhTrangHienTai"
+                                >
+                                    <Input name="tinhTrangHienTai" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="uongRuouBia"
+                                    label="6.Thói quen uống rượu"
+                                    valuePropName="checked"
+                                >
+                                    <Radio.Group
+                                        name="uongRuouBia"
+                                        defaultValue="0"
+                                    >
+                                        <Radio value="0">Không</Radio>
+                                        <Radio value="1">Có</Radio>
+                                    </Radio.Group>
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 6}}
+                                sm={{span: 6}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="soLanTuan"
+                                    label="Số lần/Tuần"
+                                >
+                                    <InputNumber
+                                        name="soLanTuan"
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 6}}
+                                sm={{span: 6}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="soLuongLan"
+                                    label="Số lượng trên tuần"
+                                >
+                                    <Input
+                                        name="soLuongLan"
+                                        placeholder="lít/chai/lon/ly"
+                                    />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="hutThuoc"
+                                    label="7.Thói quen hút thuốc"
+                                    valuePropName="checked"
+                                >
+                                    <Radio.Group
+                                        name="hutThuoc"
+                                        defaultValue="0"
+                                    >
+                                        <Radio value="0">Không</Radio>
+                                        <Radio value="1">Có</Radio>
+                                    </Radio.Group>
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="dieuTrenNgay"
+                                    label="Số điếu trên ngày"
+                                >
+                                    <InputNumber
+                                        name="dieuTrenNgay"
+                                        placeholder="Điếu/ngày"
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row>
+                            <label
+                                className="class-b"
+                                style={{marginBottom: '0px'}}
+                            >
+                                8. Tiền căn gia đình
+                            </label>
+                        </Row>
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 8}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="biBenhThan"
+                                    label="Bệnh thận"
+                                    valuePropName="checked"
+                                >
+                                    <Radio.Group
+                                        name="biBenhThan"
+                                        defaultValue={
+                                            entityObj.BiBenhThan !== undefined
+                                                ? String(entityObj.BiBenhThan)
+                                                : String(0)
+                                        }
+                                    >
+                                        <Radio value="1">Có</Radio>
+                                        <Radio value="0">Không</Radio>
+                                    </Radio.Group>
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 4}}
+                                md={{span: 4}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="biBenhLao"
+                                    label="Bệnh lao"
+                                    valuePropName="checked"
+                                >
+                                    <Radio.Group
+                                        name="biBenhLao"
+                                        defaultValue={
+                                            entityObj.BiBenhLao !== undefined
+                                                ? String(entityObj.BiBenhLao)
+                                                : String(0)
+                                        }
+                                    >
+                                        <Radio value="1">Có</Radio>
+                                        <Radio value="0">Không</Radio>
+                                    </Radio.Group>
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 4}}
+                                md={{span: 4}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="biDaiThaoDuong"
+                                    label="Đái tháo đường"
+                                    valuePropName="checked"
+                                >
+                                    <Radio.Group
+                                        name="biBenhLao"
+                                        defaultValue={
+                                            entityObj.BiBenhLao !== undefined
+                                                ? String(entityObj.BiBenhLao)
+                                                : String(0)
+                                        }
+                                    >
+                                        <Radio value="1">Có</Radio>
+                                        <Radio value="0">Không</Radio>
+                                    </Radio.Group>
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 4}}
+                                md={{span: 4}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="biTangHuyetAp"
+                                    label="Tăng huyết áp"
+                                    valuePropName="checked"
+                                >
+                                    <Radio.Group
+                                        name="biTangHuyetAp"
+                                        defaultValue={
+                                            entityObj.BiTangHuyetAp !==
+                                            undefined
+                                                ? String(
+                                                      entityObj.BiTangHuyetAp
+                                                  )
+                                                : String(0)
+                                        }
+                                    >
+                                        <Radio value="1">Có</Radio>
+                                        <Radio value="0">Không</Radio>
+                                    </Radio.Group>
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 4}}
+                                md={{span: 4}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="biUngThu"
+                                    label="Ung thư"
+                                    valuePropName="checked"
+                                >
+                                    <Radio.Group
+                                        name="biUngThu"
+                                        defaultValue={
+                                            entityObj.BiUngThu !== undefined
+                                                ? String(entityObj.BiUngThu)
+                                                : String(0)
+                                        }
+                                    >
+                                        <Radio value="1">Có</Radio>
+                                        <Radio value="0">Không</Radio>
+                                    </Radio.Group>
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    label="Bênh khác"
+                                    name="biBenhKhac"
+                                    className="my-label"
+                                >
+                                    <Input className="biBenhKhac" />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="songCungDiaChi"
+                                    valuePropName="checked"
+                                >
+                                    <Radio.Group
+                                        name="songCungDiaChi"
+                                        defaultValue={
+                                            entityObj.SongCungDiaChi !==
+                                            undefined
+                                                ? String(
+                                                      entityObj.SongCungDiaChi
+                                                  )
+                                                : String(0)
+                                        }
+                                    >
+                                        <Radio value="1">
+                                            Sống cùng địa chỉ
+                                        </Radio>
+                                        <Radio value="0">
+                                            Không cùng địa chỉ
+                                        </Radio>
+                                    </Radio.Group>
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Nếu có thì là ai"
+                                    name="nguoiThanBiBenh"
+                                >
+                                    <Input name="nguoiThanBiBenh" />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Tình trạng hiện tại"
+                                    name="tinhTrangBenhNguoiThanHienTai"
+                                >
+                                    <Input name="tinhTrangBenhNguoiThanHienTai" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row>
+                            <Col
+                                lg={{span: 24}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <div
+                                    className="class-b"
+                                    style={{marginBottom: '0px'}}
+                                >
+                                    9. Thông tin bổ sung
+                                </div>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 4}}
+                                md={{span: 4}}
+                                sm={{span: 8}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="chisobmi"
+                                    label="Chỉ số BMI (%)"
+                                >
+                                    <InputNumber
+                                        name="chisobmi"
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 4}}
+                                md={{span: 4}}
+                                sm={{span: 8}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="nambatdaudieutri"
+                                    label="Năm bắt đầu điều trị"
+                                >
+                                    <InputNumber
+                                        name="nambatdaudieutri"
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 4}}
+                                md={{span: 4}}
+                                sm={{span: 8}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="sonamdieutrithaythe"
+                                    label="Số năm điều trị thay thế"
+                                >
+                                    <InputNumber
+                                        name="sonamdieutrithaythe"
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 6}}
+                                sm={{span: 8}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="sanhconmaylan"
+                                    label="Sanh con lần mấy"
+                                >
+                                    <InputNumber
+                                        name="sanhconmaylan"
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 6}}
+                                sm={{span: 8}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="sanhconlancuoivaonam"
+                                    label="Sanh con lần cuối vào năm"
+                                >
+                                    <InputNumber
+                                        name="sanhconlancuoivaonam"
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 4}}
+                                md={{span: 4}}
+                                sm={{span: 8}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="ngoaitongquat"
+                                    label="Ngoại tổng quát"
+                                >
+                                    <Input name="ngoaitongquat" />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 4}}
+                                md={{span: 4}}
+                                sm={{span: 8}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="ngoaitietnieu"
+                                    label="Ngoại tiết niệu"
+                                >
+                                    <Input name="ngoaitietnieu" />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 6}}
+                                sm={{span: 8}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="tiencanngoaikhoakhac"
+                                    label="Tiền căn ngoại khoa khác"
+                                >
+                                    <Input name="tiencanngoaikhoakhac" />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 6}}
+                                sm={{span: 8}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="thoidiemtruyenmau"
+                                    label="Thời điểm truyền máu"
+                                >
+                                    <DatePicker
+                                        format="DD/MM/YYYY"
+                                        name="thoidiemtruyenmau"
+                                        placeholder="Vui lòng chọn ngày"
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 4}}
+                                md={{span: 4}}
+                                sm={{span: 8}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="namphathienctnttrolai"
+                                    label="Năm phát hiện CTNT trở lại"
+                                >
+                                    <InputNumber
+                                        name="namphathienctnttrolai"
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 24}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    label="Thông tin phẫu thuật"
+                                    name="phauthuat"
+                                >
+                                    <Input name="phauthuat" />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 6}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="xatri"
+                                    style={{marginBottom: '0px'}}
+                                    valuePropName="checked"
+                                >
+                                    <Checkbox name="xatri" id="xatri">
+                                        Xạ trị
+                                    </Checkbox>
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 6}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="hoatri"
+                                    style={{marginBottom: '0px'}}
+                                    valuePropName="checked"
+                                >
+                                    <Checkbox name="hoatri" id="hoatri">
+                                        Hóa trị
+                                    </Checkbox>
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 6}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="benhlyhethongduongtietnieu"
+                                    style={{marginBottom: '0px'}}
+                                    valuePropName="checked"
+                                >
+                                    <Checkbox
+                                        name="benhlyhethongduongtietnieu"
+                                        id="benhlyhethongduongtietnieu"
+                                    >
+                                        Bệnh lý hệ thống đường tiết niệu
+                                    </Checkbox>
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 6}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="benhlytimmach"
+                                    style={{marginBottom: '0px'}}
+                                    valuePropName="checked"
+                                >
+                                    <Checkbox
+                                        name="benhlytimmach"
+                                        id="benhlytimmach"
+                                    >
+                                        Bệnh lý tim mạch
+                                    </Checkbox>
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 6}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="THA"
+                                    style={{marginBottom: '0px'}}
+                                    valuePropName="checked"
+                                >
+                                    <Checkbox name="THA" id="THA">
+                                        THA
+                                    </Checkbox>
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 6}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="CAPD"
+                                    style={{marginBottom: '0px'}}
+                                    valuePropName="checked"
+                                >
+                                    <Checkbox name="CAPD" id="CAPD">
+                                        CAPD
+                                    </Checkbox>
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row>
+                            <Col
+                                lg={{span: 24}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <div
+                                    className="class-b"
+                                    style={{marginBottom: '0px'}}
+                                >
+                                    10. Tiền sử covid
+                                </div>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 0]}>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 6}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="NhiemCovid"
+                                    style={{marginBottom: '0px'}}
+                                    valuePropName="checked"
+                                >
+                                    <Checkbox
+                                        name="NhiemCovid"
+                                        id="NhiemCovid"
+                                        onClick={() => KhongBiNhiemCheck()}
+                                    >
+                                        Không bị nhiễm covid
+                                    </Checkbox>
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 6}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="BiTruocTiem"
+                                    style={{marginBottom: '0px'}}
+                                    valuePropName="checked"
+                                >
+                                    <Checkbox
+                                        name="BiTruocTiem"
+                                        id="BiTruocTiem"
+                                    >
+                                        Bị nhiễm trước tiêm
+                                    </Checkbox>
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 6}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="BiSauTiem"
+                                    style={{marginBottom: '0px'}}
+                                    valuePropName="checked"
+                                >
+                                    <Checkbox name="BiSauTiem" id="BiSauTiem">
+                                        Bị nhiễm sau tiêm
+                                    </Checkbox>
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 6}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="CoTrieuChung"
+                                    style={{marginBottom: '0px'}}
+                                    valuePropName="checked"
+                                >
+                                    <Checkbox
+                                        name="CoTrieuChung"
+                                        id="CoTrieuChung"
+                                    >
+                                        Không có triệu chứng
+                                    </Checkbox>
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 6}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="TrieuChungNhe"
+                                    style={{marginBottom: '0px'}}
+                                    valuePropName="checked"
+                                >
+                                    <Checkbox
+                                        name="TrieuChungNhe"
+                                        id="TrieuChungNhe"
+                                    >
+                                        Triệu chứng nhẹ
+                                    </Checkbox>
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 6}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="TrieuChungtrungBinh"
+                                    style={{marginBottom: '0px'}}
+                                    valuePropName="checked"
+                                >
+                                    <Checkbox
+                                        name="TrieuChungtrungBinh"
+                                        id="TrieuChungtrungBinh"
+                                    >
+                                        Triệu chứng trung bình
+                                    </Checkbox>
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 6}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="NhapVien"
+                                    style={{marginBottom: '0px'}}
+                                    valuePropName="checked"
+                                >
+                                    <Checkbox name="NhapVien" id="NhapVien">
+                                        Nhập viện
+                                    </Checkbox>
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item label="Thời gian nằm viện(ngày)">
+                                    <InputNumber
+                                        name="ThoiGianNamVien"
+                                        min={0}
+                                        max={100}
+                                        style={{width: '100%'}}
+                                        defaultValue={0}
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 6}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="ThoMay"
+                                    style={{marginBottom: '0px'}}
+                                    valuePropName="checked"
+                                >
+                                    <Checkbox name="ThoMay" id="ThoMay">
+                                        Thở máy
+                                    </Checkbox>
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 6}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="ThoHFNC"
+                                    style={{marginBottom: '0px'}}
+                                    valuePropName="checked"
+                                >
+                                    <Checkbox name="ThoHFNC" id="ThoHFNC">
+                                        Thở HFNC
+                                    </Checkbox>
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row>
+                            <label
+                                className="class-b"
+                                style={{marginBottom: '0px'}}
+                            >
+                                11. Tiêm vaccine ngừa covid
+                            </label>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 8}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="TiemVaccine"
+                                    label="Tiêm vaccine ngừa covid mũi 1"
+                                >
+                                    <Input name="TiemVaccine" />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 8}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="NgayTiemMui1"
+                                    label="Ngày tiêm mũi 1"
+                                >
+                                    <DatePicker
+                                        format="DD/MM/YYYY"
+                                        name="NgayTiemMui1"
+                                        placeholder="Vui lòng chọn ngày"
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 8}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="PhanUng"
+                                    label="Phản ứng sau tiêm lần 1"
+                                >
+                                    <Input name="PhanUng" />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 8}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="TiemVaccine2"
+                                    label="Tiêm vaccine ngừa covid mũi 2"
+                                >
+                                    <Input name="TiemVaccine2" />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 8}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="NgayTiemMui2"
+                                    label="Ngày tiêm mũi 2"
+                                >
+                                    <DatePicker
+                                        format="DD/MM/YYYY"
+                                        name="NgayTiemMui2"
+                                        placeholder="Vui lòng chọn ngày"
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 8}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="PhanUng2"
+                                    label="Phản ứng sau tiêm lần 2"
+                                >
+                                    <Input name="PhanUng2" />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 8}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="TiemVaccine3"
+                                    label="Tiêm vaccine ngừa covid mũi 3"
+                                >
+                                    <Input name="TiemVaccine3" />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 8}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="NgayTiemMui3"
+                                    label="Ngày tiêm mũi 3"
+                                >
+                                    <DatePicker
+                                        format="DD/MM/YYYY"
+                                        name="NgayTiemMui3"
+                                        placeholder="Vui lòng chọn ngày"
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 8}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="PhanUng3"
+                                    label="Phản ứng sau tiêm lần 3"
+                                >
+                                    <Input name="PhanUng3" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row>
+                            <div className="solama">III. Kinh tế</div>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    label="Thu nhập của bệnh nhân"
+                                    className="my-label"
+                                >
+                                    <Input
+                                        name="thuNhapBenhNhan"
+                                        placeholder="vnd/tháng"
+                                    />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    label="Thu nhập của vợ hoặc chồng"
+                                    className="my-label"
+                                >
+                                    <Input
+                                        name="thuNhapVoChongBenhNhan"
+                                        placeholder="vnd/tháng"
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    label="Nghề nghiệp"
+                                    className="my-label"
+                                >
+                                    <Input name="ngheNghiepVoChong" />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    label="Thu nhập khác"
+                                    className="my-label"
+                                >
+                                    <Input
+                                        name="thuNhapKhac"
+                                        placeholder="vnd/tháng"
+                                    />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    label="Tiền chuẩn bị cho việc ghép thận(có sẵn)"
+                                    className="my-label"
+                                >
+                                    <Input
+                                        name="tienChuanBiChoViecGhepThan"
+                                        placeholder="vnd/tháng"
+                                    />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row>
+                            <div className="solama">
+                                IV. Lý do đăng ký chờ ghép thận từ người hiến
+                                chết não
+                            </div>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 8}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="khongCoNguoiNhan"
+                                    style={{marginBottom: '0px'}}
+                                    valuePropName="checked"
+                                >
+                                    <Checkbox
+                                        id="khongCoNguoiNhan"
+                                        name="khongCoNguoiNhan"
+                                    >
+                                        Không có người hiến thận
+                                    </Checkbox>
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 8}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="nguoiChoBiBenh"
+                                    style={{marginBottom: '0px'}}
+                                    valuePropName="checked"
+                                >
+                                    <Checkbox
+                                        id="nguoiChoBiBenh"
+                                        name="nguoiChoBiBenh"
+                                    >
+                                        Người hiến bị bệnh
+                                    </Checkbox>
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 8}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="nguoiChoKhongHoaHopMau"
+                                    style={{marginBottom: '0px'}}
+                                    valuePropName="checked"
+                                >
+                                    <Checkbox
+                                        name="nguoiChoKhongHoaHopMau"
+                                        id="nguoiChoKhongHoaHopMau"
+                                    >
+                                        Người hiến không hòa hợp nhóm máu
+                                    </Checkbox>
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row>
+                            <Col
+                                lg={{span: 24}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="lyDoKhac"
+                                    label="Lý do khác"
+                                    className="my-label"
+                                >
+                                    <Input name="lyDoKhac" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <div className="col-md-12 no-padding">
+                            <div className="solama">V. QUAN HỆ GIA ĐÌNH:</div>
+                            {RenderEditQuanHeGiaDinh()}
+                        </div>
+
+                        <Row>
+                            <div className="solama">
+                                VI. Cam kết đăng ký chờ ghép thận từ người hiến
+                                chết não hay tim ngừng đập
+                            </div>
+                            <Col
+                                lg={{span: 24}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                Hiện tôi bị bệnh suy thận mạn giai đoạn cuối
+                                đang phải lọc máu định kỳ, có chỉ định ghép
+                                thận. Tôi đã được các bác sĩ phụ trách giải
+                                thích rõ về các bước thực hiện đánh giá tình
+                                trạng sức khỏe chung, thực hiện quá trình tuyển
+                                chọn, thời gian chờ đợi, tác dụng phụ của thuốc
+                                ức chế miễn dịch điều trị sau ghép thận, chi phí
+                                ghép thận, chuẩn bị môi trường và cách sinh hoạt
+                                sau khi được ghép thận….. Tôi xin được đăng ký
+                                vào danh sách chờ ghép thận từ người hiến chết
+                                não hay tim ngừng đập tại Bệnh viện Chợ Rẫy, tôi
+                                cam kết tuân thủ các quy định trong quá trình
+                                điều trị bệnh trước và sau ghép thận.
+                            </Col>
+                        </Row>
+                    </Form>
                 </Modal>
             </>
         );
@@ -5743,3804 +4376,3068 @@ const DangKyChoGhepTangEditAdm = (props) => {
             quanhuyentt:
                 entityObj.QuanHuyentt === null ? '' : entityObj.QuanHuyentt
         });
+        const [Huyen, setHuyen] = useState([]);
+        const [HuyenTT, setHuyenTT] = useState([]);
+        const [Xa, setXa] = useState([]);
+        const [XaTT, setXaTT] = useState([]);
         function onchangeloaddiachi(name, value) {
             if (name === 'tinh') {
                 setloaddiachi({...loaddiachi, tinh: value, quanhuyen: ''});
+
+                LoadDiachi.DaTaQuanhuyen(value).then((rs) => {
+                    if (rs.Status) {
+                        setHuyen(rs.Data);
+                    }
+                });
             } else if (name === 'quanhuyen') {
                 setloaddiachi({...loaddiachi, quanhuyen: value});
+                LoadDiachi.DaTaXaphuong(value).then((rs) => {
+                    if (rs.Status) {
+                        setXa(rs.Data);
+                    }
+                });
             } else if (name === 'tinhtt') {
                 setloaddiachi({...loaddiachi, tinhtt: value, quanhuyentt: ''});
+                LoadDiachi.DaTaQuanhuyen(value).then((rs) => {
+                    if (rs.Status) {
+                        setHuyenTT(rs.Data);
+                    }
+                });
             } else if (name === 'quanhuyentt') {
                 setloaddiachi({...loaddiachi, quanhuyentt: value});
+                LoadDiachi.DaTaXaphuong(value).then((rs) => {
+                    if (rs.Status) {
+                        setXaTT(rs.Data);
+                    }
+                });
             }
         }
+        const DropQuanHuyen = () => {
+            return Huyen.map((item) => {
+                return (
+                    <option value={item.MaHuyen} key={item.MaHuyen}>
+                        {item.TenHuyen}
+                    </option>
+                );
+            });
+        };
+        const DropXa = () => {
+            return Xa.map((item) => {
+                return (
+                    <option value={item.MaXa} key={item.MaXa}>
+                        {item.TenXa}
+                    </option>
+                );
+            });
+        };
+        const DropHuyenTT = () => {
+            return HuyenTT.map((item) => {
+                return (
+                    <option value={item.MaHuyen} key={item.MaHuyen}>
+                        {item.TenHuyen}
+                    </option>
+                );
+            });
+        };
+        const DropXaTT = () => {
+            return XaTT.map((item) => {
+                return (
+                    <option value={item.MaXa} key={item.MaXa}>
+                        {item.TenXa}
+                    </option>
+                );
+            });
+        };
         return (
             <>
                 <Modal
-                    show={
+                    visible={
                         IsShowEditPopup &&
                         entityObj.TypePhieuDKGhepTang !==
                             TypeBoPhanConstant.than
                     }
-                    dialogClassName="modal-90w"
-                    onHide={() => onCloseEntityEditModal()}
-                    backdrop="static"
+                    onCancel={() => onCloseEntityEditModal()}
+                    width={1600}
+                    zIndex={1040}
+                    okText="Hoàn thành"
+                    cancelText="Thoát"
+                    title={`Cập nhật đăng ký chờ ghép  ${TypeBoPhanConstant.GetName(
+                        entityObj.TypePhieuDKGhepTang
+                    )}`}
                 >
-                    <Modal.Header closeButton>
-                        <Modal.Title>
-                            Cập nhật đăng ký chờ ghép
-                            {/* {typeCreate} */}
-                        </Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        <Formik
-                            enableReinitialize
-                            innerRef={formRef}
-                            initialValues={{
-                                id: entityObj.Id,
-                                typePhieuDKGhepTang:
-                                    entityObj.TypePhieuDKGhepTang,
-                                hoTenBN: entityObj.HoTenBN,
-                                tinh: entityObj.Tinh,
-                                xaphuong: entityObj.XaPhuong,
-                                quanhuyen: entityObj.QuanHuyen,
-                                tinhtt: entityObj.Tinhtt,
-                                xaphuongtt: entityObj.XaPhuongtt,
-                                quanhuyentt: entityObj.QuanHuyentt,
-                                gioiTinh: String(entityObj.GioiTinh),
-                                ngaySinh: CommonUtility.GetDateSetField(
-                                    entityObj.NgaySinh
-                                ),
-                                nhomMau: entityObj.NhomMau,
-                                nhomMau1: entityObj.NhomMau1,
+                    <Form
+                        labelCol={{span: 24}}
+                        wrapperCol={{span: 24}}
+                        layout="vertical"
+                        initialValues={{
+                            id: entityObj.Id,
+                            typePhieuDKGhepTang: entityObj.TypePhieuDKGhepTang,
+                            hoTenBN: entityObj.HoTenBN,
+                            tinh: entityObj.Tinh,
+                            xaphuong: entityObj.XaPhuong,
+                            quanhuyen: entityObj.QuanHuyen,
+                            tinhtt: entityObj.Tinhtt,
+                            xaphuongtt: entityObj.XaPhuongtt,
+                            quanhuyentt: entityObj.QuanHuyentt,
+                            gioiTinh: String(entityObj.GioiTinh),
+                            ngaySinh:
+                                entityObj.NgaySinh !== null
+                                    ? moment(entityObj.NgaySinh)
+                                    : '',
+                            nhomMau: entityObj.NhomMau,
+                            nhomMau1: entityObj.NhomMau1,
+                            baoHiemYTe: entityObj.BaoHiemYTe,
+                            CMNDBN: entityObj.CMNDBN,
+                            NgayCapCMNDBN:
+                                entityObj.NgayCapCMNDBN !== null
+                                    ? moment(entityObj.NgayCapCMNDBN)
+                                    : '',
+                            NoiCapCMNDBN: entityObj.NoiCapCMNDBN,
+                            ngheNghiep: entityObj.NgheNghiep,
+                            ngheNhiepBoSung: entityObj.NgheNhiepBoSung,
+                            trinhDoVanHoa: entityObj.TrinhDoVanHoa,
+                            dienThoai: entityObj.DienThoai,
+                            dienThoai1: entityObj.DienThoai1,
+                            diaChiThuongChu: entityObj.DiaChiThuongChu,
+                            diaChiTamChu: entityObj.DiaChiTamChu,
+                            laConThuMay: entityObj.LaConThuMay,
+                            tinhTrangHonNhan: String(
+                                entityObj.TinhTrangHonNhan
+                            ),
+                            hoTenVoChong: entityObj.HoTenVoChong,
+                            dienThoaiVoChong: entityObj.DienThoaiVoChong,
+                            coMayCon: entityObj.CoMayCon,
+                            soConTrai: entityObj.SoConTrai,
+                            soConGai: entityObj.SoConGai,
+                            lonNhatSinhNam: entityObj.LonNhatSinhNam,
+                            nhoNhatSinhNam: entityObj.NhoNhatSinhNam,
+                            nguyenNhanSuyThan: entityObj.NguyenNhanSuyThan,
+                            thuocTriViemGan: entityObj.ThuocTriViemGan,
+                            ngayPhatHienSuyThan:
+                                entityObj.NgayPhatHienSuyThan !== null
+                                    ? moment(entityObj.NgayPhatHienSuyThan)
+                                    : '',
+                            dieuTriViemGanTu: entityObj.DieuTriViemGanTu,
+                            truyenMau: String(entityObj.TruyenMau),
+                            baoNhieuDonViMau: entityObj.BaoNhieuDonViMau,
+                            thang:
+                                entityObj.Thang !== null ? entityObj.Thang : '',
+                            nam: entityObj.Nam !== null ? entityObj.Nam : '',
+                            benhVienTruyenMau: entityObj.BenhVienTruyenMau,
+                            chieuCao: entityObj.ChieuCao,
+                            canNang: entityObj.CanNang,
+                            thuocDangSuDungNgay: entityObj.ThuocDangSuDungNgay,
+                            thoiGianBiTangHuyetAp:
+                                entityObj.ThoiGianBiTangHuyetAp !== null
+                                    ? moment(entityObj.ThoiGianBiTangHuyetAp)
+                                    : '',
+                            thuocTaoMau: entityObj.ThuocTaoMau,
+                            bacSiDieuTri: entityObj.BacSiDieuTri,
+                            dienThoaiBacSi: entityObj.DienThoaiBacSi,
+                            viemGanSieuViA: entityObj.ViemGanSieuViA,
+                            truocHoacSauLocMau: String(
+                                entityObj.TruocHoacSauLocMau
+                            ),
+                            tangHuyetAp: String(entityObj.TangHuyetAp),
+                            daiThaoDuong: String(entityObj.DaiThaoDuong),
+                            thoiGianBiDaiThaoDuong:
+                                entityObj.ThoiGianBiDaiThaoDuong !== null
+                                    ? moment(entityObj.ThoiGianBiDaiThaoDuong)
+                                    : '',
+                            thuocDieuTriDaiThaoDuong:
+                                entityObj.ThuocDieuTriDaiThaoDuong,
+                            tinhTrang: entityObj.TinhTrang,
+                            laoPhoi: String(entityObj.LaoPhoi),
+                            hutThuoc: String(entityObj.HutThuoc),
+                            dieuTrenNgay:
+                                entityObj.DieuTrenNgay !== null
+                                    ? entityObj.DieuTrenNgay
+                                    : '',
+                            uongRuouBia: String(entityObj.UongRuouBia),
+                            soLanTuan:
+                                entityObj.SoLanTuan !== null
+                                    ? entityObj.SoLanTuan
+                                    : '',
+                            soLuongLan: entityObj.SoLuongLan,
+                            laoCoQuanKhac: entityObj.LaoCoQuanKhac,
+                            thoiGianBiLao:
+                                entityObj.ThoiGianBiLao !== null
+                                    ? moment(entityObj.ThoiGianBiLao)
+                                    : '',
+                            thoiGianDieuTriAndNoiDieuTri:
+                                entityObj.ThoiGianDieuTriAndNoiDieuTri,
 
-                                baoHiemYTe: entityObj.BaoHiemYTe,
-                                CMNDBN: entityObj.CMNDBN,
-                                NgayCapCMNDBN: CommonUtility.GetDateSetField(
-                                    entityObj.NgayCapCMNDBN
-                                ),
-                                NoiCapCMNDBN: entityObj.NoiCapCMNDBN,
-                                ngheNghiep: entityObj.NgheNghiep,
-                                ngheNhiepBoSung: entityObj.NgheNhiepBoSung,
-                                trinhDoVanHoa: entityObj.TrinhDoVanHoa,
-                                dienThoai: entityObj.DienThoai,
-                                dienThoai1: entityObj.DienThoai1,
-                                diaChiThuongChu: entityObj.DiaChiThuongChu,
-                                diaChiTamChu: entityObj.DiaChiTamChu,
-                                laConThuMay: entityObj.LaConThuMay,
-                                tinhTrangHonNhan: String(
-                                    entityObj.TinhTrangHonNhan
-                                ),
-                                hoTenVoChong: entityObj.HoTenVoChong,
-                                dienThoaiVoChong: entityObj.DienThoaiVoChong,
-                                coMayCon: entityObj.CoMayCon,
-                                soConTrai: entityObj.SoConTrai,
-                                soConGai: entityObj.SoConGai,
-                                lonNhatSinhNam: entityObj.LonNhatSinhNam,
-                                nhoNhatSinhNam: entityObj.NhoNhatSinhNam,
-                                // tienCanGiaDinh: entityObj.TienCanGiaDinh,
-                                // tienCanBanThan: entityObj.TienCanBanThan,
-                                nguyenNhanSuyThan: entityObj.NguyenNhanSuyThan,
-                                // chuanDoanSuyThanGhep:
-                                //     entityObj.chuanDoanSuyThanGhep,
-                                benhSu: entityObj.BenhSu,
-                                thuocTriViemGan: entityObj.ThuocTriViemGan,
-                                // sinhThietThan: String(entityObj.SinhThietThan),
-                                // ketQuaSinhThietThan:
-                                //     entityObj.KetQuaSinhThietThan,
-                                ngayPhatHienSuyThan: CommonUtility.GetDateSetField(
-                                    entityObj.NgayPhatHienSuyThan
-                                ),
-                                // ngayCTNTHoacKhamThamPhanBenhLy: CommonUtility.GetDateSetField(
-                                //     entityObj.NgayCTNTHoacKhamThamPhanBenhLy
-                                // ),
-                                dieuTriViemGanTu: entityObj.DieuTriViemGanTu,
-                                // CTNTVaoNgay: String(entityObj.CTNTVaoNgay),
-                                // soGioTrenLan: entityObj.SoGioTrenLan,
-                                // soLanCTNTTuan: entityObj.SoLanCTNTTuan,
-                                // chuKyThamPhan: entityObj.ChuKyThamPhan,
-                                // chuKyThamPhanTaiBV:
-                                //     entityObj.ChuKyThamPhanTaiBV,
-                                // thamPhanBangMay: String(
-                                //     entityObj.ThamPhanBangMay
-                                // ),
-                                // thamPhanBangMayTaiBV:
-                                //     entityObj.ThamPhanBangMayTaiBV,
-                                truyenMau: String(entityObj.TruyenMau),
-                                baoNhieuDonViMau: entityObj.BaoNhieuDonViMau,
-                                thang:
-                                    entityObj.Thang !== null
-                                        ? entityObj.Thang
-                                        : '',
-                                nam:
-                                    entityObj.Nam !== null ? entityObj.Nam : '',
-                                benhVienTruyenMau: entityObj.BenhVienTruyenMau,
-                                // daGhepLan1Ngay: CommonUtility.GetDateSetField(
-                                //     entityObj.DaGhepLan1Ngay
-                                // ),
-                                // daGhepLan1TaiBV: entityObj.DaGhepLan1TaiBV,
-                                // nguoiChoThan: entityObj.NguoiChoThan,
-                                // ngayChayThanTroLai: CommonUtility.GetDateSetField(
-                                //     entityObj.NgayChayThanTroLai
-                                // ),
-                                // chayThanTroLaiTaiBV:
-                                //     entityObj.ChayThanTroLaiTaiBV,
-                                // ctntHoacKhamThamPhan: CommonUtility.GetDateSetField(
-                                //     entityObj.CTNTHoacKhamThamPhan
-                                // ),
-                                // ctntVaoNgayThuMay: entityObj.CTNTVaoNgayThuMay,
-                                // caCTNT: entityObj.CaCTNT,
-                                chieuCao: entityObj.ChieuCao,
-                                canNang: entityObj.CanNang,
-                                // nuocTieu24h: String(entityObj.NuocTieu24h),
-                                // soLuongNuocTieu24h:
-                                //     entityObj.SoLuongNuocTieu24h,
-                                thuocDangSuDungNgay:
-                                    entityObj.ThuocDangSuDungNgay,
-                                thoiGianBiTangHuyetAp: CommonUtility.GetDateSetField(
-                                    entityObj.ThoiGianBiTangHuyetAp
-                                ),
-                                thuocTaoMau: entityObj.ThuocTaoMau,
-                                bacSiDieuTri: entityObj.BacSiDieuTri,
-                                dienThoaiBacSi: entityObj.DienThoaiBacSi,
-                                khongBiViemGan: entityObj.KhongBiViemGan,
-                                viemGanSieuViA: entityObj.ViemGanSieuViA,
-                                viemGanSieuViB: entityObj.ViemGanSieuViB,
-                                viemGanSieuViC: entityObj.ViemGanSieuViC,
-                                truocHoacSauLocMau:
-                                    entityObj.TruocHoacSauLocMau,
-                                tangHuyetAp: String(entityObj.TangHuyetAp),
-                                daiThaoDuong: String(entityObj.DaiThaoDuong),
-                                thoiGianBiDaiThaoDuong: CommonUtility.GetDateSetField(
-                                    entityObj.ThoiGianBiDaiThaoDuong
-                                ),
-                                thuocDieuTriDaiThaoDuong:
-                                    entityObj.ThuocDieuTriDaiThaoDuong,
-                                tinhTrang: entityObj.TinhTrang,
-                                laoPhoi: String(entityObj.LaoPhoi),
-                                hutThuoc: String(entityObj.HutThuoc),
-                                dieuTrenNgay:
-                                    entityObj.DieuTrenNgay !== null
-                                        ? entityObj.DieuTrenNgay
-                                        : '',
-                                uongRuouBia: String(entityObj.UongRuouBia),
-                                soLanTuan:
-                                    entityObj.SoLanTuan !== null
-                                        ? entityObj.SoLanTuan
-                                        : '',
-                                soLuongLan: entityObj.SoLuongLan,
-                                benhKhac: entityObj.BenhKhac,
-                                laoCoQuanKhac: entityObj.LaoCoQuanKhac,
-                                thoiGianBiLao: CommonUtility.GetDateSetField(
-                                    entityObj.ThoiGianBiLao
-                                ),
-                                thoiGianDieuTriAndNoiDieuTri:
-                                    entityObj.ThoiGianDieuTriAndNoiDieuTri,
-                                // namPhatHien: entityObj.NamPhatHien,
-                                // dieuTriTaiBV: entityObj.DieuTriTaiBV,
-                                thoiGianDieuTri: entityObj.ThoiGianDieuTri,
-                                thuocDieuTri: entityObj.ThuocDieuTri,
-                                daPhauThuat: String(entityObj.DaPhauThuat),
-                                coPhauThuat: entityObj.CoPhauThuat,
-                                tinhTrangHienTai: entityObj.TinhTrangHienTai,
-                                ngayThangPhauThuat: CommonUtility.GetDateSetField(
-                                    entityObj.NgayThangPhauThuat
-                                ),
-                                benhVienPhauThuat: entityObj.BenhVienPhauThuat,
-                                biBenhThan: String(entityObj.BiBenhThan),
-                                biBenhLao: String(entityObj.BiBenhLao),
-                                biDaiThaoDuong: String(
-                                    entityObj.BiDaiThaoDuong
-                                ),
-                                biTangHuyetAp: String(entityObj.BiTangHuyetAp),
-                                biUngThu: String(entityObj.BiUngThu),
-                                songCungDiaChi: String(
-                                    entityObj.SongCungDiaChi
-                                ),
-                                biBenhKhac: entityObj.BiBenhKhac,
-                                nguoiThanBiBenh: entityObj.NguoiThanBiBenh,
-                                thuNhapBenhNhan: entityObj.ThuNhapBenhNhan,
-                                tinhTrangBenhNguoiThanHienTai:
-                                    entityObj.TinhTrangBenhNguoiThanHienTai,
-                                thuNhapVoChongBenhNhan:
-                                    entityObj.ThuNhapVoChongBenhNhan,
-                                ngheNghiepVoChong: entityObj.NgheNghiepVoChong,
-                                thuNhapKhac: entityObj.ThuNhapKhac,
-                                tienChuanBiChoViecGhepThan:
-                                    entityObj.TienChuanBiChoViecGhepThan,
-                                khongCoNguoiNhan: entityObj.KhongCoNguoiNhan,
-                                nguoiChoBiBenh: entityObj.NguoiChoBiBenh,
-                                nguoiChoKhongHoaHopMau:
-                                    entityObj.NguoiChoKhongHoaHopMau,
-                                lyDoKhac: entityObj.LyDoKhac,
-                                choGhepBVDieuTri: entityObj.ChoGhepBVDieuTri,
-                                choGhepBenh: entityObj.ChoGhepBenh,
-                                email: entityObj.Email,
-                                NhiemCovid: entityObj.NhiemCovid,
-                                BiTruocTiem: entityObj.BiTruocTiem,
-                                BiSauTiem: entityObj.BiSauTiem,
-                                CoTrieuChung: entityObj.CoTrieuChung,
-                                TrieuChungNhe: entityObj.TrieuChungNhe,
-                                TrieuChungtrungBinh:
-                                    entityObj.TrieuChungtrungBinh,
-                                NhapVien: entityObj.NhapVien,
-                                ThoiGianNamVien: entityObj.ThoiGianNamVien,
-                                ThoMay: entityObj.ThoMay,
-                                ThoHFNC: entityObj.ThoHFNC,
-                                TiemVaccine: entityObj.TiemVaccine,
-                                NgayTiemMui1: CommonUtility.stringToDMY(
-                                    entityObj.NgayTiemMui1
-                                ),
-                                NgayTiemMui2: CommonUtility.stringToDMY(
-                                    entityObj.NgayTiemMui2
-                                ),
-                                PhanUng: entityObj.PhanUng,
-                                TiemVaccine2: entityObj.TiemVaccine2,
-                                PhanUng2: entityObj.PhanUng2,
-                                NgayTiemMui3: CommonUtility.stringToDMY(
-                                    entityObj.NgayTiemMui3
-                                ),
-                                TiemVaccine3: entityObj.TiemVaccine3,
-                                PhanUng3: entityObj.PhanUng3,
-                                maso: entityObj.MaSo
-                            }}
-                            validationSchema={SignupSchemaTangKhac}
-                            onSubmit={(values) => {
-                                // sua gia tri 3 checkbox viem gan sieu vi A B C
-                                const values1 = values;
-                                let CMNDtruoc = false;
-                                let CMNDsau = false;
-                                if (values.khongBiViemGan) {
-                                    values1.viemGanSieuViA = false;
-                                    values1.viemGanSieuViB = false;
-                                    values1.viemGanSieuViC = false;
-                                    values1.truocHoacSauLocMau = 0;
-                                }
+                            thuocDieuTri: entityObj.ThuocDieuTri,
+                            daPhauThuat: String(entityObj.DaPhauThuat),
+                            coPhauThuat: entityObj.CoPhauThuat,
+                            tinhTrangHienTai: entityObj.TinhTrangHienTai,
+                            ngayThangPhauThuat:
+                                entityObj.NgayThangPhauThuat !== null
+                                    ? moment(entityObj.NgayThangPhauThuat)
+                                    : '',
+                            benhVienPhauThuat: entityObj.BenhVienPhauThuat,
+                            biBenhThan: String(entityObj.BiBenhThan),
+                            biBenhLao: String(entityObj.BiBenhLao),
+                            biDaiThaoDuong: String(entityObj.BiDaiThaoDuong),
+                            biTangHuyetAp: String(entityObj.BiTangHuyetAp),
+                            biUngThu: String(entityObj.BiUngThu),
+                            songCungDiaChi: String(entityObj.SongCungDiaChi),
+                            biBenhKhac: entityObj.BiBenhKhac,
+                            nguoiThanBiBenh: entityObj.NguoiThanBiBenh,
+                            thuNhapBenhNhan: entityObj.ThuNhapBenhNhan,
+                            tinhTrangBenhNguoiThanHienTai:
+                                entityObj.TinhTrangBenhNguoiThanHienTai,
+                            thuNhapVoChongBenhNhan:
+                                entityObj.ThuNhapVoChongBenhNhan,
+                            ngheNghiepVoChong: entityObj.NgheNghiepVoChong,
+                            thuNhapKhac: entityObj.ThuNhapKhac,
+                            tienChuanBiChoViecGhepThan:
+                                entityObj.TienChuanBiChoViecGhepThan,
+                            khongCoNguoiNhan: entityObj.KhongCoNguoiNhan,
+                            nguoiChoBiBenh: entityObj.NguoiChoBiBenh,
+                            nguoiChoKhongHoaHopMau:
+                                entityObj.NguoiChoKhongHoaHopMau,
+                            lyDoKhac: entityObj.LyDoKhac,
+                            choGhepBenh: TypeBoPhanConstant.GetName(
+                                entityObj.TypePhieuDKGhepTang
+                            ),
+                            choGhepBVDieuTri: entityObj.ChoGhepBVDieuTri,
+                            email: entityObj.Email,
+                            NhiemCovid: entityObj.NhiemCovid,
+                            BiTruocTiem: entityObj.BiTruocTiem,
+                            BiSauTiem: entityObj.BiSauTiem,
+                            CoTrieuChung: entityObj.CoTrieuChung,
+                            TrieuChungNhe: entityObj.TrieuChungNhe,
+                            TrieuChungtrungBinh: entityObj.TrieuChungtrungBinh,
+                            NhapVien: entityObj.NhapVien,
+                            ThoiGianNamVien: entityObj.ThoiGianNamVien,
+                            ThoMay: entityObj.ThoMay,
+                            ThoHFNC: entityObj.ThoHFNC,
+                            TiemVaccine: entityObj.TiemVaccine,
+                            NgayTiemMui1:
+                                entityObj.NgayTiemMui1 !== null
+                                    ? moment(entityObj.NgayTiemMui1)
+                                    : '',
+                            NgayTiemMui2:
+                                entityObj.NgayTiemMui2 !== null
+                                    ? moment(entityObj.NgayTiemMui2)
+                                    : '',
+                            PhanUng: entityObj.PhanUng,
+                            TiemVaccine2: entityObj.TiemVaccine2,
+                            PhanUng2: entityObj.PhanUng2,
+                            NgayTiemMui3:
+                                entityObj.NgayTiemMui3 !== null
+                                    ? moment(entityObj.NgayTiemMui3)
+                                    : '',
+                            TiemVaccine3: entityObj.TiemVaccine3,
+                            PhanUng3: entityObj.PhanUng3,
 
-                                const qhgd = dataGiaDinhEdit.current
-                                    ? dataGiaDinhEdit.current
-                                    : [];
-                                const ObjSave = {
-                                    dangKyChoGhepThanEditVM: {
-                                        ...values1,
-                                        Avatar: entityObj.Avatar,
-                                        typePhieuDKGhepTang:
-                                            entityObj.TypePhieuDKGhepTang,
-                                        ImgCMNDBNMatTruoc:
-                                            entityObj.ImgCMNDBNMatTruoc,
-                                        ImgCMNDBNMatSau:
-                                            entityObj.ImgCMNDBNMatSau
-                                    },
-                                    quanHeGiaDinhEditVMs: qhgd
-                                };
-                                if (
-                                    FileSelected !== undefined &&
-                                    FileSelected.data
-                                ) {
-                                    ObjSave.dangKyChoGhepThanEditVM.imgAvatar = FileSelected;
-                                }
+                            maso: entityObj.MaSo
+                        }}
+                    >
+                        <Form.Item name="id" hidden>
+                            <Input name="id" id="id" type="hidden" />
+                        </Form.Item>
+                        <Form.Item name="typePhieuDKGhepTang" hidden="true">
+                            <Input
+                                name="typePhieuDKGhepTang"
+                                id="typePhieuDKGhepTang"
+                                type="hidden"
+                            />
+                        </Form.Item>
 
-                                if (
-                                    FileSelectedCMNDMT !== undefined &&
-                                    FileSelectedCMNDMT.data
-                                ) {
-                                    ObjSave.dangKyChoGhepThanEditVM.imgCMND1 = FileSelectedCMNDMT;
-                                    CMNDtruoc = true;
-                                }
+                        <Row>
+                            <div className="solama">I. HÀNH CHÍNH:</div>
+                        </Row>
 
-                                if (
-                                    FileSelectedCMNDMs !== undefined &&
-                                    FileSelectedCMNDMs.data
-                                ) {
-                                    ObjSave.dangKyChoGhepThanEditVM.imgCMND2 = FileSelectedCMNDMs;
-                                    CMNDsau = true;
-                                }
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 4}}
+                                md={{span: 16}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Họ và tên"
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        },
+                                        {
+                                            min: 2,
+                                            message:
+                                                'Vui lòng nhập ít nhất 2 kí tự'
+                                        },
+                                        {
+                                            max: 255,
+                                            message:
+                                                'Vui lòng không nhập quá 255 kí tự'
+                                        },
+                                        () => ({
+                                            validator(_, val) {
+                                                const str = removeAscent(val);
+                                                if (/^[a-zA-Z ]*$/.test(str)) {
+                                                    return Promise.resolve();
+                                                }
 
-                                onSaveEditEntity(ObjSave);
-                                // kiem tra xem du 2 cmnd
-                                // if (CMNDtruoc && CMNDsau) {
-                                //     onSaveEditEntity(ObjSave);
-                                // } else {
-                                //     toast.error('Bạn thiếu ảnh CMND');
-                                // }
-
-                                // FileSelected = null;
-                            }}
-                        >
-                            {({errors, touched, values, setFieldValue}) => (
-                                <Form ref={formCreateEntity}>
-                                    <Field type="hidden" name="id" key="id" />
-                                    <Field
-                                        type="hidden"
-                                        name="typePhieuDKGhepTang"
-                                        key="TypePhieuDKGhepTang"
+                                                return Promise.reject(
+                                                    'Họ tên không được sử dụng ký tự đặc biệt hoặc số'
+                                                );
+                                            }
+                                        })
+                                    ]}
+                                    name="hoTenBN"
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input name="hoTenBN" />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 4}}
+                                md={{span: 8}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Mã số bệnh nhân"
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        }
+                                    ]}
+                                    name="maso"
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input name="maso" />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 8}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Giới tính"
+                                    name="gioiTinh"
+                                    valuePropName="checked"
+                                >
+                                    <Radio.Group
+                                        name="gioiTinh"
+                                        defaultValue="0"
+                                    >
+                                        <Radio value="1">Nam</Radio>
+                                        <Radio value="0">Nữ</Radio>
+                                    </Radio.Group>
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 4}}
+                                md={{span: 16}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item className="my-label" label="Ảnh">
+                                    <Input
+                                        type="file"
+                                        name="ImageSrc"
+                                        key="ImageSrc"
+                                        className="form-control img-padding"
+                                        onChange={ChangeFileUpload}
                                     />
-                                    <div className="col-md-12 no-padding">
-                                        <div className="solama">
-                                            I. HÀNH CHÁNH:
-                                        </div>
-                                    </div>
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 4}}
+                                md={{span: 8}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    label="Ảnh thẻ cũ"
+                                    className="my-label"
+                                >
                                     <div>
-                                        <div className="form-row ">
-                                            <div className="form-group col-md-2">
-                                                <label htmlFor="hoTenBN">
-                                                    Họ và tên
-                                                    <span className="red">
-                                                        *
-                                                    </span>
-                                                </label>
-                                                <Field
-                                                    name="hoTenBN"
-                                                    key="hoTenBN"
-                                                    className="form-control "
-                                                />
-                                                {errors.hoTenBN &&
-                                                touched.hoTenBN ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.hoTenBN}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-2">
-                                                <label htmlFor="maso">
-                                                    Mã số bệnh nhân
-                                                </label>
-                                                <Field
-                                                    name="maso"
-                                                    key="maso"
-                                                    className="form-control "
-                                                />
-                                                {errors.maso && touched.maso ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.maso}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-2">
-                                                <label htmlFor="gioiTinh">
-                                                    Giới tính
-                                                </label>
-                                                <div
-                                                    role="group"
-                                                    aria-labelledby="my-radio-group"
-                                                >
-                                                    <label
-                                                        htmlFor
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="radio"
-                                                            name="gioiTinh"
-                                                            value="1"
-                                                        />{' '}
-                                                        Nam
-                                                    </label>
-                                                    <label htmlFor>
-                                                        <Field
-                                                            type="radio"
-                                                            name="gioiTinh"
-                                                            value="0"
-                                                        />{' '}
-                                                        Nữ
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div className="form-group col-md-2">
-                                                <label htmlFor="ImageSrc">
-                                                    Ảnh
-                                                </label>
-                                                <Field
-                                                    type="file"
-                                                    name="ImageSrc"
-                                                    key="ImageSrc"
-                                                    className="form-control img-padding"
-                                                    onChange={ChangeFileUpload}
-                                                />
-                                                {errors.ImageSrc &&
-                                                touched.ImageSrc ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.ImageSrc}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-2">
-                                                <label htmlFor="ImageSrc">
-                                                    Ảnh thẻ cũ
-                                                </label>
-                                                <div>
-                                                    <>
-                                                        <img
-                                                            className="imgHinhAnhAccount"
-                                                            src={`${Constant.PathServer}${entityObj.Avatar}`}
-                                                            alt=""
-                                                            onError={
-                                                                NotFoundUserImage
-                                                            }
-                                                        />
-                                                    </>
-                                                </div>
-                                            </div>
-                                            <div className="form-group col-md-2">
-                                                <label htmlFor="ImageSrc">
-                                                    Ảnh thẻ mới
-                                                </label>
-                                                <div>
-                                                    <>
-                                                        <img
-                                                            id="Avatar"
-                                                            alt=""
-                                                        />
-                                                    </>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="form-row">
-                                            <div className="form-group col-md-4">
-                                                <label htmlFor="ngaySinh">
-                                                    Ngày sinh
-                                                    <span className="red">
-                                                        *
-                                                    </span>
-                                                </label>
-                                                <Field
-                                                    type="date"
-                                                    name="ngaySinh"
-                                                    key="ngaySinh"
-                                                    className="form-control "
-                                                />
-                                                {errors.ngaySinh &&
-                                                touched.ngaySinh ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.ngaySinh}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-
-                                            <div className="form-group col-md-2">
-                                                <label htmlFor="nhomMau">
-                                                    Nhóm máu ABO
-                                                </label>
-                                                <Field
-                                                    as="select"
-                                                    name="nhomMau"
-                                                    key="nhomMau"
-                                                    defaultValue={
-                                                        entityObj.NhomMau
-                                                    }
-                                                    className="form-control "
-                                                >
-                                                    <option>--Chọn--</option>
-                                                    <DropDMNhomMau />
-                                                </Field>
-
-                                                {errors.nhomMau &&
-                                                touched.nhomMau ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.nhomMau}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-2">
-                                                <label htmlFor="nhomMau1">
-                                                    Nhóm máu Rh
-                                                </label>
-                                                <Field
-                                                    as="select"
-                                                    name="nhomMau1"
-                                                    key="nhomMau1"
-                                                    defaultValue={
-                                                        entityObj.NhomMau1
-                                                    }
-                                                    className="form-control "
-                                                >
-                                                    <option>--Chọn--</option>
-                                                    {/* <option value="A">A</option>
-                                                <option value="AB">AB</option>
-                                                <option value="B">B</option>
-                                                <option value="O">O</option> */}
-                                                    {/* <RenderDropdownDanhMuc code="nhommau" /> */}
-                                                    <DropDMNhomMauRh />
-                                                </Field>
-
-                                                {errors.nhomMau1 &&
-                                                touched.nhomMau1 ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.nhomMau1}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-4">
-                                                <label htmlFor="baoHiemYTe">
-                                                    Bảo hiểm y tế
-                                                </label>
-                                                <Field
-                                                    name="baoHiemYTe"
-                                                    key="baoHiemYTe"
-                                                    className="form-control "
-                                                />
-                                                {errors.baoHiemYTe &&
-                                                touched.baoHiemYTe ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.baoHiemYTe}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-4">
-                                                <label htmlFor="CMNDBN">
-                                                    CMND/ CCCD/ hộ chiếu
-                                                    <span className="red">
-                                                        *
-                                                    </span>
-                                                </label>
-                                                <Field
-                                                    name="CMNDBN"
-                                                    key="CMNDBN"
-                                                    className="form-control "
-                                                />
-                                                {errors.CMNDBN &&
-                                                touched.CMNDBN ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.CMNDBN}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-4">
-                                                <label htmlFor="NgayCapCMNDBN">
-                                                    Ngày cấp
-                                                    <span className="red">
-                                                        *
-                                                    </span>
-                                                </label>
-                                                <Field
-                                                    type="date"
-                                                    name="NgayCapCMNDBN"
-                                                    key="NgayCapCMNDBN"
-                                                    className="form-control "
-                                                />
-                                                {errors.NgayCapCMNDBN &&
-                                                touched.NgayCapCMNDBN ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.NgayCapCMNDBN
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-4">
-                                                <label htmlFor="NoiCapCMNDBN">
-                                                    Nơi cấp
-                                                    <span className="red">
-                                                        *
-                                                    </span>
-                                                </label>
-                                                <Field
-                                                    name="NoiCapCMNDBN"
-                                                    key="NoiCapCMNDBN"
-                                                    className="form-control "
-                                                />
-                                                {errors.NoiCapCMNDBN &&
-                                                touched.NoiCapCMNDBN ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.NoiCapCMNDBN
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="ImgCMNDBNMatTruoc">
-                                                    Ảnh CMND / CCCD / hộ chiếu
-                                                    mặt trước
-                                                    <span className="red">
-                                                        *
-                                                    </span>
-                                                </label>
-                                                <Field
-                                                    type="file"
-                                                    name="ImgCMNDBNMatTruoc"
-                                                    key="ImgCMNDBNMatTruoc"
-                                                    className="form-control "
-                                                    onChange={
-                                                        ChangeFileUploadCMNDMT
-                                                    }
-                                                />
-                                                {errors.ImgCMNDBNMatTruoc &&
-                                                touched.ImgCMNDBNMatTruoc ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.ImgCMNDBNMatTruoc
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="ImgCMNDBNMatSau">
-                                                    Ảnh CMND/CCCD mặt sau
-                                                    <span className="red">
-                                                        *
-                                                    </span>
-                                                </label>
-
-                                                <Field
-                                                    type="file"
-                                                    name="ImgCMNDBNMatSau"
-                                                    key="ImgCMNDBNMatSau"
-                                                    className="form-control  img-padding"
-                                                    onChange={
-                                                        ChangeFileUploadCMNDMs
-                                                    }
-                                                />
-                                                {errors.ImgCMNDBNMatSau &&
-                                                touched.ImgCMNDBNMatSau ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.ImgCMNDBNMatSau
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="ImgCMNDBNMatSau">
-                                                    Ảnh CMND/CCCD mặt trước cũ
-                                                </label>
-                                                <div>
-                                                    <>
-                                                        <img
-                                                            className=" imgCMND"
-                                                            src={`${Constant.PathServer}${entityObj.ImgCMNDBNMatTruoc}`}
-                                                            alt=""
-                                                            onError={
-                                                                NotFoundImage
-                                                            }
-                                                        />
-                                                    </>
-                                                </div>
-                                            </div>
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="ImgCMNDBNMatSau">
-                                                    Ảnh CMND/CCCD mặt trước mới
-                                                </label>
-                                                <div>
-                                                    <>
-                                                        <img
-                                                            className=" imgCMND"
-                                                            id="ImgCMNDBNMatTruoc"
-                                                            alt=""
-                                                            onError={
-                                                                NotFoundImage
-                                                            }
-                                                        />
-                                                    </>
-                                                </div>
-                                            </div>
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="ImgCMNDBNMatSau">
-                                                    Ảnh CMND/CCCD mặt sau cũ
-                                                </label>
-                                                <div>
-                                                    <img
-                                                        className=" imgCMND"
-                                                        src={`${Constant.PathServer}${entityObj.ImgCMNDBNMatSau}`}
-                                                        alt=""
-                                                        onError={NotFoundImage}
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="ImgCMNDBNMatSau">
-                                                    Ảnh CMND/CCCD mặt sau mới
-                                                </label>
-                                                <div>
-                                                    <img
-                                                        className=" imgCMND"
-                                                        id="ImgCMNDBNMatSau"
-                                                        alt=""
-                                                        onError={NotFoundImage}
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="form-row">
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="ngheNghiep">
-                                                    Nghề Nghiệp
-                                                    <span className="red">
-                                                        *
-                                                    </span>
-                                                </label>
-                                                <Field
-                                                    as="select"
-                                                    name="ngheNghiep"
-                                                    key="ngheNghiep"
-                                                    className="form-control "
-                                                >
-                                                    <option value="">
-                                                        --Chọn--
-                                                    </option>
-                                                    <DropDMNgheNghiep />
-                                                </Field>
-
-                                                {errors.ngheNghiep &&
-                                                touched.ngheNghiep ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.ngheNghiep}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="ngheNhiepBoSung">
-                                                    Nghề Nghiệp ghi rõ
-                                                </label>
-                                                <Field
-                                                    name="ngheNhiepBoSung"
-                                                    key="ngheNhiepBoSung"
-                                                    className="form-control "
-                                                />
-                                                {errors.ngheNhiepBoSung &&
-                                                touched.ngheNhiepBoSung ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.ngheNhiepBoSung
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-
-                                        <div className="form-row">
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="trinhDoVanHoa">
-                                                    Trình độ văn hóa
-                                                    <span className="red">
-                                                        *
-                                                    </span>
-                                                </label>
-                                                <Field
-                                                    name="trinhDoVanHoa"
-                                                    key="trinhDoVanHoa"
-                                                    className="form-control "
-                                                />
-                                                {errors.trinhDoVanHoa &&
-                                                touched.trinhDoVanHoa ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.trinhDoVanHoa
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="dienThoai">
-                                                    Điện thoại
-                                                    <span className="red">
-                                                        *
-                                                    </span>
-                                                </label>
-                                                <Field
-                                                    name="dienThoai"
-                                                    key="dienThoai"
-                                                    className="form-control "
-                                                />
-                                                {errors.dienThoai &&
-                                                touched.dienThoai ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.dienThoai}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="dienThoai1">
-                                                    Điện thoại khác
-                                                </label>
-                                                <Field
-                                                    name="dienThoai1"
-                                                    key="dienThoai1"
-                                                    className="form-control "
-                                                />
-                                                {errors.dienThoai1 &&
-                                                touched.dienThoai1 ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.dienThoai1}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="email">
-                                                    Email
-                                                    <span className="red">
-                                                        *
-                                                    </span>
-                                                </label>
-                                                <Field
-                                                    name="email"
-                                                    key="email"
-                                                    className="form-control "
-                                                />
-                                                {errors.email &&
-                                                touched.email ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.email}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <br />
-                                        <div className="form-row">
-                                            <label htmlFor="diaChi">
-                                                Địa Chỉ Thường Trú :
-                                            </label>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-4">
-                                                <label
-                                                    htmlFor="tinh"
-                                                    className="chitietdiachi"
-                                                >
-                                                    Tỉnh/Thành Phố
-                                                    <span className="red">
-                                                        *
-                                                    </span>
-                                                </label>
-                                                <Field
-                                                    as="select"
-                                                    name="tinh"
-                                                    key="tinh"
-                                                    className="form-control "
-                                                    onChange={(e) => {
-                                                        const {
-                                                            value
-                                                        } = e.target;
-                                                        onchangeloaddiachi(
-                                                            'tinh',
-                                                            value
-                                                        );
-                                                        setFieldValue(
-                                                            'tinh',
-                                                            value
-                                                        );
-                                                        setFieldValue(
-                                                            'quanhuyen',
-                                                            ''
-                                                        );
-                                                        setFieldValue(
-                                                            'xaphuong',
-                                                            ''
-                                                        );
-                                                    }}
-                                                >
-                                                    <option value="">
-                                                        --Chọn--
-                                                    </option>
-                                                    {RenderDropdownTinh({
-                                                        code: 'tinh'
-                                                    })}
-                                                </Field>
-                                                {errors.tinh && touched.tinh ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.tinh}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-4">
-                                                <label
-                                                    htmlFor="quanhuyen"
-                                                    className="chitietdiachi"
-                                                >
-                                                    Quận/Huyện
-                                                    <span className="red">
-                                                        *
-                                                    </span>
-                                                </label>
-                                                <Field
-                                                    as="select"
-                                                    name="quanhuyen"
-                                                    key="quanhuyen"
-                                                    className="form-control "
-                                                    onChange={(e) => {
-                                                        const {
-                                                            value
-                                                        } = e.target;
-                                                        onchangeloaddiachi(
-                                                            'quanhuyen',
-                                                            value
-                                                        );
-                                                        setFieldValue(
-                                                            'quanhuyen',
-                                                            value
-                                                        );
-                                                        setFieldValue(
-                                                            'xaphuong',
-                                                            ''
-                                                        );
-                                                    }}
-                                                >
-                                                    <option value="">
-                                                        --Chọn--
-                                                    </option>
-                                                    {loaddiachi.tinh !== '' ? (
-                                                        <RenderDropdownQuanhuyen
-                                                            code="quanhuyen"
-                                                            data={
-                                                                loaddiachi.tinh
-                                                            }
-                                                        />
-                                                    ) : (
-                                                        ''
-                                                    )}
-                                                </Field>
-                                                {errors.quanhuyen &&
-                                                touched.quanhuyen ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.quanhuyen}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-4">
-                                                <label
-                                                    htmlFor="xaphuong"
-                                                    className="chitietdiachi"
-                                                >
-                                                    Xã/Phường
-                                                    <span className="red">
-                                                        *
-                                                    </span>
-                                                </label>
-                                                <Field
-                                                    as="select"
-                                                    name="xaphuong"
-                                                    key="xaphuong"
-                                                    className="form-control "
-                                                >
-                                                    <option value="">
-                                                        --Chọn--
-                                                    </option>
-                                                    {loaddiachi.quanhuyen !==
-                                                    '' ? (
-                                                        <RenderDropdownXaphuong
-                                                            code="xaphuong"
-                                                            data={
-                                                                loaddiachi.quanhuyen
-                                                            }
-                                                        />
-                                                    ) : (
-                                                        ''
-                                                    )}
-                                                </Field>
-                                                {errors.xaphuong &&
-                                                touched.xaphuong ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.xaphuong}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <label
-                                                htmlFor="diaChiThuongChu"
-                                                className="chitietdiachi"
-                                            >
-                                                Số nhà, phố, tổ dân phố/thôn/đội
-                                                <span className="red">*</span>
-                                            </label>
-                                            <Field
-                                                name="diaChiThuongChu"
-                                                key="diaChiThuongChu"
-                                                className="form-control "
+                                        <>
+                                            <img
+                                                className="imgHinhAnhAccount"
+                                                src={`${Constant.PathServer}${entityObj.Avatar}`}
+                                                alt=""
+                                                onError={NotFoundUserImage}
                                             />
-                                            {errors.diaChiThuongChu &&
-                                            touched.diaChiThuongChu ? (
-                                                <>
-                                                    <div className="invalid-feedback">
-                                                        {errors.diaChiThuongChu}
-                                                    </div>
-                                                </>
-                                            ) : null}
-                                        </div>
-                                        <br />
-                                        <div className="form-row">
-                                            <label htmlFor="diaChiTamChu">
-                                                Địa Chỉ Tạm Trú :
-                                            </label>
-                                        </div>
-
-                                        <div className="form-row">
-                                            <div className="form-group col-md-4">
-                                                <label
-                                                    htmlFor="tinhtt"
-                                                    className="chitietdiachi"
-                                                >
-                                                    Tỉnh/Thành Phố
-                                                </label>
-                                                <Field
-                                                    as="select"
-                                                    name="tinhtt"
-                                                    key="tinhtt"
-                                                    className="form-control "
-                                                    onChange={(e) => {
-                                                        const {
-                                                            value
-                                                        } = e.target;
-                                                        onchangeloaddiachi(
-                                                            'tinhtt',
-                                                            value
-                                                        );
-                                                        setFieldValue(
-                                                            'tinhtt',
-                                                            value
-                                                        );
-                                                        setFieldValue(
-                                                            'quanhuyentt',
-                                                            ''
-                                                        );
-                                                        setFieldValue(
-                                                            'xaphuongtt',
-                                                            ''
-                                                        );
-                                                    }}
-                                                >
-                                                    <option value="">
-                                                        --Chọn--
-                                                    </option>
-                                                    {RenderDropdownTinh({
-                                                        code: 'tinh'
-                                                    })}
-                                                </Field>
-                                                {errors.tinhtt &&
-                                                touched.tinhtt ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.tinhtt}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-4">
-                                                <label
-                                                    htmlFor="quanhuyentt"
-                                                    className="chitietdiachi"
-                                                >
-                                                    Quận/Huyện
-                                                </label>
-                                                <Field
-                                                    as="select"
-                                                    name="quanhuyentt"
-                                                    key="quanhuyentt"
-                                                    className="form-control "
-                                                    onChange={(e) => {
-                                                        const {
-                                                            value
-                                                        } = e.target;
-                                                        onchangeloaddiachi(
-                                                            'quanhuyentt',
-                                                            value
-                                                        );
-                                                        setFieldValue(
-                                                            'quanhuyentt',
-                                                            value
-                                                        );
-                                                        setFieldValue(
-                                                            'xaphuongtt',
-                                                            ''
-                                                        );
-                                                    }}
-                                                >
-                                                    <option value="">
-                                                        --Chọn--
-                                                    </option>
-                                                    {loaddiachi.tinhtt !==
-                                                    '' ? (
-                                                        <RenderDropdownQuanhuyen
-                                                            code="quanhuyentt"
-                                                            data={
-                                                                loaddiachi.tinhtt
-                                                            }
-                                                        />
-                                                    ) : (
-                                                        ''
-                                                    )}
-                                                </Field>
-                                                {errors.quanhuyentt &&
-                                                touched.quanhuyentt ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.quanhuyentt}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-4">
-                                                <label
-                                                    htmlFor="xaphuongtt"
-                                                    className="chitietdiachi"
-                                                >
-                                                    Xã/Phường
-                                                </label>
-                                                <Field
-                                                    as="select"
-                                                    name="xaphuongtt"
-                                                    key="xaphuongtt"
-                                                    className="form-control "
-                                                >
-                                                    <option value="">
-                                                        --Chọn--
-                                                    </option>
-                                                    {loaddiachi.quanhuyentt !==
-                                                    '' ? (
-                                                        <RenderDropdownXaphuong
-                                                            code="xaphuongtt"
-                                                            data={
-                                                                loaddiachi.quanhuyentt
-                                                            }
-                                                        />
-                                                    ) : (
-                                                        ''
-                                                    )}
-                                                </Field>
-                                                {errors.xaphuongtt &&
-                                                touched.xaphuongtt ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.xaphuongtt}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <label
-                                                htmlFor="diaChiTamChu"
-                                                className="chitietdiachi"
-                                            >
-                                                Số nhà, phố, tổ dân phố/thôn/đội
-                                            </label>
-                                            <Field
-                                                name="diaChiTamChu"
-                                                key="diaChiTamChu"
-                                                className="form-control "
-                                            />
-                                            {errors.diaChiTamChu &&
-                                            touched.diaChiTamChu ? (
-                                                <>
-                                                    <div className="invalid-feedback">
-                                                        {errors.diaChiTamChu}
-                                                    </div>
-                                                </>
-                                            ) : null}
-                                        </div>
-                                        <br />
-
-                                        <div className="form-row">
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="laConThuMay">
-                                                    Gia đình: là con thứ mấy?
-                                                    <span className="red">
-                                                        *
-                                                    </span>
-                                                </label>
-                                                <Field
-                                                    name="laConThuMay"
-                                                    key="laConThuMay"
-                                                    className="form-control "
-                                                    placeholder="VD: là con thứ 1 trong gia đình 2 con viết là 1/2"
-                                                />
-                                                {errors.laConThuMay &&
-                                                touched.laConThuMay ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.laConThuMay}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="tinhTrangHonNhan">
-                                                    Tình trạng hôn nhân
-                                                </label>
-                                                <div
-                                                    role="group"
-                                                    aria-labelledby="my-radio-group"
-                                                >
-                                                    <label
-                                                        htmlFor
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="radio"
-                                                            name="tinhTrangHonNhan"
-                                                            value="0"
-                                                        />{' '}
-                                                        Độc thân
-                                                    </label>
-                                                    <label htmlFor>
-                                                        <Field
-                                                            type="radio"
-                                                            name="tinhTrangHonNhan"
-                                                            value="1"
-                                                        />{' '}
-                                                        Đã có gia đình
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="hoTenVoChong">
-                                                    Họ tên Vợ/Chồng:
-                                                </label>
-                                                <Field
-                                                    name="hoTenVoChong"
-                                                    key="hoTenVoChong"
-                                                    className="form-control "
-                                                />
-                                                {errors.hoTenVoChong &&
-                                                touched.hoTenVoChong ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.hoTenVoChong
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="dienThoaiVoChong">
-                                                    Điện thoại
-                                                </label>
-                                                <Field
-                                                    name="dienThoaiVoChong"
-                                                    key="dienThoaiVoChong"
-                                                    className="form-control "
-                                                />
-                                                {errors.dienThoaiVoChong &&
-                                                touched.dienThoaiVoChong ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.dienThoaiVoChong
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-2">
-                                                <label htmlFor="coMayCon">
-                                                    Có mấy con
-                                                </label>
-                                                <Field
-                                                    name="coMayCon"
-                                                    key="coMayCon"
-                                                    className="form-control "
-                                                />
-                                                {errors.coMayCon &&
-                                                touched.coMayCon ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.coMayCon}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-2">
-                                                <label htmlFor="soConTrai">
-                                                    Trai
-                                                </label>
-                                                <Field
-                                                    name="soConTrai"
-                                                    key="soConTrai"
-                                                    className="form-control "
-                                                />
-                                                {errors.soConTrai &&
-                                                touched.soConTrai ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.soConTrai}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-2">
-                                                <label htmlFor="soConGai">
-                                                    Gái
-                                                </label>
-                                                <Field
-                                                    name="soConGai"
-                                                    key="soConGai"
-                                                    className="form-control "
-                                                />
-                                                {errors.soConGai &&
-                                                touched.soConGai ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.soConGai}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="lonNhatSinhNam">
-                                                    Lớn nhất sinh năm
-                                                </label>
-                                                <Field
-                                                    name="lonNhatSinhNam"
-                                                    key="lonNhatSinhNam"
-                                                    className="form-control "
-                                                />
-                                                {errors.lonNhatSinhNam &&
-                                                touched.lonNhatSinhNam ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.lonNhatSinhNam
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="nhoNhatSinhNam">
-                                                    Nhỏ nhất sinh năm
-                                                </label>
-                                                <Field
-                                                    name="nhoNhatSinhNam"
-                                                    key="nhoNhatSinhNam"
-                                                    className="form-control "
-                                                />
-                                                {errors.nhoNhatSinhNam &&
-                                                touched.nhoNhatSinhNam ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.nhoNhatSinhNam
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
+                                        </>
                                     </div>
-                                    <div className="col-md-12 no-padding">
-                                        <div className="solama">
-                                            II.TÌNH TRẠNG BỆNH LÝ
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-12">
-                                                <label htmlFor="nguyenNhanSuyThan">
-                                                    1.Nguyên nhân dẫn đến suy{' '}
-                                                    {TypeBoPhanConstant.GetName(
-                                                        String(
-                                                            values.typePhieuDKGhepTang
-                                                        ).toLowerCase()
-                                                    )}
-                                                </label>
-                                                <Field
-                                                    name="nguyenNhanSuyThan"
-                                                    key="nguyenNhanSuyThan"
-                                                    className="form-control "
-                                                />
-                                                {errors.nguyenNhanSuyThan &&
-                                                touched.nguyenNhanSuyThan ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.nguyenNhanSuyThan
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="ngayPhatHienSuyThan">
-                                                    2.Phát hiện suy{' '}
-                                                    {TypeBoPhanConstant.GetName(
-                                                        String(
-                                                            values.typePhieuDKGhepTang
-                                                        ).toLowerCase()
-                                                    )}
-                                                </label>
-                                                <Field
-                                                    type="date"
-                                                    name="ngayPhatHienSuyThan"
-                                                    key="ngayPhatHienSuyThan"
-                                                    className="form-control "
-                                                />
-                                                {errors.ngayPhatHienSuyThan &&
-                                                touched.ngayPhatHienSuyThan ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.ngayPhatHienSuyThan
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="benhSu">
-                                                    Truyền máu
-                                                </label>
-                                                <div
-                                                    role="group"
-                                                    aria-labelledby="my-radio-group"
-                                                >
-                                                    <label
-                                                        htmlFor
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="radio"
-                                                            name="truyenMau"
-                                                            value="1"
-                                                        />{' '}
-                                                        Có
-                                                    </label>
-                                                    <label htmlFor>
-                                                        <Field
-                                                            type="radio"
-                                                            name="truyenMau"
-                                                            value="0"
-                                                        />{' '}
-                                                        Không
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="baoNhieuDonViMau">
-                                                    Bao nhiêu đơn vị máu
-                                                </label>
-                                                <Field
-                                                    type="number"
-                                                    name="baoNhieuDonViMau"
-                                                    key="baoNhieuDonViMau"
-                                                    className="form-control "
-                                                />
-                                                {errors.baoNhieuDonViMau &&
-                                                touched.baoNhieuDonViMau ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.baoNhieuDonViMau
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
+                                </Form.Item>
+                            </Col>
 
-                                            <div className="form-group col-md-4">
-                                                <label htmlFor="thang">
-                                                    Truyền máu lần cuối
-                                                </label>
-                                                <Field
-                                                    type="number"
-                                                    placeholder="vào tháng"
-                                                    name="thang"
-                                                    key="thang"
-                                                    className="form-control "
-                                                />
-                                                {errors.thang &&
-                                                touched.thang ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.thang}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-2">
-                                                <label htmlFor="nam">Năm</label>
-                                                <Field
-                                                    type="number"
-                                                    name="nam"
-                                                    key="nam"
-                                                    className="form-control "
-                                                />
-                                                {errors.nam && touched.nam ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.nam}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-12">
-                                                <label htmlFor="benhVienTruyenMau">
-                                                    Truyền máu tại bệnh viện
-                                                </label>
-                                                <Field
-                                                    name="benhVienTruyenMau"
-                                                    key="benhVienTruyenMau"
-                                                    className="form-control "
-                                                />
-                                                {errors.benhVienTruyenMau &&
-                                                touched.benhVienTruyenMau ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.benhVienTruyenMau
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="chieuCao">
-                                                    Chiều cao (cm)
-                                                </label>
-                                                <Field
-                                                    type="number"
-                                                    name="chieuCao"
-                                                    key="chieuCao"
-                                                    className="form-control "
-                                                />
+                            <Col
+                                lg={{span: 4}}
+                                md={{span: 8}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    label="Ảnh thẻ mới"
+                                    className="my-label"
+                                >
+                                    <img id="Avatar" alt="" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
 
-                                                {errors.chieuCao &&
-                                                touched.chieuCao ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.chieuCao}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="canNang">
-                                                    Cân nặng (kg)
-                                                </label>
-                                                <Field
-                                                    name="canNang"
-                                                    key="canNang"
-                                                    className="form-control "
-                                                />
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Ngày sinh"
+                                    placeholder="Vui lòng chọn ngày"
+                                    rules={[
+                                        {
+                                            type: 'object',
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        },
+                                        () => ({
+                                            validator(_, val) {
+                                                if (
+                                                    new Date() < new Date(val)
+                                                ) {
+                                                    return Promise.reject(
+                                                        'Ngày sinh vượt quá ngày hiện tại'
+                                                    );
+                                                }
 
-                                                {errors.canNang &&
-                                                touched.canNang ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.canNang}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-12">
-                                                <label htmlFor="thuocDangSuDungNgay">
-                                                    Thuốc đang sử dụng/ngày
-                                                </label>
-                                                <Field
-                                                    as="textarea"
-                                                    rows={3}
-                                                    name="thuocDangSuDungNgay"
-                                                    key="thuocDangSuDungNgay"
-                                                    className="form-control "
-                                                />
+                                                if (
+                                                    new Date('1920-1-1') >
+                                                    new Date(val)
+                                                ) {
+                                                    return Promise.reject(
+                                                        'Ngày sinh phải sau ngày 1 tháng 1 năm 1920'
+                                                    );
+                                                }
+                                                return Promise.resolve();
+                                            }
+                                        })
+                                    ]}
+                                    name="ngaySinh"
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <DatePicker
+                                        format="DD/MM/YYYY"
+                                        name="ngaySinh"
+                                        placeholder="Vui lòng chọn ngày"
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
 
-                                                {errors.thuocDangSuDungNgay &&
-                                                touched.thuocDangSuDungNgay ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.thuocDangSuDungNgay
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-12">
-                                                <label htmlFor="thuocTaoMau">
-                                                    Thuốc tạo máu
-                                                </label>
-                                                <Field
-                                                    name="thuocTaoMau"
-                                                    key="thuocTaoMau"
-                                                    className="form-control "
-                                                />
+                            <Col
+                                lg={{span: 4}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Nhóm máu ABO"
+                                    name="nhomMau"
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Select defaultValue="" name="nhomMau">
+                                        <Select.Option value="">
+                                            --Chọn--
+                                        </Select.Option>
 
-                                                {errors.thuocTaoMau &&
-                                                touched.thuocTaoMau ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.thuocTaoMau}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="bacSiDieuTri">
-                                                    Bác sĩ điều trị
-                                                </label>
-                                                <Field
-                                                    name="bacSiDieuTri"
-                                                    key="bacSiDieuTri"
-                                                    className="form-control "
-                                                />
+                                        {DropDMNhomMau()}
+                                    </Select>
+                                </Form.Item>
+                            </Col>
 
-                                                {errors.bacSiDieuTri &&
-                                                touched.bacSiDieuTri ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.bacSiDieuTri
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="dienThoaiBacSi">
-                                                    Điện thoại bác sĩ
-                                                </label>
-                                                <Field
-                                                    name="dienThoaiBacSi"
-                                                    key="dienThoaiBacSi"
-                                                    className="form-control "
-                                                />
+                            <Col
+                                lg={{span: 4}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Nhóm máu Rh"
+                                    name="nhomMau1"
+                                    rules={[]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Select defaultValue="" name="nhomMau1">
+                                        <Select.Option value="">
+                                            --Chọn--
+                                        </Select.Option>
 
-                                                {errors.dienThoaiBacSi &&
-                                                touched.dienThoaiBacSi ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.dienThoaiBacSi
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="col-md-12 no-padding">
-                                            <label htmlFor="khongBiViemGan">
-                                                3.Bệnh lý kèm theo
-                                            </label>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="col-md-3">
-                                                <div className="custom-control custom-checkbox">
-                                                    <Field
-                                                        type="checkbox"
-                                                        name="khongBiViemGan"
-                                                        key="khongBiViemGan"
-                                                        id="khongBiViemGan"
-                                                        className="custom-control-input"
-                                                    />
+                                        {DropDMNhomMauRh()}
+                                    </Select>
+                                </Form.Item>
+                            </Col>
 
-                                                    <label
-                                                        className="custom-control-label"
-                                                        htmlFor="khongBiViemGan"
-                                                    >
-                                                        Không bị viêm gan
-                                                    </label>
-                                                    {errors.khongBiViemGan &&
-                                                    touched.khongBiViemGan ? (
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.khongBiViemGan
-                                                            }
-                                                        </div>
-                                                    ) : null}
-                                                </div>
-                                            </div>
-                                            <div className="col-md-3">
-                                                <div className="custom-control custom-checkbox ">
-                                                    <Field
-                                                        type="checkbox"
-                                                        name="viemGanSieuViA"
-                                                        key="viemGanSieuViA"
-                                                        id="viemGanSieuViA"
-                                                        className="custom-control-input"
-                                                        disabled={
-                                                            values.khongBiViemGan
-                                                        }
-                                                        checked={
-                                                            values.khongBiViemGan
-                                                                ? ''
-                                                                : values.viemGanSieuViA
-                                                        }
-                                                    />
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Bảo hiểm y tế"
+                                    name="baoHiemYTe"
+                                    rules={[
+                                        () => ({
+                                            validator(_, val) {
+                                                if (
+                                                    /^[a-zA-Z0-9 ]*$/.test(
+                                                        val.trim()
+                                                    )
+                                                ) {
+                                                    return Promise.resolve();
+                                                }
+                                                return Promise.reject(
+                                                    'Số bảo hiểm y tế chỉ được sử dụng chữ cái và số'
+                                                );
+                                            }
+                                        })
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input name="baoHiemYTe" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
 
-                                                    <label
-                                                        className="custom-control-label"
-                                                        htmlFor="viemGanSieuViA"
-                                                    >
-                                                        Viêm gan siêu vi A
-                                                    </label>
-                                                    {errors.viemGanSieuViA &&
-                                                    touched.viemGanSieuViA ? (
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.viemGanSieuViA
-                                                            }
-                                                        </div>
-                                                    ) : null}
-                                                </div>
-                                            </div>
-                                            <div className="col-md-3">
-                                                <div className="custom-control custom-checkbox ">
-                                                    <Field
-                                                        type="checkbox"
-                                                        name="viemGanSieuViB"
-                                                        key="viemGanSieuViB"
-                                                        id="viemGanSieuViB"
-                                                        className="custom-control-input"
-                                                        disabled={
-                                                            values.khongBiViemGan
-                                                        }
-                                                        checked={
-                                                            values.khongBiViemGan
-                                                                ? ''
-                                                                : values.viemGanSieuViB
-                                                        }
-                                                    />
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="CMND/CCCD/Hộ chiếu"
+                                    name="CMNDBN"
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        },
+                                        {
+                                            min: 9,
+                                            message: 'CMND phải có ít nhất 9 số'
+                                        },
+                                        {
+                                            max: 12,
+                                            message: 'CMND không được quá 12 số'
+                                        },
+                                        () => ({
+                                            validator(_, val) {
+                                                if (/^[0-9 ]*$/.test(val)) {
+                                                    return Promise.resolve();
+                                                }
+                                                return Promise.reject(
+                                                    'CMND chỉ được sử dụng chữ số'
+                                                );
+                                            }
+                                        })
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input name="CMNDBN" />
+                                </Form.Item>
+                            </Col>
 
-                                                    <label
-                                                        className="custom-control-label"
-                                                        htmlFor="viemGanSieuViB"
-                                                    >
-                                                        Viêm gan siêu vi B
-                                                    </label>
-                                                    {errors.viemGanSieuViB &&
-                                                    touched.viemGanSieuViB ? (
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.viemGanSieuViB
-                                                            }
-                                                        </div>
-                                                    ) : null}
-                                                </div>
-                                            </div>
-                                            <div className="col-md-3">
-                                                <div className="custom-control custom-checkbox ">
-                                                    <Field
-                                                        type="checkbox"
-                                                        name="viemGanSieuViC"
-                                                        key="viemGanSieuViC"
-                                                        id="viemGanSieuViC"
-                                                        className="custom-control-input"
-                                                        disabled={
-                                                            values.khongBiViemGan
-                                                        }
-                                                        checked={
-                                                            values.khongBiViemGan
-                                                                ? ''
-                                                                : values.viemGanSieuViC
-                                                        }
-                                                    />
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Ngày cấp"
+                                    rules={[
+                                        () => ({
+                                            validator(_, val) {
+                                                if (
+                                                    new Date() < new Date(val)
+                                                ) {
+                                                    return Promise.reject(
+                                                        'Ngày cấp vượt quá ngày hiện tại'
+                                                    );
+                                                }
 
-                                                    <label
-                                                        className="custom-control-label"
-                                                        htmlFor="viemGanSieuViC"
-                                                    >
-                                                        Viêm gan siêu vi C
-                                                    </label>
-                                                    {errors.viemGanSieuViC &&
-                                                    touched.viemGanSieuViC ? (
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.viemGanSieuViC
-                                                            }
-                                                        </div>
-                                                    ) : null}
-                                                </div>
-                                            </div>
-                                            <div
-                                                className="form-row col-md-6"
-                                                id="truocHoacSauLocMau"
-                                            >
-                                                <div className="col-md-6">
-                                                    <div
-                                                        role="group"
-                                                        aria-labelledby="my-radio-group"
-                                                    >
-                                                        <label
-                                                            htmlFor="a"
-                                                            className="mgr15"
-                                                        >
-                                                            <Field
-                                                                type="radio"
-                                                                name="truocHoacSauLocMau"
-                                                                value="1"
-                                                                disabled={
-                                                                    values.khongBiViemGan
-                                                                }
-                                                                checked={
-                                                                    values.khongBiViemGan
-                                                                        ? ''
-                                                                        : values.truocHoacSauLocMau ===
-                                                                          '1'
-                                                                }
-                                                            />{' '}
-                                                            Viêm gan trước lọc
-                                                            máu
-                                                        </label>
-                                                    </div>
-                                                </div>
-                                                <div className="col-md-6">
-                                                    <div
-                                                        role="group"
-                                                        aria-labelledby="my-radio-group"
-                                                    >
-                                                        <label htmlFor="a">
-                                                            <Field
-                                                                type="radio"
-                                                                name="truocHoacSauLocMau"
-                                                                value="2"
-                                                                disabled={
-                                                                    values.khongBiViemGan
-                                                                }
-                                                                checked={
-                                                                    values.khongBiViemGan
-                                                                        ? ''
-                                                                        : values.truocHoacSauLocMau ===
-                                                                          '2'
-                                                                }
-                                                            />{' '}
-                                                            Sau lọc máu
-                                                        </label>
-                                                    </div>
-                                                </div>
-                                            </div>{' '}
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-4">
-                                                <label htmlFor="dieuTriViemGanTu">
-                                                    Điều trị viêm gan từ lúc nào
-                                                </label>
-                                                <Field
-                                                    name="dieuTriViemGanTu"
-                                                    key="dieuTriViemGanTu"
-                                                    className="form-control "
-                                                />
-                                                {errors.dieuTriViemGanTu &&
-                                                touched.dieuTriViemGanTu ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.dieuTriViemGanTu
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-8">
-                                                <label htmlFor="thuocTriViemGan">
-                                                    Thuốc điều trị viêm gan
-                                                </label>
-                                                <Field
-                                                    name="thuocTriViemGan"
-                                                    key="thuocTriViemGan"
-                                                    className="form-control "
-                                                />
-                                                {errors.thuocTriViemGan &&
-                                                touched.thuocTriViemGan ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.thuocTriViemGan
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="col-md-3">
-                                                <div
-                                                    role="group"
-                                                    aria-labelledby="my-radio-group"
-                                                >
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="radio"
-                                                            key="laoPhoi"
-                                                            name="laoPhoi"
-                                                            value="0"
-                                                        />{' '}
-                                                        Không có tiền căn lao
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div className="col-md-3">
-                                                <div
-                                                    role="group"
-                                                    aria-labelledby="my-radio-group"
-                                                >
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="radio"
-                                                            key="laoPhoi"
-                                                            name="laoPhoi"
-                                                            value="1"
-                                                        />{' '}
-                                                        Lao phổi
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="laoCoQuanKhac">
-                                                    Lao các cơ quan khác
-                                                </label>
-                                                <Field
-                                                    name="laoCoQuanKhac"
-                                                    key="laoCoQuanKhac"
-                                                    className="form-control "
-                                                />
-                                                {errors.laoCoQuanKhac &&
-                                                touched.laoCoQuanKhac ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.laoCoQuanKhac
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-4">
-                                                <label htmlFor="thoiGianBiLao">
-                                                    Từ lúc nào
-                                                </label>
-                                                <Field
-                                                    type="date"
-                                                    name="thoiGianBiLao"
-                                                    key="thoiGianBiLao"
-                                                    className="form-control "
-                                                />
-                                                {errors.thoiGianBiLao &&
-                                                touched.thoiGianBiLao ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.thoiGianBiLao
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-8">
-                                                <label htmlFor="thoiGianDieuTriAndNoiDieuTri">
-                                                    Thời gian điều trị/Nơi điều
-                                                    trị
-                                                </label>
-                                                <Field
-                                                    name="thoiGianDieuTriAndNoiDieuTri"
-                                                    key="thoiGianDieuTriAndNoiDieuTri"
-                                                    className="form-control "
-                                                />
-                                                {errors.thoiGianDieuTriAndNoiDieuTri &&
-                                                touched.thoiGianDieuTriAndNoiDieuTri ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.thoiGianDieuTriAndNoiDieuTri
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="daiThaoDuong">
-                                                    Đái tháo đường
-                                                </label>
-                                                <div
-                                                    role="group"
-                                                    aria-labelledby="my-radio-group"
-                                                >
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="radio"
-                                                            name="daiThaoDuong"
-                                                            value="1"
-                                                        />{' '}
-                                                        Có
-                                                    </label>
-                                                    <label htmlFor="a">
-                                                        <Field
-                                                            type="radio"
-                                                            name="daiThaoDuong"
-                                                            value="0"
-                                                        />{' '}
-                                                        Không
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="thoiGianBiDaiThaoDuong">
-                                                    Từ lúc nào
-                                                </label>
-                                                <Field
-                                                    type="date"
-                                                    name="thoiGianBiDaiThaoDuong"
-                                                    key="thoiGianBiDaiThaoDuong"
-                                                    className="form-control "
-                                                />
-                                                {errors.thoiGianBiDaiThaoDuong &&
-                                                touched.thoiGianBiDaiThaoDuong ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.thoiGianBiDaiThaoDuong
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="thuocDieuTriDaiThaoDuong">
-                                                    Thuốc điều trị
-                                                </label>
-                                                <Field
-                                                    name="thuocDieuTriDaiThaoDuong"
-                                                    key="thuocDieuTriDaiThaoDuong"
-                                                    className="form-control "
-                                                />
-                                                {errors.thuocDieuTriDaiThaoDuong &&
-                                                touched.thuocDieuTriDaiThaoDuong ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.thuocDieuTriDaiThaoDuong
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="tangHuyetAp">
-                                                    Tăng huyết áp
-                                                </label>
-                                                <div
-                                                    role="group"
-                                                    aria-labelledby="my-radio-group"
-                                                >
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="radio"
-                                                            name="tangHuyetAp"
-                                                            value="1"
-                                                        />{' '}
-                                                        Có
-                                                    </label>
-                                                    <label htmlFor="a">
-                                                        <Field
-                                                            type="radio"
-                                                            name="tangHuyetAp"
-                                                            value="0"
-                                                        />{' '}
-                                                        Không
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="thoiGianBiTangHuyetAp">
-                                                    Từ lúc nào
-                                                </label>
-                                                <Field
-                                                    type="date"
-                                                    name="thoiGianBiTangHuyetAp"
-                                                    key="thoiGianBiTangHuyetAp"
-                                                    className="form-control "
-                                                />
-                                                {errors.thoiGianBiTangHuyetAp &&
-                                                touched.thoiGianBiTangHuyetAp ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.thoiGianBiTangHuyetAp
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="thuocDieuTri">
-                                                    Thuốc điều trị
-                                                </label>
-                                                <Field
-                                                    name="thuocDieuTri"
-                                                    key="thuocDieuTri"
-                                                    className="form-control "
-                                                />
-                                                {errors.thuocDieuTri &&
-                                                touched.thuocDieuTri ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.thuocDieuTri
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="benhKhac">
-                                                    Các bệnh khác
-                                                </label>
-                                                <Field
-                                                    name="benhKhac"
-                                                    key="benhKhac"
-                                                    className="form-control "
-                                                />
-                                                {errors.benhKhac &&
-                                                touched.benhKhac ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.benhKhac}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="tinhTrang">
-                                                    Tình hình hiện tại
-                                                </label>
-                                                <Field
-                                                    name="tinhTrang"
-                                                    key="tinhTrang"
-                                                    className="form-control "
-                                                />
-                                                {errors.tinhTrang &&
-                                                touched.tinhTrang ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.tinhTrang}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="col-md-12 no-padding">
-                                            <label htmlFor="coPhauThuat">
-                                                4.Tiền căn ngoại khoa
-                                            </label>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="daPhauThuat">
-                                                    Có phẫu thuật gì trước đó
-                                                    không
-                                                </label>
-                                            </div>
-                                            <div className="form-group col-md-3">
-                                                <div
-                                                    role="group"
-                                                    aria-labelledby="my-radio-group"
-                                                >
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="radio"
-                                                            name="daPhauThuat"
-                                                            value="1"
-                                                        />{' '}
-                                                        Có
-                                                    </label>
-                                                    <label htmlFor="a">
-                                                        <Field
-                                                            type="radio"
-                                                            name="daPhauThuat"
-                                                            value="0"
-                                                        />{' '}
-                                                        Không
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="ngayThangPhauThuat">
-                                                    Ngày tháng năm phẫu thuật
-                                                </label>
-                                                <Field
-                                                    type="date"
-                                                    name="ngayThangPhauThuat"
-                                                    key="ngayThangPhauThuat"
-                                                    className="form-control "
-                                                />
-                                                {errors.ngayThangPhauThuat &&
-                                                touched.ngayThangPhauThuat ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.ngayThangPhauThuat
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="benhVienPhauThuat">
-                                                    Phẫu thuật tại bệnh viện
-                                                </label>
-                                                <Field
-                                                    name="benhVienPhauThuat"
-                                                    key="benhVienPhauThuat"
-                                                    className="form-control "
-                                                />
-                                                {errors.benhVienPhauThuat &&
-                                                touched.benhVienPhauThuat ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.benhVienPhauThuat
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="coPhauThuat">
-                                                    Nếu có thì do bệnh gì
-                                                </label>
-                                                <Field
-                                                    name="coPhauThuat"
-                                                    key="coPhauThuat"
-                                                    className="form-control "
-                                                />
-                                                {errors.coPhauThuat &&
-                                                touched.coPhauThuat ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.coPhauThuat}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="tinhTrangHienTai">
-                                                    Tình trạng hiện tại
-                                                </label>
-                                                <Field
-                                                    name="tinhTrangHienTai"
-                                                    key="tinhTrangHienTai"
-                                                    className="form-control "
-                                                />
-                                                {errors.tinhTrangHienTai &&
-                                                touched.tinhTrangHienTai ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.tinhTrangHienTai
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="uongRuouBia">
-                                                    5.Thói quen nghiện rượu
-                                                </label>
-                                                <div className="form-row">
-                                                    <div
-                                                        role="group"
-                                                        aria-labelledby="my-radio-group"
-                                                    >
-                                                        <label
-                                                            htmlFor="a"
-                                                            className="mgr15"
-                                                        >
-                                                            <Field
-                                                                type="radio"
-                                                                name="uongRuouBia"
-                                                                value="1"
-                                                            />{' '}
-                                                            Có
-                                                        </label>
-                                                    </div>
-                                                    <div
-                                                        role="group"
-                                                        aria-labelledby="my-radio-group"
-                                                    >
-                                                        <label
-                                                            htmlFor="a"
-                                                            className="mgr15"
-                                                        >
-                                                            <Field
-                                                                type="radio"
-                                                                name="uongRuouBia"
-                                                                value="0"
-                                                            />{' '}
-                                                            Không
-                                                        </label>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                                if (
+                                                    new Date('1920-1-1') >
+                                                    new Date(val)
+                                                ) {
+                                                    return Promise.reject(
+                                                        'Ngày cấp phải sau ngày 1 tháng 1 năm 1920'
+                                                    );
+                                                }
+                                                return Promise.resolve();
+                                            }
+                                        })
+                                    ]}
+                                    name="NgayCapCMNDBN"
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <DatePicker
+                                        format="DD/MM/YYYY"
+                                        name="NgayCapCMNDBN"
+                                        placeholder="Vui lòng chọn ngày"
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
 
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="soLanTuan">
-                                                    Số lần/tuần
-                                                </label>
-                                                <Field
-                                                    type="number"
-                                                    name="soLanTuan"
-                                                    key="soLanTuan"
-                                                    className="form-control "
-                                                />
-                                                {errors.soLanTuan &&
-                                                touched.soLanTuan ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.soLanTuan}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="soLuongLan">
-                                                    Số lượng trên lần
-                                                </label>
-                                                <Field
-                                                    placeholder="lít/chai/lon/ly"
-                                                    name="soLuongLan"
-                                                    key="soLuongLan"
-                                                    className="form-control "
-                                                />
-                                                {errors.soLuongLan &&
-                                                touched.soLuongLan ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.soLuongLan}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="hutThuoc">
-                                                    6.Thói quen hút thuốc
-                                                </label>
-                                                <div className="form-row">
-                                                    <div
-                                                        role="group"
-                                                        aria-labelledby="my-radio-group"
-                                                    >
-                                                        <label
-                                                            htmlFor="a"
-                                                            className="mgr15"
-                                                        >
-                                                            <Field
-                                                                type="radio"
-                                                                name="hutThuoc"
-                                                                value="1"
-                                                            />{' '}
-                                                            Có
-                                                        </label>
-                                                    </div>
-                                                    <div
-                                                        role="group"
-                                                        aria-labelledby="my-radio-group"
-                                                    >
-                                                        <label
-                                                            htmlFor="a"
-                                                            className="mgr15"
-                                                        >
-                                                            <Field
-                                                                type="radio"
-                                                                name="hutThuoc"
-                                                                value="0"
-                                                            />{' '}
-                                                            Không
-                                                        </label>
-                                                    </div>
-                                                </div>
-                                            </div>
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Nơi cấp"
+                                    name="NoiCapCMNDBN"
+                                    rules={[]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input name="NoiCapCMNDBN" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
 
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="dieuTrenNgay">
-                                                    Số điếu trên ngày
-                                                </label>
-                                                <Field
-                                                    type="number"
-                                                    placeholder="điếu/ngày"
-                                                    name="dieuTrenNgay"
-                                                    key="dieuTrenNgay"
-                                                    className="form-control "
-                                                />
-                                                {errors.dieuTrenNgay &&
-                                                touched.dieuTrenNgay ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.dieuTrenNgay
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="col-md-12 no-padding">
-                                            <label htmlFor="BiBenhThan">
-                                                7.Tiền căn gia đình
-                                            </label>
-                                        </div>{' '}
-                                        <div className="form-row">
-                                            <div className="form-group col-md-2">
-                                                <label htmlFor="biBenhThan">
-                                                    Bệnh{' '}
-                                                    {TypeBoPhanConstant.GetName(
-                                                        String(
-                                                            values.typePhieuDKGhepTang
-                                                        ).toLowerCase()
-                                                    )}
-                                                </label>
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Ảnh CMND/CCCD mặt trước"
+                                >
+                                    <Input
+                                        type="file"
+                                        name="ImgCMNDBNMatTruoc"
+                                        key="ImgCMNDBNMatTruoc"
+                                        className="form-control img-padding"
+                                        onChange={ChangeFileUploadCMNDMT}
+                                    />
+                                </Form.Item>
+                            </Col>
 
-                                                <div
-                                                    role="group"
-                                                    aria-labelledby="my-radio-group"
-                                                >
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="radio"
-                                                            name="biBenhThan"
-                                                            value="1"
-                                                        />{' '}
-                                                        Có
-                                                    </label>
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="radio"
-                                                            name="biBenhThan"
-                                                            value="0"
-                                                        />{' '}
-                                                        Không
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div className="form-group col-md-2">
-                                                <label htmlFor="biBenhLao">
-                                                    Bệnh lao
-                                                </label>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Ảnh CMND/CCCD mặt sau"
+                                >
+                                    <Input
+                                        type="file"
+                                        name="ImgCMNDBNMatSau"
+                                        key="ImgCMNDBNMatSau"
+                                        className="form-control img-padding"
+                                        onChange={ChangeFileUploadCMNDMs}
+                                    />
+                                </Form.Item>
+                            </Col>
+                        </Row>
 
-                                                <div
-                                                    role="group"
-                                                    aria-labelledby="my-radio-group"
-                                                >
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="radio"
-                                                            name="biBenhLao"
-                                                            value="1"
-                                                        />{' '}
-                                                        Có
-                                                    </label>
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="radio"
-                                                            name="biBenhLao"
-                                                            value="0"
-                                                        />{' '}
-                                                        Không
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div className="form-group col-md-2">
-                                                <label htmlFor="biDaiThaoDuong">
-                                                    Đái tháo đường
-                                                </label>
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 6}}
+                                sm={{span: 12}}
+                                xs={{span: 12}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Ảnh CMND/CCCD mặt trước cũ"
+                                >
+                                    <img
+                                        className="imgCMND"
+                                        src={`${Constant.PathServer}/${entityObj.ImgCMNDBNMatTruoc}`}
+                                        alt=""
+                                        onError={NotFoundImage}
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 6}}
+                                sm={{span: 12}}
+                                xs={{span: 12}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Ảnh CMND/CCCD mặt trước mới"
+                                >
+                                    <img
+                                        className="imgCMND"
+                                        id="ImgCMNDBNMatTruoc"
+                                        alt=""
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 6}}
+                                sm={{span: 12}}
+                                xs={{span: 12}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Ảnh CMND/CCCD mặt sau cũ"
+                                >
+                                    <img
+                                        className="imgCMND"
+                                        alt=""
+                                        src={`${Constant.PathServer}/${entityObj.ImgCMNDBNMatSau}`}
+                                        onError={NotFoundImage}
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 6}}
+                                sm={{span: 12}}
+                                xs={{span: 12}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Ảnh CMND/CCCD mặt sau mới"
+                                >
+                                    <img
+                                        className="imgCMND"
+                                        id="ImgCMNDBNMatSau"
+                                        alt=""
+                                    />
+                                </Form.Item>
+                            </Col>
+                        </Row>
 
-                                                <div
-                                                    role="group"
-                                                    aria-labelledby="my-radio-group"
-                                                >
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="radio"
-                                                            name="biDaiThaoDuong"
-                                                            value="1"
-                                                        />{' '}
-                                                        Có
-                                                    </label>
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="radio"
-                                                            name="biDaiThaoDuong"
-                                                            value="0"
-                                                        />{' '}
-                                                        Không
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div className="form-group col-md-2">
-                                                <label htmlFor="biTangHuyetAp">
-                                                    Tăng huyết áp
-                                                </label>
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Nghề nghiệp"
+                                    name="ngheNghiep"
+                                    rules={[]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Select defaultValue="" name="ngheNghiep">
+                                        <Select.Option value="">
+                                            --Chọn--
+                                        </Select.Option>
 
-                                                <div
-                                                    role="group"
-                                                    aria-labelledby="my-radio-group"
-                                                >
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="radio"
-                                                            name="biTangHuyetAp"
-                                                            value="1"
-                                                        />{' '}
-                                                        Có
-                                                    </label>
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="radio"
-                                                            name="biTangHuyetAp"
-                                                            value="0"
-                                                        />{' '}
-                                                        Không
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div className="form-group col-md-2">
-                                                <label htmlFor="biUngThu">
-                                                    Ung thư
-                                                </label>
+                                        {DropDMNgheNghiep()}
+                                    </Select>
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Nghề nghiệp bổ xung"
+                                    name="ngheNghiepBoSung"
+                                >
+                                    <Input name="ngheNghiepBoSung" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
 
-                                                <div
-                                                    role="group"
-                                                    aria-labelledby="my-radio-group"
-                                                >
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="radio"
-                                                            name="biUngThu"
-                                                            value="1"
-                                                        />{' '}
-                                                        Có
-                                                    </label>
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="radio"
-                                                            name="biUngThu"
-                                                            value="0"
-                                                        />{' '}
-                                                        Không
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        {/* <div className="form-row">
-                                            <div className="form-group col-md-3">
-                                                <label htmlFor="biBenhThan">
-                                                   
-                                                </label>
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Trình độ văn hóa"
+                                    name="trinhDoVanHoa"
+                                    rules={[]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input name="trinhDoVanHoa" />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Điện thoại"
+                                    name="dienThoai"
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        },
+                                        {
+                                            min: 10,
+                                            message:
+                                                'Vui lọng nhập ít nhất 10 ký tự'
+                                        },
+                                        {
+                                            max: 12,
+                                            message:
+                                                'Vui lòng nhập không quá 12 ký tự'
+                                        },
+                                        () => ({
+                                            validator(_, val) {
+                                                if (/^[0-9+.]*$/.test(val)) {
+                                                    return Promise.resolve();
+                                                }
+                                                return Promise.reject(
+                                                    'Số điện thoại chỉ được sử dụng số'
+                                                );
+                                            }
+                                        })
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input name="dienThoai" />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Điện thoại khác"
+                                    name="dienThoai1"
+                                    rules={[
+                                        {
+                                            min: 10,
+                                            message:
+                                                'Vui lọng nhập ít nhất 10 ký tự'
+                                        },
+                                        {
+                                            max: 12,
+                                            message:
+                                                'Vui lòng nhập không quá 12 ký tự'
+                                        },
+                                        () => ({
+                                            validator(_, val) {
+                                                if (
+                                                    /^[0-9+.]*$/.test(val) ||
+                                                    val === undefined
+                                                ) {
+                                                    return Promise.resolve();
+                                                }
+                                                return Promise.reject(
+                                                    'Số điện thoại chỉ được sử dụng số'
+                                                );
+                                            }
+                                        })
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input name="dienThoai1" />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Email"
+                                    name="email"
+                                    rules={[
+                                        () => ({
+                                            validator(_, val) {
+                                                const isEmail = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+                                                if (
+                                                    isEmail.test(val) ||
+                                                    val === '' ||
+                                                    val === undefined ||
+                                                    val === null
+                                                ) {
+                                                    return Promise.resolve();
+                                                }
 
-                                                <div
-                                                    role="group"
-                                                    aria-labelledby="my-radio-group"
-                                                >
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="radio"
-                                                            name="biBenhThan"
-                                                            value="1"
-                                                        />{' '}
-                                                        Có
-                                                    </label>
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="radio"
-                                                            name="biBenhThan"
-                                                            value="0"
-                                                        />{' '}
-                                                        Không
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div className="form-group col-md-2">
-                                                <div
-                                                    role="group"
-                                                    aria-labelledby="my-radio-group"
-                                                >
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="checkbox"
-                                                            name="biBenhLao"
-                                                            value="1"
-                                                        />{' '}
-                                                        Lao
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div className="form-group col-md-2">
-                                                <div
-                                                    role="group"
-                                                    aria-labelledby="my-radio-group"
-                                                >
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="checkbox"
-                                                            name="biDaiThaoDuong"
-                                                            value="1"
-                                                        />{' '}
-                                                        Đái tháo đường
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div className="form-group col-md-2">
-                                                <div
-                                                    role="group"
-                                                    aria-labelledby="my-radio-group"
-                                                >
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="checkbox"
-                                                            name="biTangHuyetAp"
-                                                            value="1"
-                                                        />{' '}
-                                                        Tăng huyết áp
-                                                    </label>
-                                                </div>
-                                            </div>
-                                            <div className="form-group col-md-2">
-                                                <div
-                                                    role="group"
-                                                    aria-labelledby="my-radio-group"
-                                                >
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        <Field
-                                                            type="checkbox"
-                                                            name="biUngThu"
-                                                            value="1"
-                                                        />{' '}
-                                                        Ung thư
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        </div> */}
-                                        <div className="form-row">
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="biBenhKhac">
-                                                    Bệnh khác
-                                                </label>
-                                                <Field
-                                                    name="biBenhKhac"
-                                                    key="biBenhKhac"
-                                                    className="form-control "
-                                                />
+                                                return Promise.reject(
+                                                    'Email không hợp lệ'
+                                                );
+                                            }
+                                        })
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input name="email" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
 
-                                                {errors.biBenhKhac &&
-                                                touched.biBenhKhac ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.biBenhKhac}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-6">
-                                                <div
-                                                    role="group"
-                                                    aria-labelledby="my-radio-group"
-                                                >
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        Sống cùng địa chỉ{' '}
-                                                        <Field
-                                                            type="radio"
-                                                            name="songCungDiaChi"
-                                                            value="1"
-                                                        />
-                                                    </label>
-                                                    <label
-                                                        htmlFor="a"
-                                                        className="mgr15"
-                                                    >
-                                                        Không cùng địa chỉ{' '}
-                                                        <Field
-                                                            type="radio"
-                                                            name="songCungDiaChi"
-                                                            value="0"
-                                                        />
-                                                    </label>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="nguoiThanBiBenh">
-                                                    Nếu có thì là ai
-                                                </label>
-                                                <Field
-                                                    name="nguoiThanBiBenh"
-                                                    key="nguoiThanBiBenh"
-                                                    className="form-control "
-                                                />
+                        <label className="my-label">Địa chỉ thường trú:</label>
 
-                                                {errors.nguoiThanBiBenh &&
-                                                touched.nguoiThanBiBenh ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.nguoiThanBiBenh
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="tinhTrangBenhNguoiThanHienTai">
-                                                    Tình trạng hiện tại
-                                                </label>
-                                                <Field
-                                                    name="tinhTrangBenhNguoiThanHienTai"
-                                                    key="tinhTrangBenhNguoiThanHienTai"
-                                                    className="form-control "
-                                                />
+                        <Row className="form-diachithuongchu" gutter={[10, 5]}>
+                            <Col lg={{span: 8}} md={{span: 12}} sm={{span: 24}}>
+                                <Form.Item
+                                    className="chitietdiachi"
+                                    label="Tỉnh/Thành Phố"
+                                    name="tinh"
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Select
+                                        defaultValue=""
+                                        name="tinh"
+                                        onChange={(value) => {
+                                            onchangeloaddiachi('tinh', value);
+                                        }}
+                                    >
+                                        <Select.Option value="">
+                                            --Chọn--
+                                        </Select.Option>
+                                        {DropTinh()}
+                                    </Select>
+                                </Form.Item>
+                            </Col>
+                            <Col lg={{span: 8}} md={{span: 12}} sm={{span: 24}}>
+                                <Form.Item
+                                    className="chitietdiachi"
+                                    label="Quận/Huyện"
+                                    name="quanhuyen"
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Select
+                                        defaultValue=""
+                                        name="quanhuyen"
+                                        onChange={(value) => {
+                                            onchangeloaddiachi(
+                                                'quanhuyen',
+                                                value
+                                            );
+                                        }}
+                                    >
+                                        <Select.Option value="">
+                                            --Chọn--
+                                        </Select.Option>
+                                        {DropQuanHuyen()}
+                                    </Select>
+                                </Form.Item>
+                            </Col>
+                            <Col lg={{span: 8}} md={{span: 12}} sm={{span: 24}}>
+                                <Form.Item
+                                    className="chitietdiachi"
+                                    label="Xã/Phường"
+                                    name="xaphuong"
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Select defaultValue="" name="xaphuong">
+                                        <Select.Option value="">
+                                            --Chọn--
+                                        </Select.Option>
+                                        {DropXa()}
+                                    </Select>
+                                </Form.Item>
+                            </Col>
+                        </Row>
 
-                                                {errors.tinhTrangBenhNguoiThanHienTai &&
-                                                touched.tinhTrangBenhNguoiThanHienTai ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.tinhTrangBenhNguoiThanHienTai
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="col-md-12 no-padding">
-                                            <label htmlFor="NhiemCovid">
-                                                8. Tiền sử covid
-                                            </label>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="col-md-3">
-                                                <div className="custom-control custom-checkbox">
-                                                    <Field
-                                                        type="checkbox"
-                                                        name="NhiemCovid"
-                                                        key="NhiemCovid"
-                                                        id="NhiemCovid"
-                                                        className="custom-control-input"
-                                                        onClick={() =>
-                                                            KhongBiNhiemCheck()
-                                                        }
-                                                    />
+                        <Row>
+                            <Col span={24}>
+                                <Form.Item
+                                    className="my-label"
+                                    label="Số nhà, phố, tổ dân phố /thôn / đội"
+                                    name="diaChiThuongChu"
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input name="diaChiThuongChu" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
 
-                                                    <label
-                                                        className="custom-control-label"
-                                                        htmlFor="NhiemCovid"
-                                                    >
-                                                        Không bị nhiễm covid
-                                                    </label>
-                                                    {errors.NhiemCovid &&
-                                                    touched.NhiemCovid ? (
-                                                        <div className="invalid-feedback">
-                                                            {errors.NhiemCovid}
-                                                        </div>
-                                                    ) : null}
-                                                </div>
-                                            </div>
-                                            <div className="col-md-3">
-                                                <div className="custom-control custom-checkbox ">
-                                                    <Field
-                                                        type="checkbox"
-                                                        name="BiTruocTiem"
-                                                        key="BiTruocTiem"
-                                                        id="BiTruocTiem"
-                                                        className="custom-control-input"
-                                                        disabled={
-                                                            values.NhiemCovid
-                                                        }
-                                                        checked={
-                                                            values.NhiemCovid
-                                                                ? ''
-                                                                : values.BiTruocTiem
-                                                        }
-                                                    />
+                        <label className="my-label">Địa chỉ tạm trú:</label>
 
-                                                    <label
-                                                        className="custom-control-label"
-                                                        htmlFor="BiTruocTiem"
-                                                    >
-                                                        Bị nhiễm trước tiêm
-                                                    </label>
-                                                    {errors.BiTruocTiem &&
-                                                    touched.BiTruocTiem ? (
-                                                        <div className="invalid-feedback">
-                                                            {errors.BiTruocTiem}
-                                                        </div>
-                                                    ) : null}
-                                                </div>
-                                            </div>
-                                            <div className="col-md-3">
-                                                <div className="custom-control custom-checkbox ">
-                                                    <Field
-                                                        type="checkbox"
-                                                        name="BiSauTiem"
-                                                        key="BiSauTiem"
-                                                        id="BiSauTiem"
-                                                        className="custom-control-input"
-                                                        disabled={
-                                                            values.NhiemCovid
-                                                        }
-                                                        checked={
-                                                            values.NhiemCovid
-                                                                ? ''
-                                                                : values.BiSauTiem
-                                                        }
-                                                    />
+                        <Row className="form-diachithuongchu" gutter={[10, 5]}>
+                            <Col lg={{span: 8}} md={{span: 12}} sm={{span: 24}}>
+                                <Form.Item
+                                    className="chitietdiachi"
+                                    label="Tỉnh/Thành Phố"
+                                    name="tinhtt"
+                                    rules={[]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Select
+                                        defaultValue=""
+                                        name="tinhtt"
+                                        onChange={(value) => {
+                                            onchangeloaddiachi('tinhtt', value);
+                                        }}
+                                    >
+                                        <Select.Option value="">
+                                            --Chọn--
+                                        </Select.Option>
+                                        {DropTinhTT()}
+                                    </Select>
+                                </Form.Item>
+                            </Col>
+                            <Col lg={{span: 8}} md={{span: 12}} sm={{span: 24}}>
+                                <Form.Item
+                                    className="chitietdiachi"
+                                    label="Quận/Huyện"
+                                    name="quanhuyentt"
+                                    rules={[]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Select
+                                        defaultValue=""
+                                        name="quanhuyentt"
+                                        onChange={(value) => {
+                                            onchangeloaddiachi(
+                                                'quanhuyentt',
+                                                value
+                                            );
+                                        }}
+                                    >
+                                        <Select.Option value="">
+                                            --Chọn--
+                                        </Select.Option>
+                                        {DropHuyenTT()}
+                                    </Select>
+                                </Form.Item>
+                            </Col>
+                            <Col lg={{span: 8}} md={{span: 12}} sm={{span: 24}}>
+                                <Form.Item
+                                    className="chitietdiachi"
+                                    label="Xã/Phường"
+                                    name="xaphuongtt"
+                                    rules={[]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Select defaultValue="" name="xaphuongtt">
+                                        <Select.Option value="">
+                                            --Chọn--
+                                        </Select.Option>
+                                        {DropXaTT()}
+                                    </Select>
+                                </Form.Item>
+                            </Col>
+                        </Row>
 
-                                                    <label
-                                                        className="custom-control-label"
-                                                        htmlFor="BiSauTiem"
-                                                    >
-                                                        Bị nhiễm sau tiêm
-                                                    </label>
-                                                    {errors.BiSauTiem &&
-                                                    touched.BiSauTiem ? (
-                                                        <div className="invalid-feedback">
-                                                            {errors.BiSauTiem}
-                                                        </div>
-                                                    ) : null}
-                                                </div>
-                                            </div>
-                                            <div className="col-md-3">
-                                                <div className="custom-control custom-checkbox ">
-                                                    <Field
-                                                        type="checkbox"
-                                                        name="CoTrieuChung"
-                                                        key="CoTrieuChung"
-                                                        id="CoTrieuChung"
-                                                        className="custom-control-input"
-                                                        disabled={
-                                                            values.NhiemCovid
-                                                        }
-                                                        checked={
-                                                            values.NhiemCovid
-                                                                ? ''
-                                                                : values.CoTrieuChung
-                                                        }
-                                                    />
+                        <Row>
+                            <Col span={24}>
+                                <Form.Item
+                                    className="my-label"
+                                    label="Số nhà, phố, tổ dân phố /thôn / đội"
+                                    name="diaChiTamChu"
+                                    rules={[]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input name="diaChiTamChu" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
 
-                                                    <label
-                                                        className="custom-control-label"
-                                                        htmlFor="CoTrieuChung"
-                                                    >
-                                                        Không có triệu chứng
-                                                    </label>
-                                                    {errors.CoTrieuChung &&
-                                                    touched.CoTrieuChung ? (
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.CoTrieuChung
-                                                            }
-                                                        </div>
-                                                    ) : null}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="col-md-3">
-                                                <div className="custom-control custom-checkbox ">
-                                                    <Field
-                                                        type="checkbox"
-                                                        name="TrieuChungNhe"
-                                                        key="TrieuChungNhe"
-                                                        id="TrieuChungNhe"
-                                                        className="custom-control-input"
-                                                        disabled={
-                                                            values.NhiemCovid
-                                                        }
-                                                        checked={
-                                                            values.NhiemCovid
-                                                                ? ''
-                                                                : values.TrieuChungNhe
-                                                        }
-                                                    />
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Gia đình: là con thứ mấy?"
+                                    name="laConThuMay"
+                                    rules={[]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input
+                                        name="laConThuMay"
+                                        placeholder="VD: là con thứ 1 trong gia đình 2 con viết là 1/2"
+                                    />
+                                </Form.Item>
+                            </Col>
 
-                                                    <label
-                                                        className="custom-control-label"
-                                                        htmlFor="TrieuChungNhe"
-                                                    >
-                                                        Triệu chứng nhẹ
-                                                    </label>
-                                                    {errors.TrieuChungNhe &&
-                                                    touched.TrieuChungNhe ? (
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.TrieuChungNhe
-                                                            }
-                                                        </div>
-                                                    ) : null}
-                                                </div>
-                                            </div>
-                                            <div className="col-md-3">
-                                                <div className="custom-control custom-checkbox ">
-                                                    <Field
-                                                        type="checkbox"
-                                                        name="TrieuChungtrungBinh"
-                                                        key="TrieuChungtrungBinh"
-                                                        id="TrieuChungtrungBinh"
-                                                        className="custom-control-input"
-                                                        disabled={
-                                                            values.NhiemCovid
-                                                        }
-                                                        checked={
-                                                            values.NhiemCovid
-                                                                ? ''
-                                                                : values.TrieuChungtrungBinh
-                                                        }
-                                                    />
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Tình trạng hôn nhân"
+                                    name="tinhTrangHonNhan"
+                                    valuePropName="checked"
+                                >
+                                    <Radio.Group
+                                        name="tinhTrangHonNhan"
+                                        defaultValue="0"
+                                    >
+                                        <Radio value="0">Độc thân</Radio>
+                                        <Radio value="1">Đã có gia đình</Radio>
+                                    </Radio.Group>
+                                </Form.Item>
+                            </Col>
+                        </Row>
 
-                                                    <label
-                                                        className="custom-control-label"
-                                                        htmlFor="TrieuChungtrungBinh"
-                                                    >
-                                                        Triệu chúng trung bình
-                                                    </label>
-                                                    {errors.TrieuChungtrungBinh &&
-                                                    touched.TrieuChungtrungBinh ? (
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.TrieuChungtrungBinh
-                                                            }
-                                                        </div>
-                                                    ) : null}
-                                                </div>
-                                            </div>
-                                            <div className="col-md-3">
-                                                <div className="custom-control custom-checkbox ">
-                                                    <Field
-                                                        type="checkbox"
-                                                        name="NhapVien"
-                                                        key="NhapVien"
-                                                        id="NhapVien"
-                                                        className="custom-control-input"
-                                                        disabled={
-                                                            values.NhiemCovid
-                                                        }
-                                                        checked={
-                                                            values.NhiemCovid
-                                                                ? ''
-                                                                : values.NhapVien
-                                                        }
-                                                    />
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Họ tên Vợ/Chồng"
+                                    name="hoTenVoChong"
+                                    rules={[
+                                        {
+                                            min: 2,
+                                            message:
+                                                'Vui lòng nhập ít nhất 2 ký tự'
+                                        },
+                                        {
+                                            max: 255,
+                                            message:
+                                                'Vui lòng nhập không quá 255 ký tự'
+                                        },
+                                        () => ({
+                                            validator(_, val) {
+                                                const str = removeAscent(val);
+                                                if (/^[a-zA-Z ]*$/.test(str)) {
+                                                    return Promise.resolve();
+                                                }
 
-                                                    <label
-                                                        className="custom-control-label"
-                                                        htmlFor="NhapVien"
-                                                    >
-                                                        Nhập viện
-                                                    </label>
-                                                    {errors.NhapVien &&
-                                                    touched.NhapVien ? (
-                                                        <div className="invalid-feedback">
-                                                            {errors.NhapVien}
-                                                        </div>
-                                                    ) : null}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="col-md-3">
-                                                <label htmlFor="ThoiGianNamVien">
-                                                    Thời gian nằm viện(ngày)
-                                                </label>
-                                                <Field
-                                                    type="number"
-                                                    name="ThoiGianNamVien"
-                                                    key="ThoiGianNamVien"
-                                                    className="form-control "
-                                                />
+                                                return Promise.reject(
+                                                    'Họ tên không được sử dụng ký tự đặc biệt hoặc số'
+                                                );
+                                            }
+                                        })
+                                    ]}
+                                >
+                                    <Input name="hoTenVoChong" />
+                                </Form.Item>
+                            </Col>
 
-                                                {errors.ThoiGianNamVien &&
-                                                touched.ThoiGianNamVien ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.ThoiGianNamVien
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="col-md-3">
-                                                <div className="custom-control custom-checkbox ">
-                                                    <Field
-                                                        type="checkbox"
-                                                        name="ThoMay"
-                                                        key="ThoMay"
-                                                        id="ThoMay"
-                                                        className="custom-control-input"
-                                                        disabled={
-                                                            values.NhiemCovid
-                                                        }
-                                                        checked={
-                                                            values.NhiemCovid
-                                                                ? ''
-                                                                : values.ThoMay
-                                                        }
-                                                    />
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Điện thoại"
+                                    name="dienThoaiVoChong"
+                                    rules={[
+                                        {
+                                            min: 10,
+                                            message:
+                                                'Vui lòng nhập ít nhất 10 ký tự'
+                                        },
+                                        {
+                                            max: 12,
+                                            message:
+                                                'Vui lòng nhập không quá 12 ký tự'
+                                        },
+                                        () => ({
+                                            validator(_, val) {
+                                                if (
+                                                    /^[0-9+.]*$/.test(val) ||
+                                                    val === undefined ||
+                                                    val === null
+                                                ) {
+                                                    return Promise.resolve();
+                                                }
+                                                return Promise.reject(
+                                                    'Số điện thoại chỉ được sử dụng chữ số'
+                                                );
+                                            }
+                                        })
+                                    ]}
+                                >
+                                    <Input name="dienThoaiVoChong" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
 
-                                                    <label
-                                                        className="custom-control-label"
-                                                        htmlFor="ThoMay"
-                                                    >
-                                                        Thở máy
-                                                    </label>
-                                                    {errors.ThoMay &&
-                                                    touched.ThoMay ? (
-                                                        <div className="invalid-feedback">
-                                                            {errors.ThoMay}
-                                                        </div>
-                                                    ) : null}
-                                                </div>
-                                            </div>
-                                            <div className="col-md-3">
-                                                <div className="custom-control custom-checkbox ">
-                                                    <Field
-                                                        type="checkbox"
-                                                        name="ThoHFNC"
-                                                        key="ThoHFNC"
-                                                        id="ThoHFNC"
-                                                        className="custom-control-input"
-                                                        disabled={
-                                                            values.NhiemCovid
-                                                        }
-                                                        checked={
-                                                            values.NhiemCovid
-                                                                ? ''
-                                                                : values.ThoHFNC
-                                                        }
-                                                    />
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 4}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Có mấy con"
+                                    name="coMayCon"
+                                >
+                                    <InputNumber
+                                        name="coMayCon"
+                                        min={0}
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 4}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Trai"
+                                    name="soConTrai"
+                                >
+                                    <InputNumber
+                                        name="soConTrai"
+                                        min={0}
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 4}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Gái"
+                                    name="soConGai"
+                                    style={{width: '100%'}}
+                                >
+                                    <InputNumber
+                                        name="soConGai"
+                                        min={0}
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Lớn nhất sinh năm"
+                                    name="lonNhatSinhNam"
+                                >
+                                    <InputNumber
+                                        name="lonNhatSinhNam"
+                                        min={1920}
+                                        max={3000}
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Nhỏ nhất sinh năm"
+                                    name="nhoNhatSinhNam"
+                                >
+                                    <InputNumber
+                                        name="nhoNhatSinhNam"
+                                        min={1920}
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+                        </Row>
 
-                                                    <label
-                                                        className="custom-control-label"
-                                                        htmlFor="ThoHFNC"
-                                                    >
-                                                        Thở HFNC
-                                                    </label>
-                                                    {errors.ThoHFNC &&
-                                                    touched.ThoHFNC ? (
-                                                        <div className="invalid-feedback">
-                                                            {errors.ThoHFNC}
-                                                        </div>
-                                                    ) : null}
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="col-md-12 no-padding">
-                                            <label htmlFor="khongBiViemGan">
-                                                9. Tiêm vaccine ngừa covid
-                                            </label>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-4">
-                                                <label htmlFor="TiemVaccine">
-                                                    Tiêm vaccine ngừa covid lần
-                                                    1
-                                                </label>
-                                                <Field
-                                                    name="TiemVaccine"
-                                                    key="TiemVaccine"
-                                                    className="form-control "
-                                                />
+                        <Row>
+                            <div className="solama">
+                                II. TÌNH TRẠNG BỆNH LÝ:
+                            </div>
+                        </Row>
+                        <Row>
+                            <label className="class-b">
+                                1.Nguyên nhân dẫn đến bệnh hiện tại
+                            </label>
+                        </Row>
+                        <Row>
+                            <Col
+                                lg={{span: 24}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="nguyenNhanSuyThan"
+                                >
+                                    <Input name="nguyenNhanSuyThan" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
 
-                                                {errors.TiemVaccine &&
-                                                touched.TiemVaccine ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.TiemVaccine}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-4">
-                                                <label htmlFor="NgayTiemMui1">
-                                                    Ngày tiêm mũi 1
-                                                </label>
-                                                <Field
-                                                    type="date"
-                                                    name="NgayTiemMui1"
-                                                    key="NgayTiemMui1"
-                                                    className="form-control "
-                                                />
+                        <Row>
+                            <label className="class-b">
+                                2.Phát hiện suy{' '}
+                                {TypeBoPhanConstant.GetName(
+                                    entityObj.TypePhieuDKGhepTang
+                                )}
+                            </label>
+                        </Row>
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="ngayPhatHienSuyThan"
+                                >
+                                    <DatePicker
+                                        format="DD/MM/YYYY"
+                                        name="ngayPhatHienSuyThan"
+                                        placeholder="Vui lòng chọn ngày"
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+                        </Row>
 
-                                                {errors.NgayTiemMui1 &&
-                                                touched.NgayTiemMui1 ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.NgayTiemMui1
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-4">
-                                                <label htmlFor="PhanUng">
-                                                    Phản ứng sau tiêm lần 1
-                                                </label>
-                                                <Field
-                                                    name="PhanUng"
-                                                    key="PhanUng"
-                                                    className="form-control "
-                                                />
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Truyền máu"
+                                    name="truyenMau"
+                                    valuePropName="checked"
+                                >
+                                    <Radio.Group
+                                        name="truyenMau"
+                                        defaultValue="0"
+                                    >
+                                        <Radio value="1">Có</Radio>
+                                        <Radio value="0">Không</Radio>
+                                    </Radio.Group>
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Bao nhiêu đơn vị máu"
+                                    name="baoNhieuDonViMau"
+                                >
+                                    <Input name="baoNhieuDonViMau" />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Truyền máu lần cuối"
+                                    name="thang"
+                                >
+                                    <InputNumber
+                                        name="thang"
+                                        placeholder="vào tháng"
+                                        min={1}
+                                        max={12}
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 4}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Năm"
+                                    name="nam"
+                                >
+                                    <InputNumber
+                                        name="nam"
+                                        min={1970}
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+                        </Row>
 
-                                                {errors.PhanUng &&
-                                                touched.PhanUng ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.PhanUng}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-4">
-                                                <label htmlFor="TiemVaccine2">
-                                                    Tiêm vaccine ngừa covid lần
-                                                    2
-                                                </label>
-                                                <Field
-                                                    name="TiemVaccine2"
-                                                    key="TiemVaccine2"
-                                                    className="form-control "
-                                                />
+                        <Row>
+                            <Col
+                                lg={{span: 24}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Truyền máu tại bệnh viện"
+                                    name="benhVienTruyenMau"
+                                >
+                                    <Input name="benhVienTruyenMau" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
 
-                                                {errors.TiemVaccine2 &&
-                                                touched.TiemVaccine2 ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.TiemVaccine2
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-4">
-                                                <label htmlFor="NgayTiemMui2">
-                                                    Ngày tiêm mũi 2
-                                                </label>
-                                                <Field
-                                                    type="date"
-                                                    name="NgayTiemMui2"
-                                                    key="NgayTiemMui2"
-                                                    className="form-control "
-                                                />
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Chiều cao(cm)"
+                                    name="chieuCao"
+                                >
+                                    <InputNumber
+                                        name="chieuCao"
+                                        min={1}
+                                        max={300}
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
 
-                                                {errors.NgayTiemMui2 &&
-                                                touched.NgayTiemMui2 ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.NgayTiemMui2
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-4">
-                                                <label htmlFor="PhanUng2">
-                                                    Phản ứng sau tiêm lần 2
-                                                </label>
-                                                <Field
-                                                    name="PhanUng2"
-                                                    key="PhanUng2"
-                                                    className="form-control "
-                                                />
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Cân nặng(kg)"
+                                    name="canNang"
+                                >
+                                    <InputNumber
+                                        name="canNang"
+                                        min={1}
+                                        max={800}
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+                        </Row>
 
-                                                {errors.PhanUng2 &&
-                                                touched.PhanUng2 ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.PhanUng2}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-4">
-                                                <label htmlFor="TiemVaccine3">
-                                                    Tiêm vaccine ngừa covid mũi
-                                                    3
-                                                </label>
-                                                <Field
-                                                    name="TiemVaccine3"
-                                                    key="TiemVaccine3"
-                                                    className="form-control "
-                                                />
+                        <Row>
+                            <Col
+                                lg={{span: 24}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Thuốc đang sử dụng/ngày"
+                                    name="thuocDangSuDungNgay"
+                                >
+                                    <Input.TextArea
+                                        showCount
+                                        maxLength={200}
+                                        name="thuocDangSuDungNgay"
+                                    />
+                                </Form.Item>
+                            </Col>
+                        </Row>
 
-                                                {errors.TiemVaccine3 &&
-                                                touched.TiemVaccine3 ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.TiemVaccine3
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-4">
-                                                <label htmlFor="NgayTiemMui3">
-                                                    Ngày tiêm mũi 3
-                                                </label>
-                                                <Field
-                                                    type="date"
-                                                    name="NgayTiemMui3"
-                                                    key="NgayTiemMui3"
-                                                    className="form-control "
-                                                />
+                        <Row>
+                            <Col
+                                lg={{span: 24}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Thuốc tạo máu"
+                                    name="thuocTaoMau"
+                                >
+                                    <Input name="thuocTaoMau" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
 
-                                                {errors.NgayTiemMui3 &&
-                                                touched.NgayTiemMui3 ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.NgayTiemMui3
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-4">
-                                                <label htmlFor="PhanUng3">
-                                                    Phản ứng sau tiêm mũi 3
-                                                </label>
-                                                <Field
-                                                    name="PhanUng3"
-                                                    key="PhanUng3"
-                                                    className="form-control "
-                                                />
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Bác sĩ điều trị"
+                                    name="bacSiDieuTri"
+                                >
+                                    <Input name="bacSiDieuTri" />
+                                </Form.Item>
+                            </Col>
 
-                                                {errors.PhanUng3 &&
-                                                touched.PhanUng3 ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.PhanUng3}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="col-md-12 no-padding">
-                                        <div className="solama">
-                                            III. KINH TẾ:
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="thuNhapBenhNhan">
-                                                    Thu nhập của bệnh nhân
-                                                    <span className="red">
-                                                        *
-                                                    </span>
-                                                </label>
-                                                <Field
-                                                    placeholder="VND/Tháng"
-                                                    name="thuNhapBenhNhan"
-                                                    key="thuNhapBenhNhan"
-                                                    className="form-control "
-                                                />
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Điện thoại bác sĩ"
+                                    name="dienThoaiBacSi"
+                                    rules={[
+                                        {
+                                            min: 10,
+                                            message:
+                                                'Vui lòng nhập ít nhất 10 ký tự'
+                                        },
+                                        {
+                                            max: 12,
+                                            message:
+                                                'Vui lòng nhập không quá 12 ký tự'
+                                        },
+                                        () => ({
+                                            validator(_, val) {
+                                                if (
+                                                    /^[0-9+.]*$/.test(val) ||
+                                                    val === undefined ||
+                                                    val === null
+                                                ) {
+                                                    return Promise.resolve();
+                                                }
+                                                return Promise.reject(
+                                                    'Số điện thoại chỉ được sử dụng chữ số'
+                                                );
+                                            }
+                                        })
+                                    ]}
+                                >
+                                    <Input name="dienThoaiBacSi" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+                        <Row>
+                            <label
+                                className="class-b"
+                                style={{marginBottom: '0px'}}
+                            >
+                                3. Bệnh lý kèm theo
+                            </label>
+                        </Row>
 
-                                                {errors.thuNhapBenhNhan &&
-                                                touched.thuNhapBenhNhan ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.thuNhapBenhNhan
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="thuNhapVoChongBenhNhan">
-                                                    Thu nhập của Vợ hoặc Chồng
-                                                </label>
-                                                <Field
-                                                    placeholder="VND/Tháng"
-                                                    name="thuNhapVoChongBenhNhan"
-                                                    key="thuNhapVoChongBenhNhan"
-                                                    className="form-control "
-                                                />
+                        <Row gutter={[10, 0]}>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="khongBiViemGan"
+                                    style={{marginBottom: '0px'}}
+                                    valuePropName="checked"
+                                >
+                                    <Checkbox
+                                        name="khongBiViemGan"
+                                        id="khongBiViemGan"
+                                    >
+                                        Không bị viêm gan
+                                    </Checkbox>
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="viemGanSieuViA"
+                                    style={{marginBottom: '0px'}}
+                                    valuePropName="checked"
+                                >
+                                    <Checkbox
+                                        name="viemGanSieuViA"
+                                        id="viemGanSieuViA"
+                                    >
+                                        Viêm gan siêu vi A
+                                    </Checkbox>
+                                </Form.Item>
+                            </Col>
 
-                                                {errors.thuNhapVoChongBenhNhan &&
-                                                touched.thuNhapVoChongBenhNhan ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.thuNhapVoChongBenhNhan
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="ngheNghiepVoChong">
-                                                    Nghề nghiệp
-                                                </label>
-                                                <Field
-                                                    name="ngheNghiepVoChong"
-                                                    key="ngheNghiepVoChong"
-                                                    className="form-control "
-                                                />
-                                                {/* <option value="">
-                                                    --Chọn--
-                                                </option>
-                                                <option value="Bác sĩ">
-                                                    Bác sĩ
-                                                </option>
-                                                <option value="Kỹ Sư">
-                                                    Kỹ Sư
-                                                </option>
-                                                <option value="Giáo viên">
-                                                    Giáo viên
-                                                </option>
-                                                <option value="Công nhân">
-                                                    Công nhân
-                                                </option>
-                                                <RenderDropdownDanhMuc code="nghenghiep" /> 
-                                            </Field> */}
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="viemGanSieuViB"
+                                    style={{marginBottom: '0px'}}
+                                    valuePropName="checked"
+                                >
+                                    <Checkbox
+                                        name="viemGanSieuViB"
+                                        id="viemGanSieuViB"
+                                    >
+                                        Viêm gan siêu vi B
+                                    </Checkbox>
+                                </Form.Item>
+                            </Col>
 
-                                                {errors.ngheNghiepVoChong &&
-                                                touched.ngheNghiepVoChong ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.ngheNghiepVoChong
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="thuNhapKhac">
-                                                    Thu nhập khác
-                                                </label>
-                                                <Field
-                                                    placeholder="VND/Tháng"
-                                                    name="thuNhapKhac"
-                                                    key="thuNhapKhac"
-                                                    className="form-control "
-                                                />
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="viemGanSieuViC"
+                                    style={{marginBottom: '0px'}}
+                                    valuePropName="checked"
+                                >
+                                    <Checkbox
+                                        name="viemGanSieuViC"
+                                        id="viemGanSieuViC"
+                                    >
+                                        Viêm gan siêu vi C
+                                    </Checkbox>
+                                </Form.Item>
+                            </Col>
+                        </Row>
 
-                                                {errors.thuNhapKhac &&
-                                                touched.thuNhapKhac ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {errors.thuNhapKhac}
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                            <div className="form-group col-md-6">
-                                                <label htmlFor="tienChuanBiChoViecGhepThan">
-                                                    Tiền chuẩn bị cho việc ghép{' '}
-                                                    {TypeBoPhanConstant.GetName(
-                                                        String(
-                                                            values.typePhieuDKGhepTang
-                                                        ).toLowerCase()
-                                                    )}
-                                                    (có sẵn)
-                                                    <span className="red">
-                                                        *
-                                                    </span>
-                                                </label>
-                                                <Field
-                                                    name="tienChuanBiChoViecGhepThan"
-                                                    key="tienChuanBiChoViecGhepThan"
-                                                    className="form-control "
-                                                />
-
-                                                {errors.tienChuanBiChoViecGhepThan &&
-                                                touched.tienChuanBiChoViecGhepThan ? (
-                                                    <>
-                                                        <div className="invalid-feedback">
-                                                            {
-                                                                errors.tienChuanBiChoViecGhepThan
-                                                            }
-                                                        </div>
-                                                    </>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="col-md-12 no-padding">
-                                        <div
-                                            className="solama"
-                                            style={{textTransform: 'uppercase'}}
-                                        >
-                                            IV. LÝ DO ĐĂNG KÝ CHỜ GHÉP{' '}
-                                            {TypeBoPhanConstant.GetName(
-                                                String(
-                                                    values.typePhieuDKGhepTang
-                                                ).toLowerCase()
-                                            )}{' '}
-                                            TỪ NGƯỜI HIẾN CHẾT NÃO:
-                                        </div>
-                                    </div>
-
-                                    <div className="form-row">
-                                        <div className="col-md-4">
-                                            <div className="custom-control custom-checkbox">
-                                                <Field
-                                                    type="checkbox"
-                                                    name="khongCoNguoiNhan"
-                                                    key="khongCoNguoiNhan"
-                                                    id="khongCoNguoiNhan"
-                                                    className="custom-control-input"
-                                                />
-
-                                                <label
-                                                    className="custom-control-label"
-                                                    htmlFor="khongCoNguoiNhan"
-                                                >
-                                                    Không có người hiến{' '}
-                                                    {TypeBoPhanConstant.GetName(
-                                                        String(
-                                                            values.typePhieuDKGhepTang
-                                                        ).toLowerCase()
-                                                    )}
-                                                </label>
-                                                {errors.khongCoNguoiNhan &&
-                                                touched.khongCoNguoiNhan ? (
-                                                    <div className="invalid-feedback">
-                                                        {
-                                                            errors.khongCoNguoiNhan
-                                                        }
-                                                    </div>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="col-md-4">
-                                            <div className="custom-control custom-checkbox ">
-                                                <Field
-                                                    type="checkbox"
-                                                    name="nguoiChoBiBenh"
-                                                    key="nguoiChoBiBenh"
-                                                    id="nguoiChoBiBenh"
-                                                    className="custom-control-input"
-                                                />
-
-                                                <label
-                                                    className="custom-control-label"
-                                                    htmlFor="nguoiChoBiBenh"
-                                                >
-                                                    Người hiến bị bệnh
-                                                </label>
-                                                {errors.nguoiChoBiBenh &&
-                                                touched.nguoiChoBiBenh ? (
-                                                    <div className="invalid-feedback">
-                                                        {errors.nguoiChoBiBenh}
-                                                    </div>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="col-md-4">
-                                            <div className="custom-control custom-checkbox ">
-                                                <Field
-                                                    type="checkbox"
-                                                    name="nguoiChoKhongHoaHopMau"
-                                                    key="nguoiChoKhongHoaHopMau"
-                                                    id="nguoiChoKhongHoaHopMau"
-                                                    className="custom-control-input"
-                                                />
-
-                                                <label
-                                                    className="custom-control-label"
-                                                    htmlFor="nguoiChoKhongHoaHopMau"
-                                                >
-                                                    Người hiến không hòa hợp
-                                                    nhóm máu
-                                                </label>
-                                                {errors.nguoiChoKhongHoaHopMau &&
-                                                touched.nguoiChoKhongHoaHopMau ? (
-                                                    <div className="invalid-feedback">
-                                                        {
-                                                            errors.nguoiChoKhongHoaHopMau
-                                                        }
-                                                    </div>
-                                                ) : null}
-                                            </div>
-                                        </div>
-                                        <div className="form-group col-md-12">
-                                            <label htmlFor="lyDoKhac">
-                                                Lý do khác
-                                            </label>
-                                            <Field
-                                                name="lyDoKhac"
-                                                key="lyDoKhac"
-                                                className="form-control "
-                                            />
-                                            {errors.lyDoKhac &&
-                                            touched.lyDoKhac ? (
-                                                <div className="invalid-feedback">
-                                                    {errors.lyDoKhac}
-                                                </div>
-                                            ) : null}
-                                        </div>
-                                    </div>
-
-                                    <div className="col-md-12 no-padding">
-                                        <div className="solama">
-                                            VI. QUAN HỆ GIA ĐÌNH:
-                                        </div>
-                                        {RenderEditQuanHeGiaDinh()}
-                                    </div>
-                                    <div className="col-md-12 no-padding">
-                                        <div className="solama">
-                                            VI. CAM KẾT ĐĂNG KÝ CHỜ GHÉP{' '}
-                                            <p
-                                                style={{
-                                                    textTransform: 'uppercase',
-                                                    display: 'inline'
-                                                }}
-                                            >
-                                                {TypeBoPhanConstant.GetName(
-                                                    typeCreate
-                                                )}
-                                            </p>{' '}
-                                            TỪ NGƯỜI HIẾN CHẾT NÃO HAY TIM NGỪNG
-                                            ĐẬP
-                                        </div>
-                                        <div
-                                            className="form-group col-md-12"
-                                            style={{
-                                                lineHeight: '30px',
-                                                textAlign: 'justify'
-                                            }}
-                                        >
-                                            <span>
-                                                Hiện tôi bị bệnh{' '}
-                                                <div
-                                                    style={{
-                                                        width: '150px',
-                                                        display: 'inline-table'
-                                                    }}
-                                                >
-                                                    <Field
-                                                        name="choGhepBenh"
-                                                        key="choGhepBenh"
-                                                        className="form-control"
-                                                    />
-                                                    {errors.choGhepBenh &&
-                                                    touched.choGhepBenh ? (
-                                                        <>
-                                                            <div className="invalid-feedback">
-                                                                {
-                                                                    errors.choGhepBenh
-                                                                }
-                                                            </div>
-                                                        </>
-                                                    ) : null}
-                                                </div>{' '}
-                                                đang được điều trị tại{' '}
-                                                <div
-                                                    style={{
-                                                        width: '150px',
-                                                        display: 'inline-table'
-                                                    }}
-                                                >
-                                                    <Field
-                                                        name="choGhepBVDieuTri"
-                                                        key="choGhepBVDieuTri"
-                                                        className="form-control "
-                                                        style={{}}
-                                                    />
-                                                    {errors.choGhepBVDieuTri &&
-                                                    touched.choGhepBVDieuTri ? (
-                                                        <>
-                                                            <div className="invalid-feedback">
-                                                                {
-                                                                    errors.choGhepBVDieuTri
-                                                                }
-                                                            </div>
-                                                        </>
-                                                    ) : null}
-                                                </div>
-                                                , có chỉ định ghép{' '}
-                                                {TypeBoPhanConstant.GetName(
-                                                    typeCreate
-                                                )}
-                                                . Tôi đã được các bác sĩ phụ
-                                                trách giải thích rõ về các bước
-                                                thực hiện đánh giá tình trạng
-                                                sức khỏe chung, thực hiện quá
-                                                trình tuyển chọn, thời gian chờ
-                                                đợi, tác dụng phụ của thuốc ức
-                                                chế miễn dịch điều trị sau ghép{' '}
-                                                {TypeBoPhanConstant.GetName(
-                                                    typeCreate
-                                                )}
-                                                , chi phí ghép{' '}
-                                                {TypeBoPhanConstant.GetName(
-                                                    typeCreate
-                                                )}
-                                                , chuẩn bị môi trường và cách
-                                                sinh hoạt sau khi được ghép{' '}
-                                                {TypeBoPhanConstant.GetName(
-                                                    typeCreate
-                                                )}
-                                                . Tôi xin được đăng ký vào danh
-                                                sách chờ ghép{' '}
-                                                {TypeBoPhanConstant.GetName(
-                                                    typeCreate
-                                                )}{' '}
-                                                từ người hiến chết não hay tim
-                                                ngừng đập tại Bệnh viện Chợ Rẫy,
-                                                tôi cam kết tuân thủ các quy
-                                                định trong quá trình điều trị
-                                                bệnh trước và sau ghép{' '}
-                                                {TypeBoPhanConstant.GetName(
-                                                    typeCreate
-                                                )}
-                                                .
-                                            </span>
-                                        </div>
-                                    </div>
-                                </Form>
-                            )}
-                        </Formik>
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button
-                            variant="secondary"
-                            onClick={() => onCloseEntityEditModal()}
+                        <Form.Item
+                            name="truocHoacSauLocMau"
+                            valuePropName="checked"
                         >
-                            Đóng
-                        </Button>
-                        <Button
-                            variant="primary"
-                            onClick={() => {
-                                submitEdit();
-                                canhbaoErrorModal(formRef);
-                            }}
-                        >
-                            Hoàn thành
-                        </Button>
-                    </Modal.Footer>
+                            <Radio.Group name="truocHoacSauLocMau">
+                                <Radio value="1">Viêm gan trước lọc máu</Radio>
+                                <Radio value="2">Viêm gan sau lọc máu</Radio>
+                            </Radio.Group>
+                        </Form.Item>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Điều trị viêm gan từ lúc nào"
+                                    name="dieuTriViemGanTu"
+                                >
+                                    <Input name="dieuTriViemGanTu" />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 16}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Thuốc điều trị viêm gan"
+                                    name="thuocTriViemGan"
+                                >
+                                    <Input name="thuocTriViemGan" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="laoPhoi"
+                                    valuePropName="checked"
+                                >
+                                    <Radio.Group
+                                        name="laoPhoi"
+                                        defaultValue="0"
+                                    >
+                                        <Radio value="0">
+                                            Không có tiền căn lao
+                                        </Radio>
+                                        <Radio value="1">Lao phổi</Radio>
+                                    </Radio.Group>
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="laoCoQuanKhac"
+                                    label="Lao các cơ quan khác"
+                                >
+                                    <Input name="laoCoQuanKhac" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Từ lúc nào"
+                                    name="thoiGianBiLao"
+                                >
+                                    <DatePicker
+                                        format="DD/MM/YYYY"
+                                        name="thoiGianBiLao"
+                                        placeholder="Vui lòng chọn ngày"
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 16}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Thời gian điều trị/Nơi điều trị"
+                                    name="thoiGianDieuTriAndNoiDieuTri"
+                                >
+                                    <Input name="thoiGianDieuTriAndNoiDieuTri" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Đái tháo đường"
+                                    name="daiThaoDuong"
+                                    valuePropName="checked"
+                                >
+                                    <Radio.Group
+                                        name="daiThaoDuong"
+                                        defaultValue="0"
+                                    >
+                                        <Radio value="1">Có</Radio>
+                                        <Radio value="0">Không</Radio>
+                                    </Radio.Group>
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Từ lúc nào"
+                                    name="thoiGianBiDaiThaoDuong"
+                                    placeholder="Vui lòng chọn ngày"
+                                >
+                                    <DatePicker
+                                        format="DD/MM/YYYY"
+                                        name="thoiGianBiDaiThaoDuong"
+                                        placeholder="Vui lòng chọn ngày"
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Thuốc điều trị"
+                                    name="thuocDieuTriDaiThaoDuong"
+                                >
+                                    <Input name="thuocDieuTriDaiThaoDuong" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Tăng huyết áp"
+                                    name="tangHuyetAp"
+                                    valuePropName="checked"
+                                >
+                                    <Radio.Group
+                                        name="tangHuyetAp"
+                                        defaultValue="0"
+                                    >
+                                        <Radio value="1">Có</Radio>
+                                        <Radio value="0">Không</Radio>
+                                    </Radio.Group>
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Từ lúc nào"
+                                    name="thoiGianBiTangHuyetAp"
+                                >
+                                    <DatePicker
+                                        format="DD/MM/YYYY"
+                                        name="thoiGianBiTangHuyetAp"
+                                        placeholder="Vui lòng chọn ngày"
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Thuốc điều trị"
+                                    name="thuocDieuTri"
+                                >
+                                    <Input name="thuocDieuTri" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Các bệnh khác"
+                                    name="benhKhac"
+                                >
+                                    <Input name="benhKhac" />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Tình hình hiện tại"
+                                    name="tinhTrang"
+                                >
+                                    <Input name="tinhTrang" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row>
+                            <label className="class-b">
+                                4.Tiền căn ngoại khoa
+                            </label>
+                        </Row>
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <label>Có phẫu thuật gì trước đó không</label>
+                            </Col>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="daPhauThuat"
+                                    valuePropName="checked"
+                                >
+                                    <Radio.Group
+                                        name="daPhauThuat"
+                                        defaultValue="0"
+                                    >
+                                        <Radio value="1">Có</Radio>
+                                        <Radio value="0">Không</Radio>
+                                    </Radio.Group>
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Ngày tháng năm phẫu thuật"
+                                    name="ngayThangPhauThuat"
+                                >
+                                    <DatePicker
+                                        format="DD/MM/YYYY"
+                                        name="ngayThangPhauThuat"
+                                        placeholder="Vui lòng chọn ngày"
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Phẫu thuật tại bệnh viện"
+                                    name="benhVienPhauThuat"
+                                >
+                                    <Input name="benhVienPhauThuat" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Nếu có thì bệnh gì"
+                                    name="coPhauThuat"
+                                >
+                                    <Input name="coPhauThuat" />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Tình trạng hiện tại"
+                                    name="tinhTrangHienTai"
+                                >
+                                    <Input name="tinhTrangHienTai" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row>
+                            <label
+                                className="class-b"
+                                style={{marginBottom: '0px'}}
+                            >
+                                5.Thói quen uống rượu
+                            </label>
+                        </Row>
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="uongRuouBia"
+                                    valuePropName="checked"
+                                >
+                                    <Radio.Group
+                                        name="uongRuouBia"
+                                        defaultValue="0"
+                                    >
+                                        <Radio value="0">Không</Radio>
+                                        <Radio value="1">Có</Radio>
+                                    </Radio.Group>
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="soLanTuan"
+                                    label="Số lần/Tuần"
+                                >
+                                    <InputNumber
+                                        name="soLanTuan"
+                                        min={0}
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="soLuongLan"
+                                    label="Số lượng trên tuần"
+                                >
+                                    <Input
+                                        name="soLuongLan"
+                                        placeholder="lít/chai/lon/ly"
+                                    />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="hutThuoc"
+                                    label="6.Thói quen hút thuốc"
+                                    valuePropName="checked"
+                                >
+                                    <Radio.Group
+                                        name="hutThuoc"
+                                        defaultValue="0"
+                                    >
+                                        <Radio value="0">Không</Radio>
+                                        <Radio value="1">Có</Radio>
+                                    </Radio.Group>
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="dieuTrenNgay"
+                                    label="Số điếu trên ngày"
+                                >
+                                    <InputNumber
+                                        name="dieuTrenNgay"
+                                        placeholder="Điếu/ngày"
+                                        style={{width: '100%'}}
+                                        min={0}
+                                    />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row>
+                            <label
+                                className="class-b"
+                                style={{marginBottom: '0px'}}
+                            >
+                                7. Tiền căn gia đình
+                            </label>
+                        </Row>
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="biBenhThan"
+                                    label="Bệnh thận"
+                                    valuePropName="checked"
+                                >
+                                    <Radio.Group>
+                                        <Radio value="1">Có</Radio>
+                                        <Radio value="0">Không</Radio>
+                                    </Radio.Group>
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 4}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="biBenhLao"
+                                    label="Bệnh lao"
+                                    valuePropName="checked"
+                                >
+                                    <Radio.Group
+                                        name="biBenhLao"
+                                        defaultValue={
+                                            entityObj.BiBenhLao !== undefined
+                                                ? String(entityObj.BiBenhLao)
+                                                : String(0)
+                                        }
+                                    >
+                                        <Radio value="1">Có</Radio>
+                                        <Radio value="0">Không</Radio>
+                                    </Radio.Group>
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 4}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="biDaiThaoDuong"
+                                    label="Đái tháo đường"
+                                    valuePropName="checked"
+                                >
+                                    <Radio.Group
+                                        name="biBenhLao"
+                                        defaultValue={
+                                            entityObj.BiBenhLao !== undefined
+                                                ? String(entityObj.BiBenhLao)
+                                                : String(0)
+                                        }
+                                    >
+                                        <Radio value="1">Có</Radio>
+                                        <Radio value="0">Không</Radio>
+                                    </Radio.Group>
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 4}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="biTangHuyetAp"
+                                    label="Tăng huyết áp"
+                                    valuePropName="checked"
+                                >
+                                    <Radio.Group
+                                        name="biTangHuyetAp"
+                                        defaultValue={
+                                            entityObj.BiTangHuyetAp !==
+                                            undefined
+                                                ? String(
+                                                      entityObj.BiTangHuyetAp
+                                                  )
+                                                : String(0)
+                                        }
+                                    >
+                                        <Radio value="1">Có</Radio>
+                                        <Radio value="0">Không</Radio>
+                                    </Radio.Group>
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 4}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="biUngThu"
+                                    label="Ung thư"
+                                    valuePropName="checked"
+                                >
+                                    <Radio.Group
+                                        name="biUngThu"
+                                        defaultValue={
+                                            entityObj.BiUngThu !== undefined
+                                                ? String(entityObj.BiUngThu)
+                                                : String(0)
+                                        }
+                                    >
+                                        <Radio value="1">Có</Radio>
+                                        <Radio value="0">Không</Radio>
+                                    </Radio.Group>
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    label="Bênh khác"
+                                    name="biBenhKhac"
+                                    className="my-label"
+                                >
+                                    <Input className="biBenhKhac" />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="songCungDiaChi"
+                                    valuePropName="checked"
+                                >
+                                    <Radio.Group
+                                        name="songCungDiaChi"
+                                        defaultValue={
+                                            entityObj.SongCungDiaChi !==
+                                            undefined
+                                                ? String(
+                                                      entityObj.SongCungDiaChi
+                                                  )
+                                                : String(0)
+                                        }
+                                    >
+                                        <Radio value="1">
+                                            Sống cùng địa chỉ
+                                        </Radio>
+                                        <Radio value="0">
+                                            Không cùng địa chỉ
+                                        </Radio>
+                                    </Radio.Group>
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Nếu có thì là ai"
+                                    name="nguoiThanBiBenh"
+                                >
+                                    <Input name="nguoiThanBiBenh" />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    label="Tình trạng hiện tại"
+                                    name="tinhTrangBenhNguoiThanHienTai"
+                                >
+                                    <Input name="tinhTrangBenhNguoiThanHienTai" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row>
+                            <Col
+                                lg={{span: 24}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <div
+                                    className="class-b"
+                                    style={{marginBottom: '0px'}}
+                                >
+                                    8. Tiền sử covid
+                                </div>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 0]}>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="NhiemCovid"
+                                    style={{marginBottom: '0px'}}
+                                    valuePropName="checked"
+                                >
+                                    <Checkbox
+                                        name="NhiemCovid"
+                                        id="NhiemCovid"
+                                        onClick={() => KhongBiNhiemCheck()}
+                                    >
+                                        Không bị nhiễm covid
+                                    </Checkbox>
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="BiTruocTiem"
+                                    style={{marginBottom: '0px'}}
+                                    valuePropName="checked"
+                                >
+                                    <Checkbox
+                                        name="BiTruocTiem"
+                                        id="BiTruocTiem"
+                                    >
+                                        Bị nhiễm trước tiêm
+                                    </Checkbox>
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="BiSauTiem"
+                                    style={{marginBottom: '0px'}}
+                                    valuePropName="checked"
+                                >
+                                    <Checkbox name="BiSauTiem" id="BiSauTiem">
+                                        Bị nhiễm sau tiêm
+                                    </Checkbox>
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="CoTrieuChung"
+                                    style={{marginBottom: '0px'}}
+                                    valuePropName="checked"
+                                >
+                                    <Checkbox
+                                        name="CoTrieuChung"
+                                        id="CoTrieuChung"
+                                    >
+                                        Không có triệu chứng
+                                    </Checkbox>
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="TrieuChungNhe"
+                                    style={{marginBottom: '0px'}}
+                                    valuePropName="checked"
+                                >
+                                    <Checkbox
+                                        name="TrieuChungNhe"
+                                        id="TrieuChungNhe"
+                                    >
+                                        Triệu chứng nhẹ
+                                    </Checkbox>
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="TrieuChungtrungBinh"
+                                    style={{marginBottom: '0px'}}
+                                    valuePropName="checked"
+                                >
+                                    <Checkbox
+                                        name="TrieuChungtrungBinh"
+                                        id="TrieuChungtrungBinh"
+                                    >
+                                        Triệu chứng trung bình
+                                    </Checkbox>
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="NhapVien"
+                                    style={{marginBottom: '0px'}}
+                                    valuePropName="checked"
+                                >
+                                    <Checkbox name="NhapVien" id="NhapVien">
+                                        Nhập viện
+                                    </Checkbox>
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item label="Thời gian nằm viện(ngày)">
+                                    <InputNumber
+                                        name="ThoiGianNamVien"
+                                        min={0}
+                                        max={100}
+                                        style={{width: '100%'}}
+                                        defaultValue={0}
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="ThoMay"
+                                    style={{marginBottom: '0px'}}
+                                    valuePropName="checked"
+                                >
+                                    <Checkbox name="ThoMay" id="ThoMay">
+                                        Thở máy
+                                    </Checkbox>
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 6}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="ThoHFNC"
+                                    style={{marginBottom: '0px'}}
+                                    valuePropName="checked"
+                                >
+                                    <Checkbox name="ThoHFNC" id="ThoHFNC">
+                                        Thở HFNC
+                                    </Checkbox>
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row>
+                            <label
+                                className="class-b"
+                                style={{marginBottom: '0px'}}
+                            >
+                                9. Tiêm vaccine ngừa covid
+                            </label>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="TiemVaccine"
+                                    label="Tiêm vaccine ngừa covid mũi 1"
+                                >
+                                    <Input name="TiemVaccine" />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="NgayTiemMui1"
+                                    label="Ngày tiêm mũi 1"
+                                >
+                                    <DatePicker
+                                        format="DD/MM/YYYY"
+                                        name="NgayTiemMui1"
+                                        placeholder="Vui lòng chọn ngày"
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="PhanUng"
+                                    label="Phản ứng sau tiêm lần 1"
+                                >
+                                    <Input name="PhanUng" />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="TiemVaccine2"
+                                    label="Tiêm vaccine ngừa covid mũi 2"
+                                >
+                                    <Input name="TiemVaccine2" />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="NgayTiemMui2"
+                                    label="Ngày tiêm mũi 2"
+                                >
+                                    <DatePicker
+                                        format="DD/MM/YYYY"
+                                        name="NgayTiemMui2"
+                                        placeholder="Vui lòng chọn ngày"
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="PhanUng2"
+                                    label="Phản ứng sau tiêm lần 2"
+                                >
+                                    <Input name="PhanUng2" />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="TiemVaccine3"
+                                    label="Tiêm vaccine ngừa covid mũi 3"
+                                >
+                                    <Input name="TiemVaccine3" />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="NgayTiemMui3"
+                                    label="Ngày tiêm mũi 3"
+                                >
+                                    <DatePicker
+                                        format="DD/MM/YYYY"
+                                        name="NgayTiemMui3"
+                                        placeholder="Vui lòng chọn ngày"
+                                        style={{width: '100%'}}
+                                    />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    className="my-label"
+                                    name="PhanUng3"
+                                    label="Phản ứng sau tiêm lần 3"
+                                >
+                                    <Input name="PhanUng3" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row>
+                            <div className="solama">III. Kinh tế</div>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    label="Thu nhập của bệnh nhân"
+                                    className="my-label"
+                                >
+                                    <InputNumber
+                                        min={0}
+                                        style={{width: '100%'}}
+                                        name="thuNhapBenhNhan"
+                                        placeholder="vnd/tháng"
+                                    />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    label="Thu nhập của vợ hoặc chồng"
+                                    className="my-label"
+                                >
+                                    <InputNumber
+                                        min={0}
+                                        style={{width: '100%'}}
+                                        name="thuNhapVoChongBenhNhan"
+                                        placeholder="vnd/tháng"
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    label="Nghề nghiệp"
+                                    className="my-label"
+                                >
+                                    <Input name="ngheNghiepVoChong" />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    label="Thu nhập khác"
+                                    className="my-label"
+                                >
+                                    <InputNumber
+                                        min={0}
+                                        style={{width: '100%'}}
+                                        name="thuNhapKhac"
+                                        placeholder="vnd/tháng"
+                                    />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    label="Tiền chuẩn bị cho việc ghép thận(có sẵn)"
+                                    className="my-label"
+                                >
+                                    <InputNumber
+                                        min={0}
+                                        style={{width: '100%'}}
+                                        name="tienChuanBiChoViecGhepThan"
+                                        placeholder="vnd/tháng"
+                                    />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row>
+                            <div className="solama">
+                                IV. LÝ DO ĐĂNG KÝ CHỜ GHÉP
+                                <p
+                                    style={{
+                                        textTransform: 'uppercase',
+                                        display: 'inline'
+                                    }}
+                                >
+                                    {' '}
+                                    {TypeBoPhanConstant.GetName(
+                                        entityObj.TypePhieuDKGhepTang
+                                    )}
+                                </p>{' '}
+                                TỪ NGƯỜI HIẾN CHẾT NÃO:
+                            </div>
+                        </Row>
+
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="khongCoNguoiNhan"
+                                    style={{marginBottom: '0px'}}
+                                    valuePropName="checked"
+                                >
+                                    <Checkbox
+                                        id="khongCoNguoiNhan"
+                                        name="khongCoNguoiNhan"
+                                    >
+                                        Không có người hiến thận
+                                    </Checkbox>
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="nguoiChoBiBenh"
+                                    style={{marginBottom: '0px'}}
+                                    valuePropName="checked"
+                                >
+                                    <Checkbox
+                                        id="nguoiChoBiBenh"
+                                        name="nguoiChoBiBenh"
+                                    >
+                                        Người hiến bị bệnh
+                                    </Checkbox>
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 8}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="nguoiChoKhongHoaHopMau"
+                                    style={{marginBottom: '0px'}}
+                                    valuePropName="checked"
+                                >
+                                    <Checkbox
+                                        name="nguoiChoKhongHoaHopMau"
+                                        id="nguoiChoKhongHoaHopMau"
+                                    >
+                                        Người hiến không hòa hợp nhóm máu
+                                    </Checkbox>
+                                </Form.Item>
+                            </Col>
+                        </Row>
+
+                        <Row>
+                            <Col
+                                lg={{span: 24}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="lyDoKhac"
+                                    label="Lý do khác"
+                                    className="my-label"
+                                >
+                                    <Input name="lyDoKhac" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+                        <div className="col-md-12 no-padding">
+                            <div className="solama">V. QUAN HỆ GIA ĐÌNH:</div>
+                            {RenderEditQuanHeGiaDinh()}
+                        </div>
+                        <Row>
+                            <div className="solama">
+                                VI. Cam kết đăng ký chờ ghép thận từ người hiến
+                                chết não hay tim ngừng đập
+                            </div>
+                            <Col
+                                lg={{span: 24}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <span>
+                                    Hiện tôi bị bệnh{' '}
+                                    <div
+                                        style={{
+                                            width: '150px',
+                                            display: 'inline-table'
+                                        }}
+                                    >
+                                        <Form.Item name="choGhepBenh">
+                                            <Input name="choGhepBenh" />
+                                        </Form.Item>
+                                    </div>{' '}
+                                    đang được điều trị tại{' '}
+                                    <div
+                                        style={{
+                                            width: '150px',
+                                            display: 'inline-table'
+                                        }}
+                                    >
+                                        <Form.Item name="choGhepBVDieuTri">
+                                            <Input name="choGhepBVDieuTri" />
+                                        </Form.Item>
+                                    </div>
+                                    , có chỉ định ghép{' '}
+                                    {TypeBoPhanConstant.GetName(
+                                        entityObj.TypePhieuDKGhepTang
+                                    )}
+                                    . Tôi đã được các bác sĩ phụ trách giải
+                                    thích rõ về các bước thực hiện đánh giá tình
+                                    trạng sức khỏe chung, thực hiện quá trình
+                                    tuyển chọn, thời gian chờ đợi, tác dụng phụ
+                                    của thuốc ức chế miễn dịch điều trị sau ghép{' '}
+                                    {TypeBoPhanConstant.GetName(
+                                        entityObj.TypePhieuDKGhepTang
+                                    )}
+                                    , chi phí ghép{' '}
+                                    {TypeBoPhanConstant.GetName(
+                                        entityObj.TypePhieuDKGhepTang
+                                    )}
+                                    , chuẩn bị môi trường và cách sinh hoạt sau
+                                    khi được ghép{' '}
+                                    {TypeBoPhanConstant.GetName(
+                                        entityObj.TypePhieuDKGhepTang
+                                    )}
+                                    . Tôi xin được đăng ký vào danh sách chờ
+                                    ghép{' '}
+                                    {TypeBoPhanConstant.GetName(
+                                        entityObj.TypePhieuDKGhepTang
+                                    )}{' '}
+                                    từ người hiến chết não hay tim ngừng đập tại
+                                    Bệnh viện Chợ Rẫy, tôi cam kết tuân thủ các
+                                    quy định trong quá trình điều trị bệnh trước
+                                    và sau ghép{' '}
+                                    {TypeBoPhanConstant.GetName(
+                                        entityObj.TypePhieuDKGhepTang
+                                    )}
+                                    .
+                                </span>
+                            </Col>
+                        </Row>
+                    </Form>
                 </Modal>
             </>
         );

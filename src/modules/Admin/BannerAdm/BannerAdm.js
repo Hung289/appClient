@@ -15,16 +15,8 @@ import {
     BANNER_EDIT_CLOSE,
     BANNER_SEARCH_SAVE
 } from '@app/store/ActionType/BannerTypeAction';
-import {
-    Button,
-    Card,
-    Col,
-    Dropdown,
-    ListGroup,
-    ListGroupItem,
-    Modal
-} from 'react-bootstrap';
-import {Field, Form, Formik, useFormik, useFormikContex} from 'formik';
+import {ListGroup, ListGroupItem} from 'react-bootstrap';
+import {Field, Formik, useFormik, useFormikContex} from 'formik';
 import {Link, useHistory} from 'react-router-dom';
 import React, {useEffect, useRef, useState} from 'react';
 
@@ -36,6 +28,28 @@ import {confirmAlert} from 'react-confirm-alert'; // Import
 import {connect} from 'react-redux';
 import {toast} from 'react-toastify';
 import {ContextMenu, MenuItem, ContextMenuTrigger} from 'react-contextmenu';
+import {
+    Modal,
+    Drawer,
+    Button,
+    Space,
+    Row,
+    Col,
+    Input,
+    Radio,
+    Select,
+    notification,
+    Descriptions,
+    Table,
+    Menu,
+    Avatar,
+    Pagination,
+    Dropdown,
+    Form,
+    Card,
+    Checkbox
+} from 'antd';
+import * as antIcon from '@ant-design/icons';
 import AdminSecsionHead from '../AdminSecsionHead';
 
 // import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
@@ -87,33 +101,46 @@ const BannerAdm = (props) => {
             LoadEntityData(objSearch);
         }
     });
-    const SignupSchema = Yup.object().shape({
-        Name: Yup.string()
-            .trim()
-            .min(2, 'Vui lòng nhập ít nhất 2 ký tự')
-            .max(255, 'Vui lòng nhập không quá 255 ký tự')
-            .required('Vui lòng nhập thông tin này'),
-        Comment: Yup.string().trim().required('Vui lòng nhập thông tin này')
-    });
-
-    const SearchSchema = Yup.object().shape({
-        NameFilter: Yup.string().min(2, 'Vui lòng nhập ít nhất 2 ký tự'),
-        CommentFilter: Yup.string().min(2, 'Vui lòng nhập ít nhất 2 ký tự'),
-        ImageLinkFilter: Yup.string().min(2, 'Vui lòng nhập ít nhất 2 ký tự'),
-        IsLinkActiveFilter: Yup.string().nullable(),
-        IsVisibleFilter: Yup.string().nullable()
-    });
-
-    function ChangeFileUpload(event) {
+    let dataSelected;
+    async function ChangeFileUpload(event) {
         // eslint-disable-next-line prefer-destructuring
-        let Arr = event.target.files;
-        [FileSelected, ...Arr] = Arr;
-        const image = document.getElementById('ImageSrc');
-        image.src = URL.createObjectURL(event.target.files[0]);
+        const Arr = event.target.files;
+        console.log(Arr);
+        const dataOfFile = new Promise((resolve, reject) => {
+            const reader = new FileReader();
+
+            reader.onload = (eventda) => {
+                resolve(eventda.target.result);
+            };
+
+            reader.onerror = (err) => {
+                reject(err);
+            };
+
+            reader.readAsDataURL(Arr[0]);
+        });
+        if (Arr[0] !== undefined) {
+            FileSelected = {
+                fileName: Arr[0].name,
+                size: Arr[0].size,
+                type: Arr[0].type,
+                data: await dataOfFile.then((rs) => rs)
+            };
+            const image = document.getElementById('ImageSrcShow');
+
+            image.src = URL.createObjectURL(event.target.files[0]);
+        } else {
+            const image = document.getElementById('ImageSrcShow');
+            image.src =
+                'https://cidrapbusiness.org/wp-content/uploads/2017/10/noimage.gif';
+            FileSelected = {current: null};
+        }
     }
+
     function SaveAnh() {
         const fd = new FormData();
-        fd.append('files', FileSelected, FileSelected.name);
+
+        fd.append('files', FileSelected, FileSelected.fileName);
         const dataAPI = axios
             .post(`${Constant.PathServer}/api/Banners/PostImage`, fd, {
                 onUploadProgress: (ProgressEvent) => {
@@ -140,228 +167,207 @@ const BannerAdm = (props) => {
         const handleShow = () => setShow(true);
         const submitCreate = () => {
             if (formRef.current) {
-                formRef.current.handleSubmit();
+                formRef.current.submit();
             }
         };
         return (
             <>
-                <Button
-                    variant=""
-                    className="btn-nobg"
-                    size="sm"
-                    onClick={handleShow}
-                >
+                <Button type="primary" onClick={handleShow}>
                     <i className="fa fa-plus" aria-hidden="true" />
                     Tạo mới
                 </Button>
 
-                <Modal show={show} size="lg" onHide={handleClose}>
-                    <Modal.Header closeButton>
-                        <Modal.Title>Tạo mới banner</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        <Formik
-                            innerRef={formRef}
-                            initialValues={{
-                                Name: '',
+                <Modal
+                    title="Thêm mới banner"
+                    centered
+                    visible={show}
+                    onOk={() => submitCreate()}
+                    onCancel={handleClose}
+                    width={1000}
+                    zIndex={1040}
+                    okText="Hoàn thành"
+                    cancelText="Đóng"
+                >
+                    <Form
+                        ref={formRef}
+                        labelCol={{span: 24}}
+                        wrapperCol={{span: 24}}
+                        layout="vertical"
+                        initialValues={{
+                            Name: '',
+                            IsVisible: true,
+                            Order: 0,
+                            ImageLink: '',
+                            IsLinkActive: true,
+                            Comment: ''
+                        }}
+                        onFinish={(values) => {
+                            const ObjSave = {
+                                ...values
+                            };
+                            // same shape as initial values
+                            if (
+                                FileSelected !== undefined &&
+                                FileSelected.data
+                            ) {
+                                SaveAnh()
+                                    .then((dataResult) => {
+                                        if (dataResult.Status) {
+                                            ObjSave.ImageSrc = dataResult.Data;
+                                            onCreateEntity(ObjSave);
+                                        } else {
+                                            toast.error(
+                                                dataResult.MessageError
+                                            );
+                                        }
+                                    })
+                                    .catch((err) => {
+                                        toast.error('Lỗi kết nối');
+                                    });
+                            } else {
+                                onCreateEntity(ObjSave);
+                            }
+                            FileSelected = null;
+                        }}
+                    >
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item label="Ảnh Banner" name="ImageSrc">
+                                    <Input
+                                        type="file"
+                                        name="ImageSrc"
+                                        key="ImageSrc"
+                                        className="form-control img-padding"
+                                        onChange={ChangeFileUpload}
+                                    />
+                                </Form.Item>
+                            </Col>
 
-                                IsVisible: true,
-                                Order: 0,
-                                ImageLink: '',
-                                IsLinkActive: true,
-                                Comment: ''
-                            }}
-                            validationSchema={SignupSchema}
-                            onSubmit={(values) => {
-                                const ObjSave = {
-                                    ...values
-                                };
-                                // same shape as initial values
-                                if (
-                                    FileSelected !== undefined &&
-                                    FileSelected.name
-                                ) {
-                                    SaveAnh()
-                                        .then((dataResult) => {
-                                            if (dataResult.Status) {
-                                                ObjSave.ImageSrc =
-                                                    dataResult.Data;
-                                                onCreateEntity(ObjSave);
-                                            } else {
-                                                toast.error(
-                                                    dataResult.MessageError
-                                                );
-                                            }
-                                        })
-                                        .catch((err) => {
-                                            toast.error('Lỗi kết nối');
-                                        });
-                                } else {
-                                    onCreateEntity(ObjSave);
-                                }
-                                FileSelected = null;
-                            }}
-                        >
-                            {({errors, touched}) => (
-                                <Form ref={formCreateEntity}>
-                                    <div className="form-row">
-                                        <div className="form-group col-md-6">
-                                            <label htmlFor="ImageSrc">
-                                                Ảnh Banner
-                                            </label>
-                                            <Field
-                                                type="file"
-                                                name="ImageSrc"
-                                                key="ImageSrc"
-                                                className="form-control img-padding"
-                                                onChange={ChangeFileUpload}
-                                            />
-                                            {errors.ImageSrc &&
-                                            touched.ImageSrc ? (
-                                                <>
-                                                    <div className="invalid-feedback">
-                                                        {errors.ImageSrc}
-                                                    </div>
-                                                </>
-                                            ) : null}
-                                        </div>
-                                        <div className="form-group col-md-6">
-                                            <>
-                                                <img
-                                                    className="img-ImageSrc"
-                                                    id="ImageSrc"
-                                                    alt=""
-                                                />
-                                            </>
-                                        </div>
-                                    </div>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <img
+                                    style={{width: '120px', height: '80px'}}
+                                    id="ImageSrcShow"
+                                    alt=""
+                                />
+                            </Col>
+                        </Row>
 
-                                    <div className="form-group">
-                                        <label htmlFor="title">
-                                            Tên Banner
-                                            <span className="red">*</span>
-                                        </label>
-                                        <Field
-                                            name="Name"
-                                            key="Name"
-                                            className="form-control "
-                                        />
-                                        {errors.Name && touched.Name ? (
-                                            <>
-                                                <div className="invalid-feedback">
-                                                    {errors.Name}
-                                                </div>
-                                            </>
-                                        ) : null}
-                                    </div>
-                                    <div className="form-group">
-                                        <label htmlFor="Comment">
-                                            Mô tả<span className="red">*</span>
-                                        </label>
-                                        <Field
-                                            as="textarea"
-                                            rows={3}
-                                            name="Comment"
-                                            key="Comment"
-                                            className="form-control"
-                                        />
-                                        {errors.Comment && touched.Comment ? (
-                                            <div className="invalid-feedback">
-                                                {errors.Comment}
-                                            </div>
-                                        ) : null}
-                                    </div>
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 24}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    label="Tên Banner"
+                                    name="Name"
+                                    rules={[
+                                        {
+                                            min: 2,
+                                            message:
+                                                'Vui lòng nhập ít nhất 2 ký tự'
+                                        },
+                                        {
+                                            max: 255,
+                                            message:
+                                                'Vui lòng không nhập quá 255 ký tự'
+                                        },
+                                        {
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input name="Name" />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 24}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    label="Mô tả"
+                                    name="Comment"
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input.TextArea name="Comment" rows={4} />
+                                </Form.Item>
+                            </Col>
+                        </Row>
 
-                                    <div className="mb-3 custom-control custom-checkbox">
-                                        <Field
-                                            type="checkbox"
-                                            name="IsVisible"
-                                            key="IsVisible"
-                                            id="IsVisible"
-                                            className="custom-control-input"
-                                        />
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 24}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item name="ImageLink" label="Liên kết">
+                                    <Input name="ImageLink" />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 24}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item name="Order" label="Thứ tự">
+                                    <Input name="Order" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
 
-                                        <label
-                                            className="custom-control-label"
-                                            htmlFor="IsVisible"
-                                        >
-                                            Hiển thị?
-                                        </label>
-                                        {errors.IsVisible &&
-                                        touched.IsVisible ? (
-                                            <div className="invalid-feedback">
-                                                {errors.IsVisible}
-                                            </div>
-                                        ) : null}
-                                    </div>
-                                    <div className="mb-3 custom-control custom-checkbox">
-                                        <Field
-                                            type="checkbox"
-                                            name="IsLinkActive"
-                                            key="IsLinkActive"
-                                            id="IsLinkActive"
-                                            className="custom-control-input"
-                                        />
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item name="IsVisible">
+                                    <Checkbox name="IsVisible">
+                                        Hiển thị?
+                                    </Checkbox>
+                                </Form.Item>
+                            </Col>
 
-                                        <label
-                                            className="custom-control-label"
-                                            htmlFor="IsLinkActive"
-                                        >
-                                            Hoạt động?
-                                        </label>
-                                        {errors.IsLinkActive &&
-                                        touched.IsLinkActive ? (
-                                            <div className="invalid-feedback">
-                                                {errors.IsLinkActive}
-                                            </div>
-                                        ) : null}
-                                    </div>
-                                    <div className="form-group">
-                                        <label htmlFor="ImageLink">
-                                            Liên kết
-                                            <span className="red">*</span>
-                                        </label>
-                                        <Field
-                                            name="ImageLink"
-                                            key="ImageLink"
-                                            className="form-control "
-                                        />
-                                        {errors.ImageLink &&
-                                        touched.ImageLink ? (
-                                            <>
-                                                <div className="invalid-feedback">
-                                                    {errors.ImageLink}
-                                                </div>
-                                            </>
-                                        ) : null}
-                                    </div>
-                                    <div className="form-group">
-                                        <label htmlFor="Order">Thứ tự</label>
-                                        <Field
-                                            name="Order"
-                                            key="Order"
-                                            className="form-control "
-                                        />
-                                        {errors.Order && touched.Order ? (
-                                            <>
-                                                <div className="invalid-feedback">
-                                                    {errors.Order}
-                                                </div>
-                                            </>
-                                        ) : null}
-                                    </div>
-                                </Form>
-                            )}
-                        </Formik>
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button variant="secondary" onClick={handleClose}>
-                            Đóng
-                        </Button>
-                        <Button variant="primary" onClick={submitCreate}>
-                            Hoàn thành
-                        </Button>
-                    </Modal.Footer>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item name="IsLinkActive">
+                                    <Checkbox name="IsLinkActive">
+                                        Hoạt động?
+                                    </Checkbox>
+                                </Form.Item>
+                            </Col>
+                        </Row>
+                    </Form>
                 </Modal>
             </>
         );
@@ -369,260 +375,238 @@ const BannerAdm = (props) => {
     function EditModal() {
         const submitEdit = () => {
             if (formRef.current) {
-                formRef.current.handleSubmit();
+                formRef.current.submit();
             }
         };
         return (
             <>
                 <Modal
-                    show={showEditModal}
-                    size="lg"
-                    onHide={() => onCloseEntityEditModal()}
+                    title="Cập nhật hỏi đáp"
+                    centered
+                    visible={showEditModal}
+                    onOk={() => submitEdit()}
+                    onCancel={() => onCloseEntityEditModal()}
+                    width={1000}
+                    zIndex={1040}
+                    okText="Hoàn thành"
+                    cancelText="Đóng"
                 >
-                    <Modal.Header closeButton>
-                        <Modal.Title>Cập nhật banner</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        <Formik
-                            innerRef={formRef}
-                            initialValues={{
-                                Id: entityObj.Id,
-                                Name: entityObj.Name,
-                                // ImageSrc: entityObj.ImageSrc,
-                                IsVisible: entityObj.IsVisible,
-                                Order: entityObj.Order,
-                                ImageLink: entityObj.ImageLink,
-                                IsLinkActive: entityObj.IsLinkActive,
-                                Comment: entityObj.Comment
-                            }}
-                            validationSchema={SignupSchema}
-                            vali
-                            onSubmit={(values) => {
-                                // same shape as initial values
-                                const ObjSave = {
-                                    ...values,
-                                    ImageSrc: entityObj.ImageSrc
-                                };
-                                // same shape as initial values
-                                if (
-                                    FileSelected !== null &&
-                                    FileSelected.name
-                                ) {
-                                    SaveAnh()
-                                        .then((dataResult) => {
-                                            if (dataResult.Status) {
-                                                ObjSave.ImageSrc =
-                                                    dataResult.Data;
-                                                onSaveEditEntity(ObjSave);
-                                            } else {
-                                                toast.error(
-                                                    dataResult.MessageError
-                                                );
-                                            }
-                                        })
-                                        .catch((err) => {
-                                            toast.error('Lỗi kết nối');
-                                        });
-                                } else {
-                                    ObjSave.ImageSrc = entityObj.ImageSrc;
-                                    onSaveEditEntity(ObjSave);
-                                }
-                                FileSelected = null;
-                            }}
-                        >
-                            {({errors, touched}) => (
-                                <Form ref={formCreateEntity}>
-                                    <Field type="hidden" name="Id" key="Id" />
+                    <Form
+                        ref={formRef}
+                        labelCol={{span: 24}}
+                        wrapperCol={{span: 24}}
+                        layout="vertical"
+                        initialValues={{
+                            Id: entityObj.Id,
+                            Name: entityObj.Name,
+                            // ImageSrc: entityObj.ImageSrc,
+                            IsVisible: entityObj.IsVisible,
+                            Order: entityObj.Order,
+                            ImageLink: entityObj.ImageLink,
+                            IsLinkActive: entityObj.IsLinkActive,
+                            Comment: entityObj.Comment
+                        }}
+                        onFinish={(values) => {
+                            // same shape as initial values
+                            const ObjSave = {
+                                ...values,
+                                ImageSrc: entityObj.ImageSrc
+                            };
+                            // same shape as initial values
+                            if (FileSelected !== null && FileSelected.data) {
+                                SaveAnh()
+                                    .then((dataResult) => {
+                                        if (dataResult.Status) {
+                                            ObjSave.ImageSrc = dataResult.Data;
+                                            console.log(ObjSave.ImageSrc);
+                                            onSaveEditEntity(ObjSave);
+                                        } else {
+                                            toast.error(
+                                                dataResult.MessageError
+                                            );
+                                        }
+                                    })
+                                    .catch((err) => {
+                                        toast.error('Lỗi kết nối');
+                                    });
+                            } else {
+                                ObjSave.ImageSrc = entityObj.ImageSrc;
+                                onSaveEditEntity(ObjSave);
+                            }
+                            FileSelected = null;
+                        }}
+                    >
+                        <Form.Item name="Id" hidden>
+                            <Input name="Id" />
+                        </Form.Item>
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 24}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item label="Ảnh Banner" name="ImageSrc">
+                                    <Input
+                                        type="file"
+                                        name="ImageSrc"
+                                        key="ImageSrc"
+                                        className="form-control img-padding"
+                                        onChange={ChangeFileUpload}
+                                    />
+                                </Form.Item>
+                            </Col>
 
-                                    <div className="row">
-                                        <div className="form-group col-md-12">
-                                            <label htmlFor="ImageSrc">
-                                                Ảnh Banner
-                                            </label>
-                                            <Field
-                                                type="file"
-                                                name="ImageSrc"
-                                                key="ImageSrc"
-                                                className="form-control img-padding"
-                                                onChange={ChangeFileUpload}
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item label="Ảnh Banner mới">
+                                    <img
+                                        className="img-ImageSrc"
+                                        id="ImageSrcShow"
+                                        alt=""
+                                    />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item label="Ảnh Banner cũ">
+                                    {entityObj.ImageSrc !== '' ? (
+                                        <>
+                                            <img
+                                                src={`${Constant.PathServer}${entityObj.ImageSrc}`}
+                                                onError={NotFoundImage}
+                                                alt=""
+                                                className=" img-ImageSrc"
                                             />
-                                            {errors.ImageSrc &&
-                                            touched.ImageSrc ? (
-                                                <>
-                                                    <div className="invalid-feedback">
-                                                        {errors.ImageSrc}
-                                                    </div>
-                                                </>
-                                            ) : null}
-                                        </div>
+                                        </>
+                                    ) : (
+                                        <></>
+                                    )}
+                                </Form.Item>
+                            </Col>
+                        </Row>
 
-                                        <div className="form-group col-md-6">
-                                            <label htmlFor="ImageSrc">
-                                                Ảnh Banner mới
-                                            </label>
-                                            <div>
-                                                <>
-                                                    <img
-                                                        className="img-ImageSrc"
-                                                        id="ImageSrc"
-                                                        alt=""
-                                                    />
-                                                </>
-                                            </div>
-                                        </div>
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 24}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    label="Tên Banner"
+                                    name="Name"
+                                    rules={[
+                                        {
+                                            min: 2,
+                                            message:
+                                                'Vui lòng nhập ít nhất 2 ký tự'
+                                        },
+                                        {
+                                            max: 255,
+                                            message:
+                                                'Vui lòng không nhập quá 255 ký tự'
+                                        },
+                                        {
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input name="Name" />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 24}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    label="Mô tả"
+                                    name="Comment"
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input.TextArea name="Comment" rows={4} />
+                                </Form.Item>
+                            </Col>
+                        </Row>
 
-                                        <div className="form-group col-md-6">
-                                            <label htmlFor="ImageSrc">
-                                                Ảnh Banner cũ
-                                            </label>
-                                            <div>
-                                                {entityObj.ImageSrc !== '' ? (
-                                                    <>
-                                                        <img
-                                                            src={`${Constant.PathServer}${entityObj.ImageSrc}`}
-                                                            onError={
-                                                                NotFoundImage
-                                                            }
-                                                            alt=""
-                                                            className=" img-ImageSrc"
-                                                        />
-                                                    </>
-                                                ) : (
-                                                    <></>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 24}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item name="ImageLink" label="Liên kết">
+                                    <Input name="ImageLink" />
+                                </Form.Item>
+                            </Col>
+                            <Col
+                                lg={{span: 24}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item name="Order" label="Thứ tự">
+                                    <Input name="Order" />
+                                </Form.Item>
+                            </Col>
+                        </Row>
 
-                                    <div className="form-group">
-                                        <label htmlFor="title">
-                                            Tên Banner
-                                            <span className="red">*</span>
-                                        </label>
-                                        <Field
-                                            name="Name"
-                                            key="Name"
-                                            className="form-control "
-                                        />
-                                        {errors.Name && touched.Name ? (
-                                            <>
-                                                <div className="invalid-feedback">
-                                                    {errors.Name}
-                                                </div>
-                                            </>
-                                        ) : null}
-                                    </div>
-                                    <div className="form-group">
-                                        <label htmlFor="Comment">
-                                            Mô tả<span className="red">*</span>
-                                        </label>
-                                        <Field
-                                            as="textarea"
-                                            rows={3}
-                                            name="Comment"
-                                            key="Comment"
-                                            className="form-control"
-                                        />
-                                        {errors.Comment && touched.Comment ? (
-                                            <div className="invalid-feedback">
-                                                {errors.Comment}
-                                            </div>
-                                        ) : null}
-                                    </div>
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="IsVisible"
+                                    valuePropName="checked"
+                                >
+                                    <Checkbox name="IsVisible">
+                                        Hiển thị?
+                                    </Checkbox>
+                                </Form.Item>
+                            </Col>
 
-                                    <div className="mb-3 custom-control custom-checkbox">
-                                        <Field
-                                            type="checkbox"
-                                            name="IsVisible"
-                                            key="IsVisible"
-                                            id="IsVisible"
-                                            className="custom-control-input"
-                                        />
-
-                                        <label
-                                            className="custom-control-label"
-                                            htmlFor="IsVisible"
-                                        >
-                                            Hiển thị?
-                                        </label>
-                                        {errors.IsVisible &&
-                                        touched.IsVisible ? (
-                                            <div className="invalid-feedback">
-                                                {errors.IsVisible}
-                                            </div>
-                                        ) : null}
-                                    </div>
-                                    <div className="mb-3 custom-control custom-checkbox">
-                                        <Field
-                                            type="checkbox"
-                                            name="IsLinkActive"
-                                            key="IsLinkActive"
-                                            id="IsLinkActive"
-                                            className="custom-control-input"
-                                        />
-
-                                        <label
-                                            className="custom-control-label"
-                                            htmlFor="IsLinkActive"
-                                        >
-                                            Hoạt động?
-                                        </label>
-                                        {errors.IsLinkActive &&
-                                        touched.IsLinkActive ? (
-                                            <div className="invalid-feedback">
-                                                {errors.IsLinkActive}
-                                            </div>
-                                        ) : null}
-                                    </div>
-                                    <div className="form-group">
-                                        <label htmlFor="ImageLink">
-                                            Liên kết
-                                            <span className="red">*</span>
-                                        </label>
-                                        <Field
-                                            name="ImageLink"
-                                            key="ImageLink"
-                                            className="form-control "
-                                        />
-                                        {errors.ImageLink &&
-                                        touched.ImageLink ? (
-                                            <>
-                                                <div className="invalid-feedback">
-                                                    {errors.ImageLink}
-                                                </div>
-                                            </>
-                                        ) : null}
-                                    </div>
-                                    <div className="form-group">
-                                        <label htmlFor="Order">Thứ tự</label>
-                                        <Field
-                                            name="Order"
-                                            key="Order"
-                                            className="form-control "
-                                        />
-                                        {errors.Order && touched.Order ? (
-                                            <>
-                                                <div className="invalid-feedback">
-                                                    {errors.Order}
-                                                </div>
-                                            </>
-                                        ) : null}
-                                    </div>
-                                </Form>
-                            )}
-                        </Formik>
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button
-                            variant="secondary"
-                            onClick={() => onCloseEntityEditModal()}
-                        >
-                            Đóng
-                        </Button>
-                        <Button variant="primary" onClick={submitEdit}>
-                            Hoàn thành
-                        </Button>
-                    </Modal.Footer>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    name="IsLinkActive"
+                                    valuePropName="checked"
+                                >
+                                    <Checkbox name="IsLinkActive">
+                                        Hoạt động?
+                                    </Checkbox>
+                                </Form.Item>
+                            </Col>
+                        </Row>
+                    </Form>
                 </Modal>
             </>
         );
@@ -631,62 +615,62 @@ const BannerAdm = (props) => {
     function DetailModal() {
         return (
             <>
-                <Modal
-                    show={showDetailModal}
-                    size="lg"
-                    onHide={() => onCloseEntityModal()}
+                <Drawer
+                    placement="right"
+                    size="large"
+                    visible={showDetailModal}
+                    onClose={() => onCloseEntityModal()}
+                    extra={
+                        // eslint-disable-next-line react/jsx-wrap-multilines
+                        <Space>
+                            <Button
+                                type="danger"
+                                onClick={() => onCloseEntityModal()}
+                            >
+                                Đóng
+                            </Button>
+                        </Space>
+                    }
                 >
-                    <Modal.Header closeButton>
-                        <Modal.Title>Chi tiết banner</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        <ListGroup className="list-group-flush">
-                            <ListGroupItem>
-                                <dl className="row">
-                                    <dt className="col-sm-2">Ảnh đại diện</dt>
-                                    <dd className="col-sm-10">
-                                        {entityObj.ImageSrc !== '' ? (
-                                            <>
-                                                <img
-                                                    src={`${Constant.PathServer}${entityObj.ImageSrc}`}
-                                                    alt=""
-                                                    className="imgHinhAnh img-thumbnail"
-                                                />
-                                            </>
-                                        ) : (
-                                            <></>
-                                        )}
-                                    </dd>
-                                </dl>
-                            </ListGroupItem>
-                            <ListGroupItem>
-                                <dl className="row">
-                                    <dt className="col-sm-2">Tên</dt>
-                                    <dd className="col-sm-10">
-                                        {entityObj.Name}
-                                    </dd>
-                                </dl>
-                            </ListGroupItem>
-
-                            <ListGroupItem>
-                                <dl className="row">
-                                    <dt className="col-sm-2">Mô tả</dt>
-                                    <dd className="col-sm-10">
-                                        {entityObj.Comment}
-                                    </dd>
-                                </dl>
-                            </ListGroupItem>
-                        </ListGroup>
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button
-                            variant="secondary"
-                            onClick={() => onCloseEntityModal()}
-                        >
-                            Đóng
-                        </Button>
-                    </Modal.Footer>
-                </Modal>
+                    <Descriptions title="Chi tiết banner" bordered column={2}>
+                        <Descriptions.Item label="Ảnh đại diện" span={2}>
+                            {entityObj.ImageSrc !== '' ? (
+                                <>
+                                    <img
+                                        stype={{width: '800px', height: 'auto'}}
+                                        src={`${Constant.PathServer}${entityObj.ImageSrc}`}
+                                        alt=""
+                                        className="imgHinhAnh img-thumbnail"
+                                    />
+                                </>
+                            ) : (
+                                <></>
+                            )}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Tên">
+                            {entityObj.Name}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Mô tả">
+                            {entityObj.Comment}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Đường đẫn">
+                            {entityObj.ImageLink}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Hoạt động">
+                            {entityObj.IsLinkActive
+                                ? 'Đã xuất bản'
+                                : 'Chưa xuất bản'}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Hiển thị">
+                            {entityObj.IsVisible
+                                ? 'Đã xuất bản'
+                                : 'Chưa xuất bản'}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Thứ tự">
+                            {entityObj.Order}
+                        </Descriptions.Item>
+                    </Descriptions>
+                </Drawer>
             </>
         );
     }
@@ -718,8 +702,8 @@ const BannerAdm = (props) => {
                     label: 'Xác nhận',
                     onClick: () => {
                         const dsId = GetDsCheckedTableHinet('dsTable');
-                        if (dsId != null && dsId.length > 0) {
-                            onDeleteMultiEntity(dsId);
+                        if (dataSelected != null && dataSelected.length > 0) {
+                            onDeleteMultiEntity(dataSelected);
                         } else {
                             toast.onError('Vui lòng chọn ít nhất một bản ghi');
                         }
@@ -743,176 +727,167 @@ const BannerAdm = (props) => {
                 <div className="container-fluid mrb-10px">
                     <div className="row">
                         <div className="col-md-12">
-                            <Card>
-                                <Card.Header>
-                                    <strong>Tìm kiếm</strong>
-                                </Card.Header>
-                                <Card.Body>
-                                    <Formik
-                                        initialValues={{
-                                            NameFilter: searchModel.NameFilter,
-                                            CommentFilter:
-                                                searchModel.CommentFilter,
-                                            ImageLinkFilter:
-                                                searchModel.ImageLinkFilter,
-                                            IsVisibleFilter:
-                                                searchModel.IsVisibleFilter,
-                                            IsLinkActiveFilter:
-                                                searchModel.IsLinkActiveFilter
-                                        }}
-                                        validationSchema={SearchSchema}
-                                        onSubmit={(values) => {
-                                            onSubmitSearchSave(values);
-                                        }}
-                                    >
-                                        {({errors, touched}) => (
-                                            <Form>
-                                                <div>
-                                                    <div className="form-row">
-                                                        <div className="form-group col-md-4">
-                                                            <label htmlFor="NameFilter">
-                                                                Tên Banner
-                                                            </label>
-                                                            <Field
-                                                                name="NameFilter"
-                                                                key="NameFilter"
-                                                                className="form-control "
-                                                            />
-                                                            {errors.NameFilter &&
-                                                            touched.NameFilter ? (
-                                                                <>
-                                                                    <div className="invalid-feedback">
-                                                                        {
-                                                                            errors.NameFilter
-                                                                        }
-                                                                    </div>
-                                                                </>
-                                                            ) : null}
-                                                        </div>
-                                                        <div className="form-group col-md-4">
-                                                            <label htmlFor="CommentFilter">
-                                                                Mô tả
-                                                            </label>
-                                                            <Field
-                                                                name="CommentFilter"
-                                                                key="CommentFilter"
-                                                                className="form-control"
-                                                            />
-                                                            {errors.CommentFilter &&
-                                                            touched.CommentFilter ? (
-                                                                <>
-                                                                    <div className="invalid-feedback">
-                                                                        {
-                                                                            errors.CommentFilter
-                                                                        }
-                                                                    </div>
-                                                                </>
-                                                            ) : null}
-                                                        </div>
-                                                        <div className="form-group col-md-4">
-                                                            <label htmlFor="ImageLinkFilter">
-                                                                Đường dẫn
-                                                            </label>
-                                                            <Field
-                                                                name="ImageLinkFilter"
-                                                                key="ImageLinkFilter"
-                                                                className="form-control"
-                                                            />
-                                                            {errors.ImageLinkFilter &&
-                                                            touched.ImageLinkFilter ? (
-                                                                <>
-                                                                    <div className="invalid-feedback">
-                                                                        {
-                                                                            errors.ImageLinkFilter
-                                                                        }
-                                                                    </div>
-                                                                </>
-                                                            ) : null}
-                                                        </div>
-                                                    </div>
-                                                    <div className="form-row">
-                                                        <div className="form-group col-md-4">
-                                                            <label htmlFor="IsLinkActiveFilter">
-                                                                Hoạt động
-                                                            </label>
-                                                            <Field
-                                                                as="select"
-                                                                name="IsLinkActiveFilter"
-                                                                key="IsLinkActiveFilter"
-                                                                className="form-control"
-                                                            >
-                                                                <option value="">
-                                                                    --Chọn--
-                                                                </option>
-                                                                <option value="On">
-                                                                    Có
-                                                                </option>
-                                                                <option value="Off">
-                                                                    Không
-                                                                </option>
-                                                            </Field>
-                                                            {errors.IsLinkActiveFilter &&
-                                                            touched.IsLinkActiveFilter ? (
-                                                                <>
-                                                                    <div className="invalid-feedback">
-                                                                        {
-                                                                            errors.IsLinkActiveFilter
-                                                                        }
-                                                                    </div>
-                                                                </>
-                                                            ) : null}
-                                                        </div>
-                                                        <div className="form-group col-md-4">
-                                                            <label htmlFor="IsVisibleFilter">
-                                                                Hiển thị
-                                                            </label>
-                                                            <Field
-                                                                as="select"
-                                                                name="IsVisibleFilter"
-                                                                key="IsVisibleFilter"
-                                                                className="form-control"
-                                                            >
-                                                                <option value="">
-                                                                    --Chọn--
-                                                                </option>
-                                                                <option value="On">
-                                                                    Có
-                                                                </option>
-                                                                <option value="Off">
-                                                                    Không
-                                                                </option>
-                                                            </Field>
-                                                            {errors.IsVisibleFilter &&
-                                                            touched.IsVisibleFilter ? (
-                                                                <>
-                                                                    <div className="invalid-feedback">
-                                                                        {
-                                                                            errors.IsVisibleFilter
-                                                                        }
-                                                                    </div>
-                                                                </>
-                                                            ) : null}
-                                                        </div>
-                                                    </div>
-                                                    <div className="form-row">
-                                                        <Button
-                                                            variant="success"
-                                                            size="md"
-                                                            type="submit"
-                                                            className="button-action"
-                                                        >
-                                                            <i
-                                                                className="fa fa-search"
-                                                                aria-hidden="true"
-                                                            />{' '}
-                                                            Tìm kiếm
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            </Form>
-                                        )}
-                                    </Formik>
-                                </Card.Body>
+                            <Card title="Tìm kiếm">
+                                <Form
+                                    labelCol={{span: 24}}
+                                    wrapperCol={{span: 24}}
+                                    layout="vertical"
+                                    initialValues={{
+                                        NameFilter: searchModel.NameFilter,
+                                        CommentFilter:
+                                            searchModel.CommentFilter,
+                                        ImageLinkFilter:
+                                            searchModel.ImageLinkFilter,
+                                        IsVisibleFilter:
+                                            searchModel.IsVisibleFilter,
+                                        IsLinkActiveFilter:
+                                            searchModel.IsLinkActiveFilter
+                                    }}
+                                    onFinish={(values) =>
+                                        onSubmitSearchSave(values)
+                                    }
+                                >
+                                    <Row gutter={[10, 5]}>
+                                        <Col
+                                            lg={{span: 8}}
+                                            md={{span: 8}}
+                                            sm={{span: 8}}
+                                            xs={{span: 24}}
+                                        >
+                                            <Form.Item
+                                                name="NameFilter"
+                                                label="Tên Banner"
+                                                rules={[
+                                                    {
+                                                        min: 2,
+                                                        message:
+                                                            'Vui lòng nhập ít nhất 2 kí tự'
+                                                    }
+                                                ]}
+                                                validateTrigger={[
+                                                    'onBlur',
+                                                    'onChange'
+                                                ]}
+                                            >
+                                                <Input name="NameFilter" />
+                                            </Form.Item>
+                                        </Col>
+
+                                        <Col
+                                            lg={{span: 8}}
+                                            md={{span: 8}}
+                                            sm={{span: 8}}
+                                            xs={{span: 24}}
+                                        >
+                                            <Form.Item
+                                                name="CommentFilter"
+                                                label="Mô tả"
+                                                rules={[
+                                                    {
+                                                        min: 2,
+                                                        message:
+                                                            'Vui lòng nhập ít nhất 2 kí tự'
+                                                    }
+                                                ]}
+                                                validateTrigger={[
+                                                    'onBlur',
+                                                    'onChange'
+                                                ]}
+                                            >
+                                                <Input name="CommentFilter" />
+                                            </Form.Item>
+                                        </Col>
+
+                                        <Col
+                                            lg={{span: 8}}
+                                            md={{span: 8}}
+                                            sm={{span: 8}}
+                                            xs={{span: 24}}
+                                        >
+                                            <Form.Item
+                                                name="ImageLinkFilter"
+                                                label="Đường dẫn"
+                                                rules={[
+                                                    {
+                                                        min: 2,
+                                                        message:
+                                                            'Vui lòng nhập ít nhất 2 kí tự'
+                                                    }
+                                                ]}
+                                                validateTrigger={[
+                                                    'onBlur',
+                                                    'onChange'
+                                                ]}
+                                            >
+                                                <Input name="ImageLinkFilter" />
+                                            </Form.Item>
+                                        </Col>
+                                    </Row>
+                                    <Row gutter={[10, 5]}>
+                                        <Col
+                                            lg={{span: 12}}
+                                            md={{span: 12}}
+                                            sm={{span: 12}}
+                                            xs={{span: 24}}
+                                        >
+                                            <Form.Item
+                                                name="IsLinkActiveFilter"
+                                                label="Hoạt động"
+                                            >
+                                                <Select defaultValue="">
+                                                    <Select.Option value="">
+                                                        --Chọn--
+                                                    </Select.Option>
+                                                    <Select.Option value="On">
+                                                        Có
+                                                    </Select.Option>
+                                                    <Select.Option value="Off">
+                                                        Không
+                                                    </Select.Option>
+                                                </Select>
+                                            </Form.Item>
+                                        </Col>
+
+                                        <Col
+                                            lg={{span: 12}}
+                                            md={{span: 12}}
+                                            sm={{span: 12}}
+                                            xs={{span: 24}}
+                                        >
+                                            <Form.Item
+                                                name="IsVisibleFilter"
+                                                label="Hiển thị"
+                                            >
+                                                <Select defaultValue="">
+                                                    <Select.Option value="">
+                                                        --Chọn--
+                                                    </Select.Option>
+                                                    <Select.Option value="On">
+                                                        Có
+                                                    </Select.Option>
+                                                    <Select.Option value="Off">
+                                                        Không
+                                                    </Select.Option>
+                                                </Select>
+                                            </Form.Item>
+                                        </Col>
+                                    </Row>
+                                    <Row>
+                                        <Col
+                                            lg={{span: 24}}
+                                            md={{span: 24}}
+                                            sm={{span: 24}}
+                                            xs={{span: 24}}
+                                        >
+                                            <Button
+                                                type="primary"
+                                                htmlType="submit"
+                                            >
+                                                Tìm kiếm
+                                            </Button>
+                                        </Col>
+                                    </Row>
+                                </Form>
                             </Card>
                         </div>
                     </div>
@@ -920,10 +895,11 @@ const BannerAdm = (props) => {
             </section>
         );
     };
-    const NextPage = (pageInd) => {
+    const NextPage = (page, pageSize) => {
         const searchMd = {
             ...searchModel,
-            PageIndex: pageInd
+            PageIndex: page,
+            PageSize: pageSize
         };
         onSubmitSearchSave(searchMd);
     };
@@ -953,264 +929,149 @@ const BannerAdm = (props) => {
         }
         return reder;
     };
-
+    const rowSelection = {
+        onChange: (selectedRowKeys, selectedRows) => {
+            dataSelected = selectedRowKeys;
+            console.log(dataSelected);
+        }
+    };
     const RenderDsTable = () => {
         let lstItem = [];
         let pageSiz = 20;
         let pageInd = 1;
+        let Count = 0;
         if (lstEntity.ListItem !== undefined) {
             lstItem = lstEntity.ListItem;
             pageInd = lstEntity.CurrentPage;
+            Count = lstEntity.Count;
         }
         if (searchModel !== undefined) {
             pageSiz = searchModel.PageSize;
         }
-
+        const getMenu = (record) => (
+            <>
+                <Menu>
+                    <Menu.Item
+                        key={`sua_${record.Id}`}
+                        icon={<antIcon.EditOutlined />}
+                        onClick={() => onEditEntity(record.Id)}
+                    >
+                        Sửa
+                    </Menu.Item>
+                    <Menu.Item
+                        key={`xoa_${record.Id}`}
+                        icon={<antIcon.DeleteOutlined />}
+                        onClick={() => DeleteAction(record.Id)}
+                    >
+                        Xóa
+                    </Menu.Item>
+                </Menu>
+            </>
+        );
+        const columns = [
+            {
+                title: 'STT',
+                key: 'STT',
+                render: (text, record, index) => (
+                    <div>{(pageInd - 1) * pageSiz + index + 1}</div>
+                )
+            },
+            {
+                title: 'Hành động',
+                key: 'HanhDong',
+                render: (text, record) => {
+                    return (
+                        <Dropdown.Button
+                            onClick={() => onOpenDetailModal(record.Id)}
+                            overlay={() => getMenu(record)}
+                        >
+                            Chi tiết
+                        </Dropdown.Button>
+                    );
+                }
+            },
+            {
+                title: 'Ảnh Banner',
+                key: 'AnhBanner',
+                render: (text, record, index) =>
+                    record.ImageSrc !== '' ? (
+                        <>
+                            <img
+                                src={`${Constant.PathServer}${record.ImageSrc}`}
+                                onError={NotFoundImage}
+                                alt=""
+                                className="imgHinhAnh-Banner img-thumbnail"
+                            />
+                        </>
+                    ) : (
+                        <></>
+                    )
+            },
+            {
+                title: 'Tên banner',
+                key: 'TenBanner',
+                render: (text, record, index) => <div>{record.Name}</div>
+            },
+            {
+                title: 'Mô tả',
+                key: 'Mota',
+                render: (text, record, index) => <div>{record.Comment}</div>
+            },
+            {
+                title: 'Đường dẫn',
+                key: 'DuongDan',
+                render: (text, record, index) => <div>{record.ImageLink}</div>
+            },
+            {
+                title: 'Hoạt động',
+                key: 'HoatDong',
+                render: (text, record, index) => {
+                    return record.IsLinkActive ? (
+                        <i className="fas fa-check" />
+                    ) : (
+                        <i className="fas fa-times" />
+                    );
+                }
+            },
+            {
+                title: 'Hiển thị',
+                key: 'HienThi',
+                render: (text, record, index) => {
+                    return record.IsVisible ? (
+                        <i className="fas fa-check" />
+                    ) : (
+                        <i className="fas fa-times" />
+                    );
+                }
+            },
+            {
+                title: 'Thứ tự',
+                key: 'ThuTu',
+                render: (text, record, index) => <div>{record.Order}</div>
+            }
+        ];
         return (
             <>
                 <EditModal />
                 <DetailModal />
-
-                <div className="table-responsive">
-                    <table className="table table-hinetNew" id="dsTable">
-                        <thead>
-                            <tr>
-                                <th scope="col">
-                                    <input
-                                        type="checkbox"
-                                        className="checkAll"
-                                        onClick={(e) =>
-                                            CheckAllItem(e, 'dsTable')
-                                        }
-                                    />
-                                </th>
-                                <th scope="col">#</th>
-                                <th
-                                    scope="col"
-                                    className="imgHinhAnhCol mw-image"
-                                >
-                                    Ảnh Banner
-                                </th>
-                                <th scope="col" className="widthColTableMedium">
-                                    Tên Banner
-                                </th>
-                                <th scope="col">Mô tả</th>
-                                <th scope="col">Đường dẫn</th>
-                                <th scope="col">Hoạt động?</th>
-                                <th scope="col">Hiển thị</th>
-                                <th scope="col">Thứ tự</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {lstItem.length > 0 ? (
-                                lstItem.map((item, key) => {
-                                    const rIndex =
-                                        (pageInd - 1) * pageSiz + key + 1;
-                                    return (
-                                        <tr
-                                            key={key}
-                                            onClick={(e) =>
-                                                CheckRowsHinetTable(e)
-                                            }
-                                        >
-                                            <td>
-                                                <input
-                                                    className="checkTd"
-                                                    type="checkbox"
-                                                    data-id={item.Id}
-                                                    onClick={(e) =>
-                                                        CheckRowsHinetTable(e)
-                                                    }
-                                                />
-                                            </td>
-                                            <th scope="row">{rIndex}</th>
-
-                                            <td>
-                                                {item.ImageSrc !== '' ? (
-                                                    <>
-                                                        <img
-                                                            src={`${Constant.PathServer}${item.ImageSrc}`}
-                                                            onError={
-                                                                NotFoundImage
-                                                            }
-                                                            alt=""
-                                                            className="imgHinhAnh-Banner img-thumbnail"
-                                                        />
-                                                    </>
-                                                ) : (
-                                                    <></>
-                                                )}
-                                            </td>
-                                            <td>
-                                                <div className="tableBoxMain">
-                                                    <div className="tableBoxMain-label">
-                                                        {item.Name}
-                                                    </div>
-                                                    <div className="tableBoxMain-btnAction">
-                                                        <Dropdown>
-                                                            <Dropdown.Toggle
-                                                                size="sm"
-                                                                variant=""
-                                                                className="dropdowTableBtn"
-                                                            >
-                                                                <i
-                                                                    className="fa fa-ellipsis-h"
-                                                                    aria-hidden="true"
-                                                                />
-                                                            </Dropdown.Toggle>
-
-                                                            <Dropdown.Menu>
-                                                                <Dropdown.Item
-                                                                    onClick={() =>
-                                                                        onEditEntity(
-                                                                            item.Id
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    <span className="boxIcon">
-                                                                        <i className="fas fa-edit" />
-                                                                    </span>
-                                                                    <span>
-                                                                        Sửa
-                                                                    </span>
-                                                                </Dropdown.Item>
-                                                                <Dropdown.Item
-                                                                    onClick={() =>
-                                                                        DeleteAction(
-                                                                            item.Id
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    <span className="boxIcon">
-                                                                        <i className="fas fa-times" />
-                                                                    </span>
-                                                                    <span>
-                                                                        Xóa
-                                                                    </span>
-                                                                </Dropdown.Item>
-                                                                <Dropdown.Item
-                                                                    onClick={() =>
-                                                                        onOpenDetailModal(
-                                                                            item.Id
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    <span className="boxIcon">
-                                                                        <i className="fas fa-info-circle" />
-                                                                    </span>
-                                                                    <span>
-                                                                        Xem chi
-                                                                        tiết
-                                                                    </span>
-                                                                </Dropdown.Item>
-                                                            </Dropdown.Menu>
-                                                        </Dropdown>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>{item.Comment}</td>
-                                            <td>{item.ImageLink}</td>
-                                            <td>
-                                                {item.IsLinkActive ? (
-                                                    <i className="fas fa-check" />
-                                                ) : (
-                                                    <i className="fas fa-times" />
-                                                )}
-                                            </td>
-                                            <td>
-                                                {item.IsVisible ? (
-                                                    <i className="fas fa-check" />
-                                                ) : (
-                                                    <i className="fas fa-times" />
-                                                )}
-                                            </td>
-                                            <td>{item.Order}</td>
-                                        </tr>
-                                    );
-                                })
-                            ) : (
-                                <NotDataToShow colNum={9} />
-                            )}
-                        </tbody>
-                        <thead>
-                            <tr>
-                                <th scope="col">
-                                    <input
-                                        type="checkbox"
-                                        className="checkAll"
-                                        onClick={(e) =>
-                                            CheckAllItem(e, 'dsTable')
-                                        }
-                                    />
-                                </th>
-                                <th scope="col">#</th>
-                                <th
-                                    scope="col"
-                                    className="imgHinhAnhCol mw-image"
-                                >
-                                    Ảnh Banner
-                                </th>
-                                <th scope="col" className="widthColTableMedium">
-                                    Tên Banner
-                                </th>
-                                <th scope="col">Mô tả</th>
-                                <th scope="col">Đường dẫn</th>
-                                <th scope="col">Hoạt động?</th>
-                                <th scope="col">Hiển thị</th>
-                                <th scope="col">Thứ tự</th>
-                            </tr>
-                        </thead>
-                    </table>
-                </div>
-                <div>
-                    <div className="row">
-                        <div className="col-sm-6">
-                            Tổng số {lstEntity.Count} bản ghi trang hiện tại -
-                            tổng số {lstEntity.TotalPage} trang
-                        </div>
-
-                        <div className="col-sm-6 right">
-                            <nav
-                                aria-label="Page navigation "
-                                className="tblHinet-pagin"
-                            >
-                                <ul className="pagination pagination-sm">
-                                    <li className="page-item">
-                                        <Button
-                                            className="page-link"
-                                            onClick={() => NextPage(1)}
-                                            aria-label="Previous"
-                                        >
-                                            <span aria-hidden="true">
-                                                &laquo;
-                                            </span>
-                                            <span className="sr-only">
-                                                Previous
-                                            </span>
-                                        </Button>
-                                    </li>
-                                    <RenderPage />
-                                    <li className="page-item">
-                                        <Button
-                                            className="page-link"
-                                            onClick={() =>
-                                                NextPage(lstEntity.TotalPage)
-                                            }
-                                            aria-label="Next"
-                                        >
-                                            <span aria-hidden="true">
-                                                &raquo;
-                                            </span>
-                                            <span className="sr-only">
-                                                Next
-                                            </span>
-                                        </Button>
-                                    </li>
-                                </ul>
-                            </nav>
-                        </div>
-                    </div>
-                </div>
+                <Table
+                    id="dsTable"
+                    rowKey="Id"
+                    rowSelection={rowSelection}
+                    columns={columns}
+                    dataSource={lstItem}
+                    pagination={{
+                        total: Count,
+                        showSizeChanger: true,
+                        showQuickJumper: true,
+                        pageSize: pageSiz,
+                        current: pageInd,
+                        showTotal: (total) => `Tổng cộng ${total} bản ghi`,
+                        onChange: (page, pageSize) => {
+                            NextPage(page, pageSize);
+                        }
+                    }}
+                />
             </>
         );
     };
@@ -1225,43 +1086,43 @@ const BannerAdm = (props) => {
                         <div className="col-md-12">
                             <div className="card">
                                 <div className="p-2 card-header">
-                                    <CreateModal />
-                                    <Button
-                                        size="sm"
-                                        variant=""
-                                        className="btn-nobg"
-                                        onClick={() => ToggleSearchPanel()}
-                                    >
-                                        {showPanelSearch ? (
-                                            <>
-                                                <i
-                                                    className="fa fa-times"
-                                                    aria-hidden="true"
-                                                />{' '}
-                                                Đóng tìm kiếm
-                                            </>
-                                        ) : (
-                                            <>
-                                                <i
-                                                    className="fa fa-search"
-                                                    aria-hidden="true"
-                                                />{' '}
-                                                Tìm kiếm
-                                            </>
-                                        )}
-                                    </Button>
-                                    <Button
-                                        size="sm"
-                                        variant=""
-                                        className="btn-nobg"
-                                        onClick={() => DeleteMulTiBtnAction()}
-                                    >
-                                        <i
-                                            className="fa fa-trash"
-                                            aria-hidden="true"
-                                        />{' '}
-                                        Xóa
-                                    </Button>
+                                    <Space>
+                                        <CreateModal />
+                                        <Button
+                                            type="primary"
+                                            onClick={() => ToggleSearchPanel()}
+                                        >
+                                            {showPanelSearch ? (
+                                                <>
+                                                    <i
+                                                        className="fa fa-times"
+                                                        aria-hidden="true"
+                                                    />{' '}
+                                                    Đóng tìm kiếm
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <i
+                                                        className="fa fa-search"
+                                                        aria-hidden="true"
+                                                    />{' '}
+                                                    Tìm kiếm
+                                                </>
+                                            )}
+                                        </Button>
+                                        <Button
+                                            type="danger"
+                                            onClick={() =>
+                                                DeleteMulTiBtnAction()
+                                            }
+                                        >
+                                            <i
+                                                className="fa fa-trash"
+                                                aria-hidden="true"
+                                            />{' '}
+                                            Xóa
+                                        </Button>
+                                    </Space>
                                 </div>
                                 <div className="card-body nopadding">
                                     <div className="tab-content">

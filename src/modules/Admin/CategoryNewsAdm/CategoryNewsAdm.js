@@ -7,17 +7,9 @@ import {NotFoundImage} from '@modules/Common/NotFound';
 import ClassicEditor from '@ckeditor/ckeditor5-build-classic';
 import * as Constant from '@app/Constant';
 import axios from 'axios';
-import {
-    Modal,
-    Button,
-    Col,
-    Dropdown,
-    ListGroup,
-    ListGroupItem,
-    Card
-} from 'react-bootstrap';
+import {ListGroup, ListGroupItem} from 'react-bootstrap';
 import {Link, useHistory} from 'react-router-dom';
-import {Formik, useFormik, Form, Field, useFormikContex} from 'formik';
+import {Formik, useFormik, Field, useFormikContex} from 'formik';
 import {toast} from 'react-toastify';
 import * as categoryNewsService from '@app/services/categoryNewsService';
 import {
@@ -34,6 +26,27 @@ import {
     CATEGORYNEWS_SEARCH_SAVE
 } from '@app/store/ActionType/CategoryNewsTypeAction';
 import {ContextMenu, MenuItem, ContextMenuTrigger} from 'react-contextmenu';
+import {
+    Drawer,
+    Button,
+    Space,
+    Row,
+    Col,
+    Input,
+    Radio,
+    Select,
+    notification,
+    Descriptions,
+    Table,
+    Menu,
+    Avatar,
+    Pagination,
+    Dropdown,
+    Card,
+    Form,
+    Modal
+} from 'antd';
+import * as antIcon from '@ant-design/icons';
 import AdminSecsionHead from '../AdminSecsionHead';
 
 // import {FontAwesomeIcon} from '@fortawesome/react-fontawesome';
@@ -83,6 +96,7 @@ const CatetoryNewsAdm = (props) => {
             LoadEntityData(objSearch);
         }
     });
+    let dataSelected;
     const SignupSchema = Yup.object().shape({
         code: Yup.string()
             .trim()
@@ -96,10 +110,6 @@ const CatetoryNewsAdm = (props) => {
             .required('Vui lòng nhập thông tin này')
     });
 
-    const SearchSchema = Yup.object().shape({
-        name: Yup.string().trim().min(2, 'Vui lòng nhập ít nhất 2 ký tự')
-    });
-
     const [test, settest] = useState(true);
 
     function CreateModal() {
@@ -108,111 +118,124 @@ const CatetoryNewsAdm = (props) => {
         const handleShow = () => setShow(true);
         const submitCreate = () => {
             if (formRef.current) {
-                formRef.current.handleSubmit();
+                formRef.current.submit();
             }
         };
         return (
             <>
-                <Button
-                    variant=""
-                    className="btn-nobg"
-                    size="sm"
-                    onClick={handleShow}
-                >
+                <Button type="primary" onClick={handleShow}>
                     <i className="fa fa-plus" aria-hidden="true" />
                     Tạo mới
                 </Button>
 
-                <Modal show={show} size="lg" onHide={handleClose}>
-                    <Modal.Header closeButton>
-                        <Modal.Title>Tạo mới nhóm tin bài</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        <Formik
-                            innerRef={formRef}
-                            initialValues={{
-                                code: '',
-                                name: '',
-                                description: ''
-                            }}
-                            validationSchema={SignupSchema}
-                            onSubmit={(values) => {
-                                const ObjSave = {
-                                    ...values
-                                };
-                                // same shape as initial values
+                <Modal
+                    title="Thêm mới nhóm tin bài"
+                    centered
+                    visible={show}
+                    onOk={() => submitCreate()}
+                    onCancel={handleClose}
+                    width={1000}
+                    zIndex={1040}
+                >
+                    <Form
+                        ref={formRef}
+                        labelCol={{span: 24}}
+                        wrapperCol={{span: 24}}
+                        layout="vertical"
+                        initialValues={{
+                            code: '',
+                            name: '',
+                            description: ''
+                        }}
+                        onFinish={(values) => {
+                            const ObjSave = {
+                                ...values
+                            };
 
-                                onCreateEntity(ObjSave);
-                            }}
-                        >
-                            {({errors, touched}) => (
-                                <Form ref={formCreateEntity}>
-                                    <div className="form-group">
-                                        <label htmlFor="code">
-                                            Mã nhóm
-                                            <span className="red">*</span>
-                                        </label>
-                                        <Field
-                                            name="code"
-                                            key="code"
-                                            className="form-control "
-                                        />
-                                        {errors.code && touched.code ? (
-                                            <>
-                                                <div className="invalid-feedback">
-                                                    {errors.code}
-                                                </div>
-                                            </>
-                                        ) : null}
-                                    </div>
-                                    <div className="form-group">
-                                        <label htmlFor="name">
-                                            Tên nhóm
-                                            <span className="red">*</span>
-                                        </label>
-                                        <Field
-                                            name="name"
-                                            key="name"
-                                            className="form-control "
-                                        />
-                                        {errors.name && touched.name ? (
-                                            <>
-                                                <div className="invalid-feedback">
-                                                    {errors.name}
-                                                </div>
-                                            </>
-                                        ) : null}
-                                    </div>
-                                    <div className="form-group">
-                                        <label htmlFor="description">
-                                            Mô tả
-                                        </label>
-                                        <Field
-                                            as="textarea"
-                                            rows={3}
-                                            name="description"
-                                            key="description"
-                                            className="form-control"
-                                        />
-                                        {errors.description &&
-                                        touched.description ? (
-                                            <div className="invalid-feedback">
-                                                {errors.description}
-                                            </div>
-                                        ) : null}
-                                    </div>
-                                </Form>
-                            )}
-                        </Formik>
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button variant="secondary" onClick={handleClose}>
-                            Đóng
-                        </Button>
-                        <Button variant="primary" onClick={submitCreate}>
-                            Hoàn thành
-                        </Button>
-                    </Modal.Footer>
+                            onCreateEntity(ObjSave);
+                        }}
+                    >
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 24}}
+                                md={{span: 42}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    label="Mã nhóm"
+                                    name="code"
+                                    rules={[
+                                        {
+                                            min: 2,
+                                            message:
+                                                'Vui lòng nhập ít nhất 2 ký tự'
+                                        },
+                                        {
+                                            max: 255,
+                                            message:
+                                                'Vui lòng nhập không quá 255 ký tự'
+                                        },
+                                        {
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input name="code" />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 24}}
+                                md={{span: 42}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    label="Tên nhóm"
+                                    name="name"
+                                    rules={[
+                                        {
+                                            min: 2,
+                                            message:
+                                                'Vui lòng nhập ít nhất 2 ký tự'
+                                        },
+                                        {
+                                            max: 255,
+                                            message:
+                                                'Vui lòng nhập không quá 255 ký tự'
+                                        },
+                                        {
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input name="name" />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 24}}
+                                md={{span: 42}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item name="description" label="Mô tả">
+                                    <Input.TextArea
+                                        showCount
+                                        maxLength={300}
+                                        name="description"
+                                    />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+                    </Form>
                 </Modal>
             </>
         );
@@ -220,12 +243,126 @@ const CatetoryNewsAdm = (props) => {
     function EditModal() {
         const submitEdit = () => {
             if (formRef.current) {
-                formRef.current.handleSubmit();
+                formRef.current.submit();
             }
         };
         return (
             <>
                 <Modal
+                    title="Cập nhật nhóm tin bài"
+                    centered
+                    visible={showEditModal}
+                    onOk={() => submitEdit()}
+                    onCancel={() => onCloseEntityEditModal()}
+                    width={1000}
+                    zIndex={1040}
+                >
+                    <Form
+                        ref={formRef}
+                        labelCol={{span: 24}}
+                        wrapperCol={{span: 24}}
+                        layout="vertical"
+                        initialValues={{
+                            id: entityObj.Id,
+                            code: entityObj.Code,
+                            name: entityObj.Name,
+                            description: entityObj.Description
+                        }}
+                        onFinish={(values) => {
+                            const ObjSave = {
+                                ...values
+                            };
+
+                            onSaveEditEntity(ObjSave);
+                        }}
+                    >
+                        <Form.Item name="id" hidden>
+                            <Input name="id" />
+                        </Form.Item>
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 24}}
+                                md={{span: 42}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    label="Mã nhóm"
+                                    name="code"
+                                    rules={[
+                                        {
+                                            min: 2,
+                                            message:
+                                                'Vui lòng nhập ít nhất 2 ký tự'
+                                        },
+                                        {
+                                            max: 255,
+                                            message:
+                                                'Vui lòng nhập không quá 255 ký tự'
+                                        },
+                                        {
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input name="code" />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 24}}
+                                md={{span: 42}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    label="Tên nhóm"
+                                    name="name"
+                                    rules={[
+                                        {
+                                            min: 2,
+                                            message:
+                                                'Vui lòng nhập ít nhất 2 ký tự'
+                                        },
+                                        {
+                                            max: 255,
+                                            message:
+                                                'Vui lòng nhập không quá 255 ký tự'
+                                        },
+                                        {
+                                            required: true,
+                                            message:
+                                                'Vui lòng nhập thông tin này'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input name="name" />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 24}}
+                                md={{span: 42}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item name="description" label="Mô tả">
+                                    <Input.TextArea
+                                        showCount
+                                        maxLength={300}
+                                        name="description"
+                                    />
+                                </Form.Item>
+                            </Col>
+                        </Row>
+                    </Form>
+                </Modal>
+
+                {/* <Modal
                     show={showEditModal}
                     size="lg"
                     onHide={() => onCloseEntityEditModal()}
@@ -327,7 +464,7 @@ const CatetoryNewsAdm = (props) => {
                             Hoàn thành
                         </Button>
                     </Modal.Footer>
-                </Modal>
+                </Modal> */}
             </>
         );
     }
@@ -335,52 +472,39 @@ const CatetoryNewsAdm = (props) => {
     function DetailModal() {
         return (
             <>
-                <Modal
-                    show={showDetailModal}
-                    size="lg"
-                    onHide={() => onCloseEntityModal()}
+                <Drawer
+                    placement="right"
+                    size="large"
+                    visible={showDetailModal}
+                    onClose={() => onCloseEntityModal()}
+                    extra={
+                        // eslint-disable-next-line react/jsx-wrap-multilines
+                        <Space>
+                            <Button
+                                type="danger"
+                                onClick={() => onCloseEntityModal()}
+                            >
+                                Đóng
+                            </Button>
+                        </Space>
+                    }
                 >
-                    <Modal.Header closeButton>
-                        <Modal.Title>Chi tiết nhóm tin bài</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        <ListGroup className="list-group-flush">
-                            <ListGroupItem>
-                                <dl className="row">
-                                    <dt className="col-sm-2">Mã nhóm</dt>
-                                    <dd className="col-sm-10">
-                                        {entityObj.Code}
-                                    </dd>
-                                </dl>
-                            </ListGroupItem>
-                            <ListGroupItem>
-                                <dl className="row">
-                                    <dt className="col-sm-2">Tên nhóm</dt>
-                                    <dd className="col-sm-10">
-                                        {entityObj.Name}
-                                    </dd>
-                                </dl>
-                            </ListGroupItem>
-
-                            <ListGroupItem>
-                                <dl className="row">
-                                    <dt className="col-sm-2">Mô tả</dt>
-                                    <dd className="col-sm-10">
-                                        {entityObj.Description}
-                                    </dd>
-                                </dl>
-                            </ListGroupItem>
-                        </ListGroup>
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button
-                            variant="secondary"
-                            onClick={() => onCloseEntityModal()}
-                        >
-                            Đóng
-                        </Button>
-                    </Modal.Footer>
-                </Modal>
+                    <Descriptions
+                        title="Chi tiết nhóm tin bài"
+                        bordered
+                        column={2}
+                    >
+                        <Descriptions.Item label="Mã nhóm">
+                            {entityObj.Code}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Tên nhóm">
+                            {entityObj.Name}
+                        </Descriptions.Item>
+                        <Descriptions.Item label="Mô Tả" span={2}>
+                            {entityObj.Description}
+                        </Descriptions.Item>
+                    </Descriptions>
+                </Drawer>
             </>
         );
     }
@@ -412,9 +536,8 @@ const CatetoryNewsAdm = (props) => {
                 {
                     label: 'Xác nhận',
                     onClick: () => {
-                        const dsId = GetDsCheckedTableHinet('dsTable');
-                        if (dsId != null && dsId.length > 0) {
-                            onDeleteMultiEntity(dsId);
+                        if (dataSelected != null && dataSelected.length > 0) {
+                            onDeleteMultiEntity(dataSelected);
                         } else {
                             toast.onError('Vui lòng chọn ít nhất một bản ghi');
                         }
@@ -438,64 +561,61 @@ const CatetoryNewsAdm = (props) => {
                 <div className="container-fluid  mrb-10px">
                     <div className="row">
                         <div className="col-md-12">
-                            <Card>
-                                <Card.Header>
-                                    <strong>Tìm kiếm</strong>
-                                </Card.Header>
-                                <Card.Body>
-                                    <Formik
-                                        initialValues={{
-                                            Name: searchModel.Name
-                                        }}
-                                        validationSchema={SearchSchema}
-                                        onSubmit={(values) => {
-                                            onSubmitSearchSave(values);
-                                        }}
-                                    >
-                                        {({errors, touched}) => (
-                                            <Form>
-                                                <div>
-                                                    <div className="form-row">
-                                                        <div className="form-group col-md-4">
-                                                            <label htmlFor="inputEmail4">
-                                                                Tên nhóm
-                                                            </label>
-                                                            <Field
-                                                                name="Name"
-                                                                key="Name"
-                                                                className="form-control "
-                                                            />
-                                                            {errors.Name &&
-                                                            touched.Name ? (
-                                                                <>
-                                                                    <div className="invalid-feedback">
-                                                                        {
-                                                                            errors.Name
-                                                                        }
-                                                                    </div>
-                                                                </>
-                                                            ) : null}
-                                                        </div>
-                                                    </div>
-                                                    <div className="form-row">
-                                                        <Button
-                                                            variant="success"
-                                                            size="md"
-                                                            type="submit"
-                                                            className="button-action"
-                                                        >
-                                                            <i
-                                                                className="fa fa-search"
-                                                                aria-hidden="true"
-                                                            />{' '}
-                                                            Tìm kiếm
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            </Form>
-                                        )}
-                                    </Formik>
-                                </Card.Body>
+                            <Card title="Tìm kiếm">
+                                <Form
+                                    labelCol={{span: 24}}
+                                    wrapperCol={{span: 24}}
+                                    layout="vertical"
+                                    initialValues={{
+                                        Name: searchModel.Name
+                                    }}
+                                    onFinish={(values) =>
+                                        onSubmitSearchSave(values)
+                                    }
+                                >
+                                    <Row gutter={[10, 5]}>
+                                        <Col
+                                            lg={{span: 24}}
+                                            md={{span: 24}}
+                                            sm={{span: 24}}
+                                            xs={{span: 24}}
+                                        >
+                                            <Form.Item
+                                                name="Name"
+                                                label="Tên Nhóm"
+                                                rules={[
+                                                    {
+                                                        min: 2,
+                                                        message:
+                                                            'Vui lòng nhập ít nhất 2 kí tự'
+                                                    }
+                                                ]}
+                                                validateTrigger={[
+                                                    'onBlur',
+                                                    'onChange'
+                                                ]}
+                                            >
+                                                <Input name="Name" />
+                                            </Form.Item>
+                                        </Col>
+                                    </Row>
+
+                                    <Row>
+                                        <Col
+                                            lg={{span: 24}}
+                                            md={{span: 24}}
+                                            sm={{span: 24}}
+                                            xs={{span: 24}}
+                                        >
+                                            <Button
+                                                type="primary"
+                                                htmlType="submit"
+                                            >
+                                                Tìm kiếm
+                                            </Button>
+                                        </Col>
+                                    </Row>
+                                </Form>
                             </Card>
                         </div>
                     </div>
@@ -503,10 +623,12 @@ const CatetoryNewsAdm = (props) => {
             </section>
         );
     };
-    const NextPage = (pageInd) => {
+
+    const NextPage = (page, pageSize) => {
         const searchMd = {
             ...searchModel,
-            PageIndex: pageInd
+            PageIndex: page,
+            PageSize: pageSize
         };
         onSubmitSearchSave(searchMd);
     };
@@ -536,220 +658,105 @@ const CatetoryNewsAdm = (props) => {
         }
         return reder;
     };
-
+    const rowSelection = {
+        onChange: (selectedRowKeys, selectedRows) => {
+            dataSelected = selectedRowKeys;
+        }
+    };
     const RenderDsTable = () => {
         let lstItem = [];
-        let pageSiz = 20;
+        let pageSiz = 10;
         let pageInd = 1;
+        let Count = 0;
         if (lstEntity.ListItem !== undefined) {
             lstItem = lstEntity.ListItem;
             pageInd = lstEntity.CurrentPage;
+            Count = lstEntity.Count;
         }
         if (searchModel !== undefined) {
             pageSiz = searchModel.PageSize;
         }
+        const getMenu = (record) => (
+            <>
+                <Menu>
+                    <Menu.Item
+                        key={`sua_${record.Id}`}
+                        icon={<antIcon.EditOutlined />}
+                        onClick={() => onEditEntity(record.Id)}
+                    >
+                        Sửa
+                    </Menu.Item>
+                    <Menu.Item
+                        key={`xoa_${record.Id}`}
+                        icon={<antIcon.DeleteOutlined />}
+                        onClick={() => DeleteAction(record.Id)}
+                    >
+                        Xóa
+                    </Menu.Item>
+                </Menu>
+            </>
+        );
+        const columns = [
+            {
+                title: 'STT',
+                key: 'STT',
+                render: (text, record, index) => (
+                    <div>{(pageInd - 1) * pageSiz + index + 1}</div>
+                )
+            },
+            {
+                title: 'Hành động',
+                key: 'HanhDong',
+                render: (text, record) => {
+                    return (
+                        <Dropdown.Button
+                            onClick={() => onOpenDetailModal(record.Id)}
+                            overlay={() => getMenu(record)}
+                        >
+                            Chi tiết
+                        </Dropdown.Button>
+                    );
+                }
+            },
+            {
+                title: 'Mã nhóm',
+                key: 'MaNhom',
+                render: (text, record, index) => <div>{record.Code}</div>
+            },
+            {
+                title: 'Tên Nhóm',
+                key: 'TenNhom',
+                render: (text, record, index) => <div>{record.Name}</div>
+            },
+            {
+                title: 'Mô tả',
+                key: 'MoTa',
+                render: (text, record, index) => <div>{record.Description}</div>
+            }
+        ];
         return (
             <>
                 <EditModal />
                 <DetailModal />
 
-                <div className="table-responsive">
-                    <table className="table table-hinetNew" id="dsTable">
-                        <thead>
-                            <tr>
-                                <th scope="col">
-                                    <input
-                                        type="checkbox"
-                                        className="checkAll"
-                                        onClick={(e) =>
-                                            CheckAllItem(e, 'dsTable')
-                                        }
-                                    />
-                                </th>
-                                <th scope="col">#</th>
-
-                                <th scope="col" className="widthColTableMedium">
-                                    Mã nhóm
-                                </th>
-                                <th scope="col" className="widthColTableMedium">
-                                    Tên nhóm
-                                </th>
-                                <th scope="col">Mô tả</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {lstItem.length > 0 ? (
-                                lstItem.map((item, key) => {
-                                    const rIndex =
-                                        (pageInd - 1) * pageSiz + key + 1;
-                                    return (
-                                        <tr
-                                            key={key}
-                                            onClick={(e) =>
-                                                CheckRowsHinetTable(e)
-                                            }
-                                        >
-                                            <td>
-                                                <input
-                                                    className="checkTd"
-                                                    type="checkbox"
-                                                    data-id={item.Id}
-                                                    onClick={(e) =>
-                                                        CheckRowsHinetTable(e)
-                                                    }
-                                                />
-                                            </td>
-                                            <th scope="row">{rIndex}</th>
-                                            <td>
-                                                <div className="tableBoxMain">
-                                                    <div className="tableBoxMain-label">
-                                                        {item.Code}
-                                                    </div>
-                                                    <div className="tableBoxMain-btnAction">
-                                                        <Dropdown>
-                                                            <Dropdown.Toggle
-                                                                size="sm"
-                                                                variant=""
-                                                                className="dropdowTableBtn"
-                                                            >
-                                                                <i
-                                                                    className="fa fa-ellipsis-h"
-                                                                    aria-hidden="true"
-                                                                />
-                                                            </Dropdown.Toggle>
-
-                                                            <Dropdown.Menu>
-                                                                <Dropdown.Item
-                                                                    onClick={() =>
-                                                                        onEditEntity(
-                                                                            item.Id
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    <span className="boxIcon">
-                                                                        <i className="fas fa-edit" />
-                                                                    </span>
-                                                                    <span>
-                                                                        Sửa
-                                                                    </span>
-                                                                </Dropdown.Item>
-                                                                <Dropdown.Item
-                                                                    onClick={() =>
-                                                                        DeleteAction(
-                                                                            item.Id
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    <span className="boxIcon">
-                                                                        <i className="fas fa-times" />
-                                                                    </span>
-                                                                    <span>
-                                                                        Xóa
-                                                                    </span>
-                                                                </Dropdown.Item>
-                                                                <Dropdown.Item
-                                                                    onClick={() =>
-                                                                        onOpenDetailModal(
-                                                                            item.Id
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    <span className="boxIcon">
-                                                                        <i className="fas fa-info-circle" />
-                                                                    </span>
-                                                                    <span>
-                                                                        Xem chi
-                                                                        tiết
-                                                                    </span>
-                                                                </Dropdown.Item>
-                                                            </Dropdown.Menu>
-                                                        </Dropdown>
-                                                    </div>
-                                                </div>
-                                            </td>
-
-                                            <td>{item.Name}</td>
-                                            <td>{item.Description}</td>
-                                        </tr>
-                                    );
-                                })
-                            ) : (
-                                <NotDataToShow colNum={5} />
-                            )}
-                        </tbody>
-                        <thead>
-                            <tr>
-                                <th scope="col">
-                                    <input
-                                        type="checkbox"
-                                        className="checkAll"
-                                        onClick={(e) =>
-                                            CheckAllItem(e, 'dsTable')
-                                        }
-                                    />
-                                </th>
-                                <th scope="col">#</th>
-
-                                <th scope="col" className="widthColTableMedium">
-                                    Mã nhóm
-                                </th>
-                                <th scope="col" className="widthColTableMedium">
-                                    Tên nhóm
-                                </th>
-                                <th scope="col">Mô tả</th>
-                            </tr>
-                        </thead>
-                    </table>
-                </div>
-                <div>
-                    <div className="row">
-                        <div className="col-sm-6">
-                            Tổng số {lstEntity.Count} bản ghi trang hiện tại -
-                            tổng số {lstEntity.TotalPage} trang
-                        </div>
-
-                        <div className="col-sm-6 right">
-                            <nav
-                                aria-label="Page navigation"
-                                className="tblHinet-pagin"
-                            >
-                                <ul className="pagination pagination-sm">
-                                    <li className="page-item">
-                                        <Button
-                                            className="page-link"
-                                            onClick={() => NextPage(1)}
-                                            aria-label="Previous"
-                                        >
-                                            <span aria-hidden="true">
-                                                &laquo;
-                                            </span>
-                                            <span className="sr-only">
-                                                Previous
-                                            </span>
-                                        </Button>
-                                    </li>
-                                    <RenderPage />
-                                    <li className="page-item">
-                                        <Button
-                                            className="page-link"
-                                            onClick={() =>
-                                                NextPage(lstEntity.TotalPage)
-                                            }
-                                            aria-label="Next"
-                                        >
-                                            <span aria-hidden="true">
-                                                &raquo;
-                                            </span>
-                                            <span className="sr-only">
-                                                Next
-                                            </span>
-                                        </Button>
-                                    </li>
-                                </ul>
-                            </nav>
-                        </div>
-                    </div>
-                </div>
+                <Table
+                    id="dsTable"
+                    rowKey="Id"
+                    rowSelection={rowSelection}
+                    columns={columns}
+                    dataSource={lstItem}
+                    pagination={{
+                        total: Count,
+                        showSizeChanger: true,
+                        showQuickJumper: true,
+                        pageSize: pageSiz,
+                        current: pageInd,
+                        showTotal: (total) => `Tổng cộng ${total} bản ghi`,
+                        onChange: (page, pageSize) => {
+                            NextPage(page, pageSize);
+                        }
+                    }}
+                />
             </>
         );
     };
@@ -764,43 +771,44 @@ const CatetoryNewsAdm = (props) => {
                         <div className="col-md-12">
                             <div className="card">
                                 <div className="card-header p-2">
-                                    <CreateModal />
-                                    <Button
-                                        size="sm"
-                                        variant=""
-                                        className="btn-nobg"
-                                        onClick={() => ToggleSearchPanel()}
-                                    >
-                                        {showPanelSearch ? (
-                                            <>
-                                                <i
-                                                    className="fa fa-times"
-                                                    aria-hidden="true"
-                                                />{' '}
-                                                Đóng tìm kiếm
-                                            </>
-                                        ) : (
-                                            <>
-                                                <i
-                                                    className="fa fa-search"
-                                                    aria-hidden="true"
-                                                />{' '}
-                                                Tìm kiếm
-                                            </>
-                                        )}
-                                    </Button>
-                                    <Button
-                                        size="sm"
-                                        variant=""
-                                        className="btn-nobg"
-                                        onClick={() => DeleteMulTiBtnAction()}
-                                    >
-                                        <i
-                                            className="fa fa-trash"
-                                            aria-hidden="true"
-                                        />{' '}
-                                        Xóa
-                                    </Button>
+                                    <Space>
+                                        <CreateModal />
+                                        <Button
+                                            type="primary"
+                                            onClick={() => ToggleSearchPanel()}
+                                        >
+                                            {showPanelSearch ? (
+                                                <>
+                                                    <i
+                                                        className="fa fa-times"
+                                                        aria-hidden="true"
+                                                    />{' '}
+                                                    Đóng tìm kiếm
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <i
+                                                        className="fa fa-search"
+                                                        aria-hidden="true"
+                                                    />{' '}
+                                                    Tìm kiếm
+                                                </>
+                                            )}
+                                        </Button>
+                                        <Button
+                                            type="danger"
+                                            onClick={() =>
+                                                DeleteMulTiBtnAction()
+                                            }
+                                        >
+                                            <i
+                                                className="fa fa-trash"
+                                                aria-hidden="true"
+                                            />{' '}
+                                            Xóa
+                                        </Button>
+                                    </Space>
+
                                     {/* <Button size="sm" className="button-action">
                                         <i
                                             className="fa fa-reply"

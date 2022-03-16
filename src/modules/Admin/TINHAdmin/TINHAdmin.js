@@ -1,3 +1,4 @@
+/* eslint-disable react/jsx-wrap-multilines */
 import 'react-confirm-alert/src/react-confirm-alert.css'; // Import css
 import NotDataToShow from '@modules/Common/NotDataToShow';
 import * as Constant from '@app/Constant';
@@ -8,22 +9,17 @@ import {
     GetDsCheckedTableHinet,
     CheckAllItem
 } from '@modules/Common/TableCommon';
-import {
-    Button,
-    Card,
-    Col,
-    Dropdown,
-    ListGroup,
-    ListGroupItem,
-    Modal
-} from 'react-bootstrap';
+import {ListGroup, ListGroupItem} from 'react-bootstrap';
+import * as antIcon from '@ant-design/icons';
+
+import * as antd from 'antd';
 import {
     TINH_CLOSE_VIEWDETAIL,
     TINH_CLOSE_VIEWEDIT,
     TINH_EDIT_CLOSE,
     TINH_SEARCH_SAVE
 } from '@app/store/ActionType/TINHTypeAction';
-import {Field, Form, Formik, useFormik, useFormikContex} from 'formik';
+import {Field, Formik, useFormik, useFormikContex} from 'formik';
 import {Link, useHistory} from 'react-router-dom';
 import React, {useEffect, useRef, useState} from 'react';
 import {NotFoundImage} from '@modules/Common/NotFound';
@@ -35,6 +31,28 @@ import {ContextMenu, MenuItem, ContextMenuTrigger} from 'react-contextmenu';
 import AdminSecsionHead from '../AdminSecsionHead';
 
 const TINHAdm = (props) => {
+    const {
+        Drawer,
+        Button,
+        Space,
+        Form,
+        Row,
+        Col,
+        Input,
+        Radio,
+        Select,
+        notification,
+        Descriptions,
+        Table,
+        Dropdown,
+        Menu,
+        Pagination,
+        Modal,
+        Card
+    } = antd;
+    const {Option} = Select;
+    const {Column, ColumnGroup} = Table;
+    const [form] = Form.useForm();
     const formCreateEntity = useRef(null);
     const formRef = useRef();
     const createEditor = useRef();
@@ -60,6 +78,8 @@ const TINHAdm = (props) => {
         onSubmitSearchSave
     } = props;
     const [showPanelSearch, SetshowPanelSearch] = useState(false);
+    let dataSelected;
+
     function ToggleSearchPanel() {
         SetshowPanelSearch(!showPanelSearch);
     }
@@ -79,143 +99,133 @@ const TINHAdm = (props) => {
         }
     });
 
-    const SignupSchema = Yup.object().shape({
-        MaTinh: Yup.string()
-            .trim()
-            .min(2, 'Vui lòng nhập ít nhất 2 ký tự')
-            .required('Vui lòng nhập thông tin này'),
-        Loai: Yup.string()
-            .trim()
-            .min(2, 'Vui lòng nhập ít nhất 2 ký tự')
-            .required('Vui lòng nhập thông tin này'),
-        TenTinh: Yup.string()
-            .trim()
-            .min(2, 'Vui lòng nhập ít nhất 2 ký tự')
-            .required('Vui lòng nhập thông tin này')
-    });
-
-    const SearchSchema = Yup.object().shape({
-        MaTinhFilter: Yup.string(),
-        TenTinhFilter: Yup.string(),
-        LoaiFilter: Yup.string()
-    });
-
     function CreateModal() {
         const [show, setShow] = useState(false);
         const handleClose = () => setShow(false);
         const handleShow = () => setShow(true);
         const submitCreate = () => {
             if (formRef.current) {
-                formRef.current.handleSubmit();
+                formRef.current.submit();
             }
         };
         return (
             <>
-                <Button
-                    variant=""
-                    className="btn-nobg"
-                    size="sm"
-                    onClick={handleShow}
-                >
-                    <i className="fa fa-plus" aria-hidden="true" />
-                    Tạo mới
+                <Button type="primary" onClick={handleShow}>
+                    <i className="fa fa-plus" aria-hidden="true" /> &nbsp; Tạo
+                    mới
                 </Button>
 
-                <Modal show={show} size="lg" onHide={handleClose}>
-                    <Modal.Header closeButton>
-                        <Modal.Title>Tạo mới tỉnh</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        <Formik
-                            innerRef={formRef}
-                            initialValues={{
-                                MaTinh: '',
-                                TenTinh: '',
-                                Loai: ''
-                            }}
-                            validationSchema={SignupSchema}
-                            onSubmit={(values) => {
-                                const ObjSave = {
-                                    ...values
-                                };
-                                // same shape as initial values
-                                onCreateEntity(ObjSave);
-                            }}
-                        >
-                            {({errors, touched}) => (
-                                <Form ref={formCreateEntity}>
-                                    <div className="form-group">
-                                        <label htmlFor="MaTinh">
-                                            Mã tỉnh
-                                            <span className="red">*</span>
-                                        </label>
-                                        <Field
-                                            name="MaTinh"
-                                            key="MaTinh"
-                                            className="form-control "
-                                        />
-                                        {errors.Name && touched.Name ? (
-                                            <>
-                                                <div className="invalid-feedback">
-                                                    {errors.MaTinh}
-                                                </div>
-                                            </>
-                                        ) : null}
-                                    </div>
-                                    <div className="form-group">
-                                        <label htmlFor="TenTinh">
-                                            Tên Tỉnh/ Thành phố
-                                            <span className="red">*</span>
-                                        </label>
-                                        <Field
-                                            name="TenTinh"
-                                            key="TenTinh"
-                                            className="form-control"
-                                        />
-                                        {errors.TenTinh && touched.TenTinh ? (
-                                            <div className="invalid-feedback">
-                                                {errors.TenTinh}
-                                            </div>
-                                        ) : null}
-                                    </div>
-                                    <div className="form-row">
-                                        <label htmlFor="Loai">
-                                            Loại
-                                            <span className="red">*</span>
-                                        </label>
+                <Modal
+                    title="Tạo mới tỉnh"
+                    centered
+                    visible={show}
+                    onOk={() => submitCreate()}
+                    onCancel={() => handleClose()}
+                    width={1000}
+                    zIndex={1040}
+                    okText="Hoàn thành"
+                    cancelText="Đóng"
+                >
+                    <Form
+                        ref={formRef}
+                        labelCol={{span: 24}}
+                        wrapperCol={{span: 24}}
+                        layout="vertical"
+                        initialValues={{
+                            Name: '',
+                            Order: '',
+                            IsShow: true,
+                            ClassCss: '',
+                            StyleCss: '',
+                            Code: '',
+                            AllowFilterScope: true
+                        }}
+                        onFinish={(values) => {
+                            const ObjSave = {
+                                ...values
+                            };
 
-                                        <Field
-                                            as="select"
-                                            name="Loai"
-                                            key="Loai"
-                                            className="form-control "
-                                        >
-                                            <option value="">--Chọn--</option>
-                                            <option value="Tỉnh">Tỉnh</option>
-                                            <option value="Thành phố Trung ương">
-                                                Thành phố Trung ương
-                                            </option>
-                                        </Field>
-                                        {errors.Loai && touched.Loai ? (
-                                            <>
-                                                <div className="invalid-feedback">
-                                                    {errors.Loai}
-                                                </div>
-                                            </>
-                                        ) : null}
-                                    </div>
-                                </Form>
-                            )}
-                        </Formik>
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button variant="secondary" onClick={handleClose}>
-                            Đóng
-                        </Button>
-                        <Button variant="primary" onClick={submitCreate}>
-                            Hoàn thành
-                        </Button>
-                    </Modal.Footer>
+                            onCreateEntity(ObjSave);
+                        }}
+                    >
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    label="Mã tỉnh"
+                                    name="MaTinh"
+                                    rules={[
+                                        {
+                                            min: 2,
+                                            message:
+                                                'Vui lòng nhập ít nhất 2 ký tự'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input name="MaTinh" />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    label="Tên Tỉnh/ Thành phố"
+                                    name="TenTinh"
+                                    rules={[
+                                        {
+                                            min: 2,
+                                            message:
+                                                'Vui lòng nhập ít nhất 2 ký tự'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input name="TenTinh" />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 24}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    label="Loại"
+                                    name="Loai"
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message:
+                                                'Vui lòng chọn thông tin này'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Select name="Loai" initialvalues="">
+                                        <Select.Option value="">
+                                            --Chọn--
+                                        </Select.Option>
+                                        <Select.Option value="Tỉnh">
+                                            Tỉnh
+                                        </Select.Option>
+                                        <Select.Option value="Thành phố trung ương">
+                                            Thành phố trung ương
+                                        </Select.Option>
+                                    </Select>
+                                </Form.Item>
+                            </Col>
+                        </Row>
+                    </Form>
                 </Modal>
             </>
         );
@@ -224,118 +234,124 @@ const TINHAdm = (props) => {
     function EditModal() {
         const submitEdit = () => {
             if (formRef.current) {
-                formRef.current.handleSubmit();
+                formRef.current.submit();
             }
         };
         return (
             <>
                 <Modal
-                    show={showEditModal}
-                    size="lg"
-                    onHide={() => onCloseEntityEditModal()}
+                    title="Cập nhật tỉnh"
+                    centered
+                    visible={showEditModal}
+                    onOk={() => submitEdit()}
+                    onCancel={() => onCloseEntityEditModal()}
+                    width={1000}
+                    zIndex={1040}
+                    okText="Hoàn thành"
+                    cancelText="Đóng"
                 >
-                    <Modal.Header closeButton>
-                        <Modal.Title>Cập nhật tỉnh</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        <Formik
-                            innerRef={formRef}
-                            initialValues={{
-                                Id: entityObj.Id,
-                                MaTinh: entityObj.MaTinh,
-                                TenTinh: entityObj.TenTinh,
-                                Loai: entityObj.Loai
-                            }}
-                            validationSchema={SignupSchema}
-                            vali
-                            onSubmit={(values) => {
-                                // same shape as initial values
-                                const ObjSave = {
-                                    ...values
-                                };
-                                onSaveEditEntity(ObjSave);
-                                // same shape as initial values
-                            }}
-                        >
-                            {({errors, touched}) => (
-                                <Form ref={formCreateEntity}>
-                                    <Field type="hidden" name="Id" key="Id" />
+                    <Form
+                        ref={formRef}
+                        labelCol={{span: 24}}
+                        wrapperCol={{span: 24}}
+                        layout="vertical"
+                        initialValues={{
+                            Id: entityObj.Id,
+                            MaTinh: entityObj.MaTinh,
+                            TenTinh: entityObj.TenTinh,
+                            Loai: entityObj.Loai
+                        }}
+                        onFinish={(values) => {
+                            // same shape as initial values
+                            const ObjSave = {
+                                ...values
+                            };
+                            onSaveEditEntity(ObjSave);
+                            // same shape as initial values
+                        }}
+                    >
+                        <Form.Item name="Id" hidden>
+                            <Input name="Id" />
+                        </Form.Item>
 
-                                    <div className="form-group">
-                                        <label htmlFor="MaTinh">
-                                            Mã tỉnh
-                                            <span className="red">*</span>
-                                        </label>
-                                        <Field
-                                            name="MaTinh"
-                                            key="MaTinh"
-                                            className="form-control "
-                                        />
-                                        {errors.MaTinh && touched.MaTinh ? (
-                                            <>
-                                                <div className="invalid-feedback">
-                                                    {errors.MaTinh}
-                                                </div>
-                                            </>
-                                        ) : null}
-                                    </div>
-                                    <div className="form-group">
-                                        <label htmlFor="TenTinh">
-                                            Tên Tỉnh/ Thành phố
-                                            <span className="red">*</span>
-                                        </label>
-                                        <Field
-                                            name="TenTinh"
-                                            key="TenTinh"
-                                            className="form-control"
-                                        />
-                                        {errors.TenTinh && touched.TenTinh ? (
-                                            <div className="invalid-feedback">
-                                                {errors.TenTinh}
-                                            </div>
-                                        ) : null}
-                                    </div>
-                                    <div className="form-row">
-                                        <label htmlFor="Loai">
-                                            Loại
-                                            <span className="red">*</span>
-                                        </label>
+                        <Row gutter={[10, 5]}>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    label="Mã tỉnh"
+                                    name="MaTinh"
+                                    rules={[
+                                        {
+                                            min: 2,
+                                            message:
+                                                'Vui lòng nhập ít nhất 2 ký tự'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input name="MaTinh" />
+                                </Form.Item>
+                            </Col>
 
-                                        <Field
-                                            as="select"
-                                            name="Loai"
-                                            key="Loai"
-                                            className="form-control "
-                                        >
-                                            <option value="">--Chọn--</option>
-                                            <option value="Tỉnh">Tỉnh</option>
-                                            <option value="Thành phố Trung ương">
-                                                Thành phố Trung ương
-                                            </option>
-                                        </Field>
-                                        {errors.Loai && touched.Loai ? (
-                                            <>
-                                                <div className="invalid-feedback">
-                                                    {errors.Loai}
-                                                </div>
-                                            </>
-                                        ) : null}
-                                    </div>
-                                </Form>
-                            )}
-                        </Formik>
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button
-                            variant="secondary"
-                            onClick={() => onCloseEntityEditModal()}
-                        >
-                            Đóng
-                        </Button>
-                        <Button variant="primary" onClick={submitEdit}>
-                            Hoàn thành
-                        </Button>
-                    </Modal.Footer>
+                            <Col
+                                lg={{span: 12}}
+                                md={{span: 12}}
+                                sm={{span: 12}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    label="Tên Tỉnh/ Thành phố"
+                                    name="TenTinh"
+                                    rules={[
+                                        {
+                                            min: 2,
+                                            message:
+                                                'Vui lòng nhập ít nhất 2 ký tự'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Input name="TenTinh" />
+                                </Form.Item>
+                            </Col>
+
+                            <Col
+                                lg={{span: 24}}
+                                md={{span: 24}}
+                                sm={{span: 24}}
+                                xs={{span: 24}}
+                            >
+                                <Form.Item
+                                    label="Loại"
+                                    name="Loai"
+                                    rules={[
+                                        {
+                                            required: true,
+                                            message:
+                                                'Vui lòng chọn thông tin này'
+                                        }
+                                    ]}
+                                    validateTrigger={['onBlur', 'onChange']}
+                                >
+                                    <Select name="Loai" initialvalues="">
+                                        <Select.Option value="">
+                                            --Chọn--
+                                        </Select.Option>
+                                        <Select.Option value="Tỉnh">
+                                            Tỉnh
+                                        </Select.Option>
+                                        <Select.Option value="Thành phố trung ương">
+                                            Thành phố trung ương
+                                        </Select.Option>
+                                    </Select>
+                                </Form.Item>
+                            </Col>
+                        </Row>
+                    </Form>
                 </Modal>
             </>
         );
@@ -343,46 +359,39 @@ const TINHAdm = (props) => {
     function DetailModal() {
         return (
             <>
-                <Modal
-                    show={showDetailModal}
-                    size="lg"
-                    onHide={() => onCloseEntityModal()}
-                >
-                    <Modal.Header closeButton>
-                        <Modal.Title>Chi tiết tỉnh</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body>
-                        <ListGroup className="list-group-flush">
-                            <ListGroupItem>
-                                <dl className="row">
-                                    <dt className="col-sm-2">Mã tỉnh</dt>
-                                    <dd className="col-sm-10">
-                                        {entityObj.MaTinh}
-                                    </dd>
-                                </dl>
-                            </ListGroupItem>
-
-                            <ListGroupItem>
-                                <dl className="row">
-                                    <dt className="col-sm-2">
-                                        Tên Tỉnh/ Thành phố
-                                    </dt>
-                                    <dd className="col-sm-10">
-                                        {entityObj.TenTinh}
-                                    </dd>
-                                </dl>
-                            </ListGroupItem>
-                        </ListGroup>
-                    </Modal.Body>
-                    <Modal.Footer>
-                        <Button
-                            variant="secondary"
-                            onClick={() => onCloseEntityModal()}
+                <>
+                    <Drawer
+                        title="Thông tin chi tiết"
+                        placement="right"
+                        size="large"
+                        onClose={onCloseEntityModal}
+                        visible={showDetailModal}
+                        extra={
+                            <Space>
+                                <Button onClick={onCloseEntityModal}>
+                                    Đóng
+                                </Button>
+                            </Space>
+                        }
+                    >
+                        <Descriptions
+                            title="Thông tin chi tiết"
+                            bordered
+                            column={1}
+                            size="middle"
                         >
-                            Đóng
-                        </Button>
-                    </Modal.Footer>
-                </Modal>
+                            <Descriptions.Item label="Tên Tỉnh/ Thành phố">
+                                {entityObj.TenTinh}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="Mã đơn vị">
+                                {entityObj.MaTinh}
+                            </Descriptions.Item>
+                            <Descriptions.Item label="Loại">
+                                {entityObj.Loai}
+                            </Descriptions.Item>
+                        </Descriptions>
+                    </Drawer>
+                </>
             </>
         );
     }
@@ -413,8 +422,8 @@ const TINHAdm = (props) => {
                     label: 'Xác nhận',
                     onClick: () => {
                         const dsId = GetDsCheckedTableHinet('dsTable');
-                        if (dsId != null && dsId.length > 0) {
-                            onDeleteMultiEntity(dsId);
+                        if (dataSelected != null && dataSelected.length > 0) {
+                            onDeleteMultiEntity(dataSelected);
                         } else {
                             toast.onError('Vui lòng chọn ít nhất một bản ghi');
                         }
@@ -438,121 +447,85 @@ const TINHAdm = (props) => {
                 <div className="container-fluid mrb-10px">
                     <div className="row">
                         <div className="col-md-12">
-                            <Card>
-                                <Card.Header>
-                                    <strong>Tìm kiếm</strong>
-                                </Card.Header>
-                                <Card.Body>
-                                    <Formik
-                                        initialValues={{
-                                            MaTinhFilter:
-                                                searchModel.MaTinhFilter,
-                                            TenTinhFilter:
-                                                searchModel.TenTinhFilter,
-                                            LoaiFilter: searchModel.LoaiFilter
-                                        }}
-                                        validationSchema={SearchSchema}
-                                        onSubmit={(values) => {
-                                            onSubmitSearchSave(values);
-                                        }}
-                                    >
-                                        {({errors, touched}) => (
-                                            <Form>
-                                                <div>
-                                                    <div className="form-row">
-                                                        <div className="form-group col-md-4">
-                                                            <label htmlFor="MaTinhFilter">
-                                                                Mã tỉnh
-                                                            </label>
-                                                            <Field
-                                                                name="MaTinhFilter"
-                                                                key="MaTinhFilter"
-                                                                className="form-control "
-                                                            />
-                                                            {errors.MaTinhFilter &&
-                                                            touched.MaTinhFilter ? (
-                                                                <>
-                                                                    <div className="invalid-feedback">
-                                                                        {
-                                                                            errors.MaTinhFilter
-                                                                        }
-                                                                    </div>
-                                                                </>
-                                                            ) : null}
-                                                        </div>
-                                                        <div className="form-group col-md-4">
-                                                            <label htmlFor="TenTinhFilter">
-                                                                Tỉnh/ Thành phố
-                                                            </label>
-                                                            <Field
-                                                                name="TenTinhFilter"
-                                                                key="TenTinhFilter"
-                                                                className="form-control"
-                                                            />
-                                                            {errors.TenTinhFilter &&
-                                                            touched.TenTinhFilter ? (
-                                                                <>
-                                                                    <div className="invalid-feedback">
-                                                                        {
-                                                                            errors.TenTinhFilter
-                                                                        }
-                                                                    </div>
-                                                                </>
-                                                            ) : null}
-                                                        </div>
+                            <Card title="Tìm kiếm">
+                                <Form
+                                    form={form}
+                                    name="basic"
+                                    labelCol={{span: 8}}
+                                    wrapperCol={{span: 16}}
+                                    initialValues={{remember: true}}
+                                    onFinish={(values) => {
+                                        onSubmitSearchSave(values);
+                                    }}
+                                    onFinishFailed={(errorInfo) => {
+                                        notification.error({
+                                            placement: 'bottomRight',
+                                            message: 'Cảnh báo',
+                                            description:
+                                                'Vui lòng kiểm tra lại dữ liệu nhập'
+                                        });
+                                    }}
+                                    autoComplete="off"
+                                >
+                                    <Row gutter={24}>
+                                        <Col span={8}>
+                                            <Form.Item
+                                                label="Mã đơn vị"
+                                                name="MaTinhFilter"
+                                            >
+                                                <Input />
+                                            </Form.Item>
+                                        </Col>
+                                        <Col span={8}>
+                                            <Form.Item
+                                                label="Tên tỉnh/ t.phố"
+                                                name="TenTinhFilter"
+                                            >
+                                                <Input />
+                                            </Form.Item>
+                                        </Col>
+                                        <Col span={8}>
+                                            <Form.Item
+                                                label="Loại"
+                                                name="LoaiFilter"
+                                            >
+                                                <Select placeholder="--Tất cả--">
+                                                    <Option value="">
+                                                        Tất cả
+                                                    </Option>
+                                                    <Option value="Tỉnh">
+                                                        Tỉnh
+                                                    </Option>
+                                                    <Option value="Thành phố Trung ương">
+                                                        Thành phố Trung ương
+                                                    </Option>
+                                                </Select>
+                                            </Form.Item>
+                                        </Col>
+                                    </Row>
 
-                                                        <div className="form-group col-md-4">
-                                                            <label htmlFor="LoaiFilter">
-                                                                Loại
-                                                            </label>
-                                                            <Field
-                                                                as="select"
-                                                                name="LoaiFilter"
-                                                                key="LoaiFilter"
-                                                                className="form-control "
-                                                            >
-                                                                <option value="">
-                                                                    --Chọn--
-                                                                </option>
-                                                                <option value="Tỉnh">
-                                                                    Tỉnh
-                                                                </option>
-                                                                <option value="Thành phố Trung ương">
-                                                                    Thành phố
-                                                                    Trung ương
-                                                                </option>
-                                                            </Field>
-                                                            {errors.LoaiFilter &&
-                                                            touched.LoaiFilter ? (
-                                                                <>
-                                                                    <div className="invalid-feedback">
-                                                                        {
-                                                                            errors.LoaiFilter
-                                                                        }
-                                                                    </div>
-                                                                </>
-                                                            ) : null}
-                                                        </div>
-                                                    </div>
-                                                    <div className="form-row">
-                                                        <Button
-                                                            variant="success"
-                                                            size="md"
-                                                            type="submit"
-                                                            className="button-action"
-                                                        >
-                                                            <i
-                                                                className="fa fa-search"
-                                                                aria-hidden="true"
-                                                            />{' '}
-                                                            Tìm kiếm
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            </Form>
-                                        )}
-                                    </Formik>
-                                </Card.Body>
+                                    <Row>
+                                        <Col
+                                            span={24}
+                                            style={{textAlign: 'right'}}
+                                        >
+                                            <Button
+                                                type="primary"
+                                                htmlType="submit"
+                                            >
+                                                Tìm kiếm
+                                            </Button>
+                                            <Button
+                                                style={{margin: '0 8px'}}
+                                                onClick={() => {
+                                                    form.resetFields();
+                                                }}
+                                            >
+                                                Reset
+                                            </Button>
+                                        </Col>
+                                    </Row>
+                                </Form>
                             </Card>
                         </div>
                     </div>
@@ -560,14 +533,19 @@ const TINHAdm = (props) => {
             </section>
         );
     };
-    const NextPage = (pageInd) => {
+    const NextPage = (pageInd, pageSize) => {
         const searchMd = {
             ...searchModel,
-            PageIndex: pageInd
+            PageIndex: pageInd,
+            PageSize: pageSize
         };
         onSubmitSearchSave(searchMd);
     };
-
+    const rowSelection = {
+        onChange: (selectedRowKeys, selectedRows) => {
+            dataSelected = selectedRowKeys;
+        }
+    };
     const RenderPage = () => {
         const totalPage =
             lstEntity.TotalPage !== undefined ? lstEntity.TotalPage : 1;
@@ -598,228 +576,101 @@ const TINHAdm = (props) => {
         let lstItem = [];
         let pageSiz = 20;
         let pageInd = 1;
+        let Count = 0;
         if (lstEntity.ListItem !== undefined) {
             lstItem = lstEntity.ListItem;
             pageInd = lstEntity.CurrentPage;
+            Count = lstEntity.Count;
         }
         if (searchModel !== undefined) {
             pageSiz = searchModel.PageSize;
         }
+        const getmenu = (record) => (
+            <>
+                <Menu>
+                    <Menu.Item
+                        key={`sua_${record.Id}`}
+                        onClick={() => {
+                            onEditEntity(record.Id);
+                        }}
+                        icon={<antIcon.EditOutlined />}
+                    >
+                        Sửa
+                    </Menu.Item>
+
+                    <Menu.Item
+                        key={`xoa_${record.Id}`}
+                        onClick={() => DeleteAction(record.Id)}
+                        icon={<antIcon.DeleteOutlined />}
+                    >
+                        Xóa
+                    </Menu.Item>
+                    <Menu.Item key={`danhsachhuyen_${record.Id}`}>
+                        <Link
+                            className="MauDen"
+                            to={`/admin/Huyen/${record.MaTinh}`}
+                        >
+                            <span className="boxIcon">
+                                <i className="fas fa-info-circle" />
+                            </span>
+                            <span>Danh sách Quận/ Huyện/ Thị xã</span>
+                        </Link>
+                    </Menu.Item>
+                </Menu>
+            </>
+        );
+
         return (
             <>
                 <EditModal />
                 <DetailModal />
-
-                <div className="table-responsive">
-                    <table className="table table-hinetNew" id="dsTable">
-                        <thead>
-                            <tr>
-                                <th scope="col">
-                                    <input
-                                        type="checkbox"
-                                        className="checkAll"
-                                        onClick={(e) =>
-                                            CheckAllItem(e, 'dsTable')
-                                        }
-                                    />
-                                </th>
-                                <th scope="col">#</th>
-
-                                <th scope="col" className="widthColTableMedium">
-                                    Tên Tỉnh/ Thành phố
-                                </th>
-                                <th scope="col">Mã tỉnh</th>
-                                <th scope="col">Loại</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {lstItem.length > 0 ? (
-                                lstItem.map((item, key) => {
-                                    const rIndex = pageInd * pageSiz + key + 1;
-                                    return (
-                                        <tr
-                                            key={key}
-                                            onClick={(e) =>
-                                                CheckRowsHinetTable(e)
-                                            }
-                                        >
-                                            <td>
-                                                <input
-                                                    className="checkTd"
-                                                    type="checkbox"
-                                                    data-id={item.Id}
-                                                    onClick={(e) =>
-                                                        CheckRowsHinetTable(e)
-                                                    }
-                                                />
-                                            </td>
-                                            <th scope="row">{rIndex}</th>
-                                            <td>
-                                                <div className="tableBoxMain">
-                                                    <div className="tableBoxMain-label">
-                                                        {item.TenTinh}
-                                                    </div>
-                                                    <div className="tableBoxMain-btnAction">
-                                                        <Dropdown>
-                                                            <Dropdown.Toggle
-                                                                size="sm"
-                                                                variant=""
-                                                                className="dropdowTableBtn"
-                                                            >
-                                                                <i
-                                                                    className="fa fa-ellipsis-h"
-                                                                    aria-hidden="true"
-                                                                />
-                                                            </Dropdown.Toggle>
-
-                                                            <Dropdown.Menu>
-                                                                <Dropdown.Item
-                                                                    onClick={() =>
-                                                                        onEditEntity(
-                                                                            item.Id
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    <span className="boxIcon">
-                                                                        <i className="fas fa-edit" />
-                                                                    </span>
-                                                                    <span>
-                                                                        Sửa
-                                                                    </span>
-                                                                </Dropdown.Item>
-                                                                <Dropdown.Item
-                                                                    onClick={() =>
-                                                                        DeleteAction(
-                                                                            item.Id
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    <span className="boxIcon">
-                                                                        <i className="fas fa-times" />
-                                                                    </span>
-                                                                    <span>
-                                                                        Xóa
-                                                                    </span>
-                                                                </Dropdown.Item>
-                                                                {/* <Dropdown.Item
-                                                                    onClick={() =>
-                                                                        onOpenDetailModal(
-                                                                            item.Id
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    <span className="boxIcon">
-                                                                        <i className="fas fa-info-circle" />
-                                                                    </span>
-                                                                    <span>
-                                                                        Xem chi
-                                                                        tiết
-                                                                    </span>
-                                                                </Dropdown.Item> */}
-                                                                <Dropdown.Item>
-                                                                    <Link
-                                                                        className="MauDen"
-                                                                        to={`/admin/Huyen/${item.MaTinh}`}
-                                                                    >
-                                                                        <span className="boxIcon">
-                                                                            <i className="fas fa-info-circle" />
-                                                                        </span>
-                                                                        <span>
-                                                                            Danh
-                                                                            sách
-                                                                            Quận/
-                                                                            Huyện/
-                                                                            Thị
-                                                                            xã
-                                                                        </span>
-                                                                    </Link>
-                                                                </Dropdown.Item>
-                                                            </Dropdown.Menu>
-                                                        </Dropdown>
-                                                    </div>
-                                                </div>
-                                            </td>
-
-                                            {/* <td>{item.MaTinh}</td> */}
-                                            <td>{item.MaTinh}</td>
-                                            <td>{item.Loai}</td>
-                                        </tr>
-                                    );
-                                })
-                            ) : (
-                                <NotDataToShow colNum={4} />
-                            )}
-                        </tbody>
-                        <thead>
-                            <tr>
-                                <th scope="col">
-                                    <input
-                                        type="checkbox"
-                                        className="checkAll"
-                                        onClick={(e) =>
-                                            CheckAllItem(e, 'dsTable')
-                                        }
-                                    />
-                                </th>
-                                <th scope="col">#</th>
-
-                                <th scope="col" className="widthColTableMedium">
-                                    Tên Tỉnh/ Thành phố
-                                </th>
-                                <th scope="col">Mã tỉnh</th>
-                                <th scope="col">Loại</th>
-                            </tr>
-                        </thead>
-                    </table>
-                </div>
-                <div>
-                    <div className="row">
-                        <div className="col-sm-6">
-                            Tổng số {lstEntity.Count} bản ghi trang hiện tại -
-                            tổng số {lstEntity.TotalPage} trang
-                        </div>
-                        <div className="col-sm-6 right">
-                            <nav
-                                aria-label="Page navigation "
-                                className="tblHinet-pagin"
+                <Table
+                    rowKey="Id"
+                    rowSelection={rowSelection}
+                    dataSource={lstItem}
+                    pagination={{
+                        total: Count,
+                        showSizeChanger: true,
+                        showQuickJumper: true,
+                        pageSize: pageSiz,
+                        current: pageInd,
+                        showTotal: (total) => `Tổng cộng ${total} bản ghi`,
+                        onChange: (page, pageSize) => {
+                            NextPage(page, pageSize);
+                        }
+                    }}
+                >
+                    <Column
+                        title="#"
+                        key="STT"
+                        render={(text, record, index) => (
+                            <div>{(pageInd - 1) * pageSiz + index + 1}</div>
+                        )}
+                    />
+                    <Column
+                        title="Thao tác"
+                        key="action"
+                        render={(text, record) => (
+                            <Dropdown.Button
+                                onClick={() => onOpenDetailModal(record.Id)}
+                                overlay={() => getmenu(record)}
                             >
-                                <ul className="pagination pagination-sm">
-                                    <li className="page-item">
-                                        <Button
-                                            className="page-link"
-                                            onClick={() => NextPage(1)}
-                                            aria-label="Previous"
-                                        >
-                                            <span aria-hidden="true">
-                                                &laquo;
-                                            </span>
-                                            <span className="sr-only">
-                                                Previous
-                                            </span>
-                                        </Button>
-                                    </li>
-                                    <RenderPage />
-                                    <li className="page-item">
-                                        <Button
-                                            className="page-link"
-                                            onClick={() =>
-                                                NextPage(lstEntity.TotalPage)
-                                            }
-                                            aria-label="Next"
-                                        >
-                                            <span aria-hidden="true">
-                                                &raquo;
-                                            </span>
-                                            <span className="sr-only">
-                                                Next
-                                            </span>
-                                        </Button>
-                                    </li>
-                                </ul>
-                            </nav>
-                        </div>
-                    </div>
-                </div>
+                                Chi tiết
+                            </Dropdown.Button>
+                        )}
+                    />
+                    <Column
+                        title="Tên Tỉnh/ Thành phố"
+                        dataIndex="TenTinh"
+                        key="TenTinh"
+                    />
+                    <Column
+                        title="Mã Tỉnh/ Thành phố"
+                        dataIndex="MaTinh"
+                        key="MaTinh"
+                    />
+                    <Column title="Loại" dataIndex="Loai" key="Loai" />
+                </Table>
             </>
         );
     };
@@ -833,43 +684,43 @@ const TINHAdm = (props) => {
                         <div className="col-md-12">
                             <div className="card">
                                 <div className="p-2 card-header">
-                                    <CreateModal />
-                                    <Button
-                                        size="sm"
-                                        variant=""
-                                        className="btn-nobg"
-                                        onClick={() => ToggleSearchPanel()}
-                                    >
-                                        {showPanelSearch ? (
-                                            <>
-                                                <i
-                                                    className="fa fa-times"
-                                                    aria-hidden="true"
-                                                />{' '}
-                                                Đóng tìm kiếm
-                                            </>
-                                        ) : (
-                                            <>
-                                                <i
-                                                    className="fa fa-search"
-                                                    aria-hidden="true"
-                                                />{' '}
-                                                Tìm kiếm
-                                            </>
-                                        )}
-                                    </Button>
-                                    <Button
-                                        size="sm"
-                                        variant=""
-                                        className="btn-nobg"
-                                        onClick={() => DeleteMulTiBtnAction()}
-                                    >
-                                        <i
-                                            className="fa fa-trash"
-                                            aria-hidden="true"
-                                        />{' '}
-                                        Xóa
-                                    </Button>
+                                    <Space>
+                                        <CreateModal />
+                                        <Button
+                                            type="primary"
+                                            onClick={() => ToggleSearchPanel()}
+                                        >
+                                            {showPanelSearch ? (
+                                                <>
+                                                    <i
+                                                        className="fa fa-times"
+                                                        aria-hidden="true"
+                                                    />{' '}
+                                                    &nbsp; Đóng tìm kiếm
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <i
+                                                        className="fa fa-search"
+                                                        aria-hidden="true"
+                                                    />{' '}
+                                                    &nbsp; Tìm kiếm
+                                                </>
+                                            )}
+                                        </Button>
+                                        <Button
+                                            type="danger"
+                                            onClick={() =>
+                                                DeleteMulTiBtnAction()
+                                            }
+                                        >
+                                            <i
+                                                className="fa fa-trash"
+                                                aria-hidden="true"
+                                            />{' '}
+                                            &nbsp; Xóa
+                                        </Button>
+                                    </Space>
                                 </div>
                                 <div className="card-body">
                                     <div className="tab-content">
